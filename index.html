@@ -17951,6 +17951,9 @@
         function resolveApiUrl(url) {
           if (typeof url !== 'string') return url;
           let srv = (localStorage.getItem('ip_adm_server_url') || '').trim();
+          if (!srv && typeof window !== 'undefined' && window.location && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol.startsWith('http')) {
+            srv = 'https://invoicepro-admin-backend-production.up.railway.app';
+          }
           const base = srv ? srv.replace(/\/+$/, '') : 'http://localhost:8766';
           if (url.includes('/api/')) {
             const apiPath = url.substring(url.indexOf('/api/'));

@@ -290,12 +290,103 @@ def init_db():
                 created_at       TEXT DEFAULT '',
                 updated_at       TEXT DEFAULT ''
             );
+            CREATE TABLE IF NOT EXISTS checkout_orders (
+                id                      TEXT PRIMARY KEY,
+                order_id                TEXT UNIQUE NOT NULL,
+                customer_id             TEXT DEFAULT '',
+                customer_name           TEXT NOT NULL DEFAULT '',
+                customer_email          TEXT DEFAULT '',
+                customer_phone          TEXT DEFAULT '',
+                city                    TEXT DEFAULT '',
+                plan_name               TEXT NOT NULL DEFAULT 'Standard License',
+                plan_duration_years     INTEGER DEFAULT 1,
+                amount                  REAL NOT NULL DEFAULT 1499,
+                currency                TEXT DEFAULT 'INR',
+                payment_status          TEXT NOT NULL DEFAULT 'completed',
+                payment_method          TEXT DEFAULT 'Razorpay / Sylivion Checkout',
+                transaction_id          TEXT DEFAULT '',
+                emp_id                  TEXT DEFAULT '',
+                emp_name                TEXT DEFAULT '',
+                commission_calculated   REAL DEFAULT 0,
+                license_key_generated   TEXT DEFAULT '',
+                checkout_source         TEXT DEFAULT 'Sylivion Checkout',
+                raw_payload             TEXT DEFAULT '{}',
+                created_at              TEXT NOT NULL,
+                updated_at              TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dev_tasks (
+                id             TEXT PRIMARY KEY,
+                title          TEXT NOT NULL DEFAULT '',
+                description    TEXT DEFAULT '',
+                category       TEXT DEFAULT 'Bug',
+                priority       TEXT DEFAULT 'High',
+                status         TEXT DEFAULT 'todo',
+                assignee_id    TEXT DEFAULT '',
+                assignee_name  TEXT DEFAULT '',
+                dev_notes      TEXT DEFAULT '',
+                branch_name    TEXT DEFAULT '',
+                pr_link        TEXT DEFAULT '',
+                due_date       TEXT DEFAULT '',
+                created_by_id  TEXT DEFAULT '',
+                created_by_name TEXT DEFAULT '',
+                created_at     TEXT NOT NULL,
+                updated_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dev_releases (
+                id             TEXT PRIMARY KEY,
+                version        TEXT NOT NULL UNIQUE,
+                title          TEXT NOT NULL DEFAULT '',
+                release_date   TEXT DEFAULT '',
+                status         TEXT DEFAULT 'draft',
+                features_json  TEXT DEFAULT '[]',
+                fixes_json     TEXT DEFAULT '[]',
+                notes          TEXT DEFAULT '',
+                download_url   TEXT DEFAULT '',
+                created_by     TEXT DEFAULT '',
+                created_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id             TEXT PRIMARY KEY,
+                user_id        TEXT DEFAULT '',
+                user_name      TEXT DEFAULT '',
+                role           TEXT DEFAULT '',
+                action         TEXT NOT NULL,
+                module         TEXT DEFAULT 'General',
+                details        TEXT DEFAULT '',
+                ip_address     TEXT DEFAULT '',
+                timestamp      TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS license_keys (
+                id             TEXT PRIMARY KEY,
+                license_key    TEXT UNIQUE NOT NULL,
+                customer_id    TEXT DEFAULT '',
+                customer_name  TEXT DEFAULT '',
+                plan_name      TEXT DEFAULT 'Standard Plan',
+                duration_years INTEGER DEFAULT 1,
+                status         TEXT DEFAULT 'active',
+                generated_by   TEXT DEFAULT 'system',
+                expiry_date    TEXT DEFAULT '',
+                created_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key            TEXT PRIMARY KEY,
+                value          TEXT NOT NULL DEFAULT '',
+                category       TEXT DEFAULT 'general',
+                updated_at     TEXT DEFAULT ''
+            );
 
         """)
-                # Ensure customer table columns for sales attribution & commission
-        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label"]:
+        # Ensure customer table columns for sales attribution, checkout tracking & commission
+        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label", "payment_method", "transaction_id", "checkout_source", "status", "order_id"]:
             try:
                 db.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
+            except Exception:
+                pass
+
+        # Ensure employee_sales table columns for comprehensive employee attribution
+        for col in ["emp_id", "customer_id", "plan_name", "status", "target_month"]:
+            try:
+                db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
             except Exception:
                 pass
 
@@ -1160,6 +1251,14 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json(customers)
                 return
 
+            if path in ("/api/checkout/orders", "/api/orders"):
+                with _db_lock:
+                    db = get_db()
+                    orders = rows_to_list(db.execute("SELECT * FROM checkout_orders ORDER BY created_at DESC LIMIT 200").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "orders": orders})
+                return
+
             if path == "/api/reports":
                 with _db_lock:
                     db = get_db()
@@ -1761,7 +1860,146 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.commit()
                     db.close()
                 print(f"  [Report IN] [{data.get('category','?')}] {(data.get('message') or '')[:60]}")
-                self.send_ok(f"Report received id={rid}")
+            # ── Sylivion Checkout Integration ────────────────────────────────
+            if path in ("/api/checkout/order", "/api/checkout/webhook"):
+                c_name = (data.get("customer_name") or data.get("name") or "").strip()
+                if not c_name:
+                    self.send_err("customer_name is required", 400)
+                    return
+                
+                c_email = (data.get("customer_email") or data.get("email") or "").strip()
+                c_phone = (data.get("customer_phone") or data.get("phone") or "").strip()
+                c_city = (data.get("city") or "").strip()
+                plan_name = (data.get("plan_name") or data.get("plan") or "1 Year Plan").strip()
+                amount = float(data.get("amount") or data.get("price") or 1499.0)
+                currency = (data.get("currency") or "INR").strip()
+                tx_id = (data.get("transaction_id") or data.get("payment_id") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
+                pay_method = (data.get("payment_method") or "Sylivion Checkout").strip()
+                order_num = (data.get("order_id") or f"ORD-{int(time.time())}-{os.urandom(2).hex().upper()}").strip()
+                raw_emp_id = (data.get("emp_id") or data.get("empId") or data.get("referral_code") or "").strip()
+                
+                # License Key Generation
+                lic_key = (data.get("license_key") or "").strip()
+                if not lic_key:
+                    lic_key = f"INV-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}"
+                
+                # Plan duration calculation
+                plan_years = 1
+                if "3" in plan_name or "3y" in plan_name.lower(): plan_years = 3
+                elif "5" in plan_name or "5y" in plan_name.lower(): plan_years = 5
+                elif "lifetime" in plan_name.lower() or "vip" in plan_name.lower(): plan_years = 99
+                
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                try:
+                    exp_year = datetime.now().year + (plan_years if plan_years < 50 else 50)
+                    plan_end_date = datetime.now().replace(year=exp_year).strftime("%Y-%m-%d")
+                except Exception:
+                    plan_end_date = f"{datetime.now().year + 1}-12-31"
+
+                with _db_lock:
+                    db = get_db()
+                    # 1. Match Employee attribution
+                    matched_emp = None
+                    if raw_emp_id:
+                        matched_emp = db.execute(
+                            "SELECT id, emp_id, name, department, designation FROM employees WHERE LOWER(emp_id)=? OR LOWER(id)=? OR LOWER(name)=?",
+                            (raw_emp_id.lower(), raw_emp_id.lower(), raw_emp_id.lower())
+                        ).fetchone()
+                    
+                    emp_db_id = matched_emp["id"] if matched_emp else ""
+                    emp_code = matched_emp["emp_id"] if matched_emp else raw_emp_id
+                    emp_real_name = matched_emp["name"] if matched_emp else ""
+                    
+                    # Commission calculation
+                    commission = calculate_plan_commission(plan_name, amount, f"EMP: {emp_code}") if emp_code else 0.0
+
+                    # 2. Check or Create Customer
+                    cust_row = None
+                    if c_email:
+                        cust_row = db.execute("SELECT id FROM customers WHERE LOWER(email)=?", (c_email.lower(),)).fetchone()
+                    if not cust_row and c_phone:
+                        cust_row = db.execute("SELECT id FROM customers WHERE phone=?", (c_phone,)).fetchone()
+                    
+                    if cust_row:
+                        cid = cust_row["id"]
+                        db.execute("""UPDATE customers SET 
+                            license_key=?, purchase_date=?, purchase_amount=?, 
+                            plan_end_date=?, plan_label=?, sold_by_emp_id=?, sold_by_emp_name=?, 
+                            sales_person=?, payment_method=?, transaction_id=?, checkout_source=?, 
+                            order_id=?, updated_at=?
+                            WHERE id=?""",
+                            (lic_key, today_str, amount, plan_end_date, plan_name,
+                             emp_code, emp_real_name, emp_real_name, pay_method, tx_id,
+                             "Sylivion Checkout", order_num, now_iso(), cid))
+                    else:
+                        cid = new_id()
+                        db.execute("""INSERT INTO customers 
+                            (id, name, owner, city, currency, email, phone, license_key, purchase_date,
+                             purchase_amount, support_purchased, support_amount, notes, plan_end_date,
+                             sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
+                             payment_method, transaction_id, checkout_source, status, order_id, created_at, updated_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (cid, c_name, c_name, c_city, currency, c_email, c_phone, lic_key, today_str,
+                             amount, 1, 0, f"Purchased via Sylivion Checkout. EMP: {emp_code} ({emp_real_name})",
+                             plan_end_date, emp_code, emp_real_name, emp_real_name, "Sylivion Checkout",
+                             plan_name, pay_method, tx_id, "Sylivion Checkout", "active", order_num, now_iso(), now_iso()))
+
+                    # 3. Record in employee_sales if employee attributed
+                    if matched_emp:
+                        sale_id = new_id()
+                        cur_month = today_str[:7]
+                        db.execute("""INSERT INTO employee_sales 
+                            (id, employee_id, emp_id, customer_id, customer_name, plan_name, amount, commission, date, note, status, target_month, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (sale_id, emp_db_id, emp_code, cid, c_name, plan_name, amount, commission,
+                             today_str, f"Online Checkout ({order_num}) - {plan_name}", "approved", cur_month, now_iso()))
+
+                    # 4. Insert into checkout_orders
+                    chk_id = new_id()
+                    db.execute("""INSERT INTO checkout_orders
+                        (id, order_id, customer_id, customer_name, customer_email, customer_phone, city,
+                         plan_name, plan_duration_years, amount, currency, payment_status, payment_method,
+                         transaction_id, emp_id, emp_name, commission_calculated, license_key_generated,
+                         checkout_source, raw_payload, created_at, updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (chk_id, order_num, cid, c_name, c_email, c_phone, c_city,
+                         plan_name, plan_years, amount, currency, "completed", pay_method,
+                         tx_id, emp_code, emp_real_name, commission, lic_key,
+                         "Sylivion Checkout", json.dumps(data), now_iso(), now_iso()))
+
+                    # 5. Insert license key record
+                    db.execute("""INSERT OR REPLACE INTO license_keys 
+                        (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                        (new_id(), lic_key, cid, c_name, plan_name, plan_years, "active", "checkout", plan_end_date, now_iso()))
+
+                    # 6. Audit Log
+                    db.execute("""INSERT INTO audit_logs 
+                        (id, user_id, user_name, role, action, module, details, timestamp)
+                        VALUES (?,?,?,?,?,?,?,?)""",
+                        (new_id(), "checkout-system", "Sylivion Checkout", "system",
+                         f"Processed checkout order {order_num} for {c_name} (Plan: {plan_name}, EMP: {emp_code or 'None'})",
+                         "Checkout", f"Amount: {currency} {amount}, License: {lic_key}", now_iso()))
+
+                    db.commit()
+                    db.close()
+
+                self.send_json({
+                    "ok": True,
+                    "order_id": order_num,
+                    "customer_id": cid,
+                    "license_key": lic_key,
+                    "plan_name": plan_name,
+                    "plan_end_date": plan_end_date,
+                    "amount": amount,
+                    "currency": currency,
+                    "employee_attributed": {
+                        "matched": bool(matched_emp),
+                        "emp_id": emp_code,
+                        "name": emp_real_name,
+                        "commission": commission
+                    } if emp_code else None
+                })
                 return
 
             # ── Customers ─────────────────────────────────────────────────────

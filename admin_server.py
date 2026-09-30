@@ -274,6 +274,22 @@ def init_db():
                 status           TEXT DEFAULT 'in_progress',
                 created_at       TEXT DEFAULT ''
             );
+            CREATE TABLE IF NOT EXISTS teams (
+                id               TEXT PRIMARY KEY,
+                dept_id          TEXT DEFAULT '',
+                name             TEXT NOT NULL DEFAULT '',
+                code             TEXT DEFAULT '',
+                lead_name        TEXT DEFAULT '',
+                lead_phone       TEXT DEFAULT '',
+                lead_email       TEXT DEFAULT '',
+                members          TEXT DEFAULT '[]',
+                headcount        INTEGER DEFAULT 0,
+                targetMonthly    REAL DEFAULT 0,
+                progress         REAL DEFAULT 0,
+                focus_area       TEXT DEFAULT '',
+                created_at       TEXT DEFAULT '',
+                updated_at       TEXT DEFAULT ''
+            );
 
         """)
                 # Ensure customer table columns for sales attribution & commission

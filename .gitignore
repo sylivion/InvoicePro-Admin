@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.ngrok.exe.old
+.env
+admin_data/
+*.db
+*.db-shm
+*.db-wal

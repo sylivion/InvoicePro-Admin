@@ -51,8 +51,104 @@ os.makedirs(DATA_DIR, exist_ok=True)
 _db_lock = threading.RLock()
 
 
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
+class IndexableRow(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._values = list(self.values())
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+class PGCursorWrapper:
+    def __init__(self, cur, conn):
+        self._cur = cur
+        self._conn = conn
+    def fetchone(self):
+        r = self._cur.fetchone()
+        return IndexableRow(r) if r is not None else None
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        return [IndexableRow(r) for r in rows]
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+    @property
+    def description(self):
+        return self._cur.description
+    def close(self):
+        try: self._cur.close()
+        except Exception: pass
+
+class PGDatabaseWrapper:
+    def __init__(self, pg_conn):
+        self.conn = pg_conn
+    def execute(self, sql, params=None):
+        if sql.strip().upper().startswith("PRAGMA"):
+            cur = self.conn.cursor()
+            cur.execute("SELECT 1")
+            return PGCursorWrapper(cur, self.conn)
+        sql_trans = self._transform(sql)
+        import psycopg2.extras
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        if params is not None:
+            cur.execute(sql_trans, params)
+        else:
+            cur.execute(sql_trans)
+        return PGCursorWrapper(cur, self.conn)
+    def executescript(self, sql_script):
+        cur = self.conn.cursor()
+        for statement in sql_script.split(';'):
+            s = statement.strip()
+            if s:
+                try:
+                    cur.execute(self._transform(s))
+                except Exception:
+                    try: self.conn.rollback()
+                    except Exception: pass
+        try: self.conn.commit()
+        except Exception: pass
+        try: cur.close()
+        except Exception: pass
+    def commit(self):
+        try: self.conn.commit()
+        except Exception: pass
+    def rollback(self):
+        try: self.conn.rollback()
+        except Exception: pass
+    def close(self):
+        try: self.conn.close()
+        except Exception: pass
+    def _transform(self, sql):
+        if sql.strip().upper().startswith("PRAGMA"):
+            return "SELECT 1"
+        sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE)
+        if m:
+            tbl = m.group(1)
+            cols_raw = m.group(2)
+            cols = [c.strip() for c in cols_raw.split(',') if c.strip()]
+            pk = cols[0]
+            update_clauses = [f'{c}=EXCLUDED.{c}' for c in cols if c != pk]
+            update_str = ', '.join(update_clauses) if update_clauses else f'{pk}=EXCLUDED.{pk}'
+            sql = re.sub(r'INSERT\s+OR\s+REPLACE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+            sql = sql.rstrip().rstrip(';') + f' ON CONFLICT ({pk}) DO UPDATE SET {update_str}'
+        return sql.replace('?', '%s')
+
+
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
+    if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
+        try:
+            import psycopg2
+            import psycopg2.extras
+            conn = psycopg2.connect(DATABASE_URL)
+            return PGDatabaseWrapper(conn)
+        except Exception as e:
+            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
+
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")

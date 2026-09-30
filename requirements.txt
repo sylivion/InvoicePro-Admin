@@ -1,2 +1,1 @@
-# Python standard library is used for admin_server.py.
-# No external pip dependencies required.
+psycopg2-binary>=2.9.9

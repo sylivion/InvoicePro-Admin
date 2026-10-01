@@ -3708,7 +3708,7 @@
             <select x-model="auditFilterUser"
               class="px-2.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 font-medium focus:outline-none max-w-[180px]">
               <option value="all">👤 All Staff</option>
-              <template x-for="u in auditFilterUserOptions" :key="u.username || u.name">
+              <template x-for="(u, idx) in auditFilterUserOptions" :key="u.key || ('opt_' + idx)">
                 <option :value="u.name" x-text="u.name + (u.role ? ' (' + u.role + ')' : '')"></option>
               </template>
             </select>
@@ -20353,10 +20353,12 @@
 
         get auditFilterUserOptions() {
           const map = new Map();
-          (this.staffUsers || []).forEach(u => {
+          (this.staffUsers || []).forEach((u, idx) => {
             const name = (u.name || u.username || '').trim();
-            if (name) {
-              map.set(name.toLowerCase(), {
+            const key = (u.username || u.name || ('usr_' + idx)).trim().toLowerCase();
+            if (name && key && !map.has(key)) {
+              map.set(key, {
+                key: key,
                 name: name,
                 username: u.username || '',
                 role: (u.role || '').toUpperCase(),
@@ -20364,10 +20366,12 @@
               });
             }
           });
-          (this.auditLog || []).forEach(l => {
+          (this.auditLog || []).forEach((l, idx) => {
             const name = (l.user_name || '').trim();
-            if (name && !map.has(name.toLowerCase())) {
-              map.set(name.toLowerCase(), {
+            const key = (l.user_name || l.user_id || ('log_' + idx)).trim().toLowerCase();
+            if (name && key && !map.has(key)) {
+              map.set(key, {
+                key: key,
                 name: name,
                 username: l.user_id || '',
                 role: (l.user_role || '').toUpperCase(),

@@ -167,10 +167,15 @@ def get_db():
         except Exception as e:
             print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
 
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=60000")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+    except Exception:
+        pass
     return conn
 
 
@@ -3315,11 +3320,18 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.close()
                         self.send_json({"ok": False, "error": "This account is inactive/suspended. Please contact the administrator."})
                         return
-                    # Update last login
+                    # Update last login safely
                     now_str = now_iso()
-                    db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
-                    db.commit()
-                    db.close()
+                    try:
+                        db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
+                        db.commit()
+                    except Exception as db_err:
+                        print(f"  [AUTH] Warning: Failed to update last_login timestamp: {db_err}")
+                    finally:
+                        try:
+                            db.close()
+                        except Exception:
+                            pass
 
                 # Normalize username-to-role mappings
                 un_lower = (user_dict.get("username") or "").lower()

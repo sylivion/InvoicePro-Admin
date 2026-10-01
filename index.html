@@ -10903,30 +10903,60 @@
                   <!-- Actions -->
                   <td class="px-4 py-3.5">
                     <div class="flex items-center justify-center gap-1.5" @click.stop>
-                      <!-- View Salary & Quota Deduction Modal -->
+                      <!-- View Salary & Quota Deduction Breakdown -->
                       <button @click="openSalesSalaryModal(emp)"
                         class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors"
                         title="View Full Salary Deduction Breakdown">
                         <i class="fa-solid fa-calculator text-xs"></i>
                       </button>
-                      <!-- Direct UPI / QR Salary Payment -->
-                      <button @click="openDirectSalaryPaymentModal(emp)"
-                        class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer"
-                        title="Direct Salary Payment via UPI QR">
-                        <i class="fa-solid fa-bolt text-[10px]"></i>
-                        <i class="fa-solid fa-qrcode text-xs"></i>
-                        <span>Pay</span>
+
+                      <!-- Direct UPI / QR Salary Payment (Disabled when fully paid or 0 balance) -->
+                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) <= 0 && getEmpGrossPay(emp, payrollMonth) > 0">
+                        <button disabled
+                          class="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 cursor-not-allowed select-none"
+                          title="Fully Paid — No Balance Due">
+                          <i class="fa-solid fa-circle-check text-[11px] text-emerald-600"></i>
+                          <span>Paid</span>
+                        </button>
+                      </template>
+                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) <= 0 && getEmpGrossPay(emp, payrollMonth) === 0">
+                        <button disabled
+                          class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium text-xs flex items-center gap-1 cursor-not-allowed opacity-60 select-none"
+                          title="No Payable Amount for this cycle">
+                          <i class="fa-solid fa-ban text-[10px]"></i>
+                          <span>Pay</span>
+                        </button>
+                      </template>
+                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) > 0">
+                        <button @click="openDirectSalaryPaymentModal(emp, getEmpPayrollBalance(emp, payrollMonth))"
+                          class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                          :title="'Pay Outstanding Balance: ₹' + getEmpPayrollBalance(emp, payrollMonth).toLocaleString('en-IN')">
+                          <i class="fa-solid fa-bolt text-[10px]"></i>
+                          <i class="fa-solid fa-qrcode text-xs"></i>
+                          <span>Pay</span>
+                        </button>
+                      </template>
+
+                      <!-- Generate & Print Official Salary Slip -->
+                      <button @click="generateSalarySlip(emp, payrollMonth)"
+                        class="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
+                        title="Generate &amp; Print Official Salary Slip">
+                        <i class="fa-solid fa-file-invoice text-xs"></i>
                       </button>
-                      <!-- Pay record manual -->
+
+                      <!-- Pay record manual (Disabled if 0 balance) -->
                       <button @click="openEmpPayModal(emp.id)"
-                        class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
-                        title="Record Payment Manual">
+                        :disabled="getEmpPayrollBalance(emp, payrollMonth) <= 0"
+                        :class="getEmpPayrollBalance(emp, payrollMonth) <= 0 ? 'opacity-30 cursor-not-allowed' : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 cursor-pointer'"
+                        class="p-1.5 rounded-lg transition-colors"
+                        :title="getEmpPayrollBalance(emp, payrollMonth) <= 0 ? 'Fully Paid - No Manual Payment Needed' : 'Record Payment Manual'">
                         <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
                       </button>
+
                       <!-- View detail -->
                       <button @click="openEmpDetail(emp.id)"
                         class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors"
-                        title="View Sales & Payments">
+                        title="View Sales &amp; Payments">
                         <i class="fa-solid fa-eye text-xs"></i>
                       </button>
                     </div>
@@ -13250,24 +13280,24 @@
           </div>
         </div>
 
-        <!-- Quick Preset Buttons -->
+        <!-- Cycle Payable & Balance Due Summary Cards -->
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Select Payment Type</label>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Payroll Cycle Summary</label>
           <div class="grid grid-cols-2 gap-2">
-            <!-- Monthly CTC/Salary Preset -->
-            <button type="button" @click="setSalaryPaymentPreset('ctc')"
-              :class="salaryPaymentPreset==='ctc' ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+            <!-- Total Payable for Cycle -->
+            <button type="button" @click="setSalaryPaymentPreset('payable')"
+              :class="salaryPaymentPreset==='payable' ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 shadow-xs' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
               class="p-2.5 rounded-xl border text-left transition-all cursor-pointer">
-              <div class="text-[10px] font-bold uppercase text-gray-400">Monthly Net CTC</div>
-              <div class="font-semibold text-sm text-emerald-600 dark:text-emerald-400" x-text="fmtCurrency((((parseInt(salaryPaymentEmp?.basicSalary)||35000) + Math.round((parseInt(salaryPaymentEmp?.basicSalary)||35000)*0.4))))"></div>
+              <div class="text-[10px] font-bold uppercase text-gray-400">Total Payable for Cycle</div>
+              <div class="font-bold text-sm text-emerald-600 dark:text-emerald-400 font-mono" x-text="fmtCurrency(getEmpGrossPay(salaryPaymentEmp, payrollMonth))"></div>
             </button>
 
-            <!-- Commission Balance Preset (if any) -->
-            <button type="button" @click="setSalaryPaymentPreset('commission')"
-              :class="salaryPaymentPreset==='commission' ? 'border-purple-600 bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-200' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+            <!-- Balance Remaining Due -->
+            <button type="button" @click="setSalaryPaymentPreset('balance')"
+              :class="salaryPaymentPreset==='balance' ? 'border-brand-600 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-200 shadow-xs' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
               class="p-2.5 rounded-xl border text-left transition-all cursor-pointer">
-              <div class="text-[10px] font-bold uppercase text-gray-400">Incentive Due</div>
-              <div class="font-semibold text-sm text-purple-600 dark:text-purple-400" x-text="fmtCurrency((salaryPaymentEmp && empBalance(salaryPaymentEmp) > 0 ? empBalance(salaryPaymentEmp).toLocaleString('en-IN') : '0'))"></div>
+              <div class="text-[10px] font-bold uppercase text-gray-400">Balance Remaining Due</div>
+              <div class="font-bold text-sm font-mono" :class="getEmpPayrollBalance(salaryPaymentEmp, payrollMonth) > 0 ? 'text-red-500' : 'text-emerald-600'" x-text="fmtCurrency(getEmpPayrollBalance(salaryPaymentEmp, payrollMonth))"></div>
             </button>
           </div>
         </div>
@@ -22245,46 +22275,240 @@
           this.editingSalaryUpi = false;
           this.salaryPaymentDate = this.today();
           
-          const baseSalary = parseInt(emp.basicSalary) || 35000;
-          const monthlyCTC = baseSalary + Math.round(baseSalary * 0.4);
-          const commBalance = this.empBalance(emp);
+          const cycle = this.payrollMonth || new Date().toISOString().slice(0, 7);
+          const totalPayable = this.getEmpGrossPay(emp, cycle);
+          const balanceDue = this.getEmpPayrollBalance(emp, cycle);
 
           if (defaultAmt !== undefined && defaultAmt !== null) {
             this.salaryPaymentAmount = parseFloat(defaultAmt) || 0;
             this.salaryPaymentPreset = 'custom';
           } else if (defaultNote && defaultNote.includes('Commission')) {
+            const commBalance = this.empBalance(emp);
             this.salaryPaymentAmount = commBalance > 0 ? commBalance : 0;
             this.salaryPaymentPreset = 'commission';
           } else {
-            this.salaryPaymentAmount = monthlyCTC;
-            this.salaryPaymentPreset = 'ctc';
+            // Automatically fetch the exact Total Payable / Balance Due amount shown in the table
+            this.salaryPaymentAmount = balanceDue > 0 ? balanceDue : (totalPayable > 0 ? totalPayable : 0);
+            this.salaryPaymentPreset = 'payable';
           }
 
-          const currentCycle = this.payrollMonth || new Date().toISOString().slice(0, 7);
-          this.salaryPaymentNote = defaultNote || (`Salary Disbursement - ${currentCycle}`);
+          this.salaryPaymentNote = defaultNote || (`Salary Disbursement - ${cycle}`);
           this.updateSalaryPaymentQR();
           this.showSalaryPaymentModal = true;
+        },
+
+        generateSalarySlip(emp, monthStr) {
+          if (!emp) return;
+          const cycle = monthStr || this.payrollMonth || new Date().toISOString().slice(0, 7);
+          const parts = cycle.split('-');
+          const year = parts[0];
+          const monthNum = parts[1];
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          const formattedMonth = (year && monthNum) ? `${monthNames[parseInt(monthNum, 10) - 1] || 'Cycle'} ${year}` : cycle;
+          
+          const isSales = this.isEmpSalesRole ? this.isEmpSalesRole(emp) : (['sales', 'sales_member', 'sales_leader'].includes((emp.role || '').toLowerCase()) || (emp.department || '').toLowerCase().includes('sales'));
+          const netSalary = this.getEmpNetSalary ? this.getEmpNetSalary(emp, cycle) : (parseInt(emp.basicSalary) || 10000);
+          const incentive = this.payrollCommIn ? this.payrollCommIn(emp, cycle) : 0;
+          const totalPayable = this.getEmpGrossPay ? this.getEmpGrossPay(emp, cycle) : (netSalary + incentive);
+          const totalPaid = this.empTotalPaid ? this.empTotalPaid(emp) : 0;
+          const balanceDue = this.getEmpPayrollBalance ? this.getEmpPayrollBalance(emp, cycle) : Math.max(0, totalPayable - totalPaid);
+          const salesDeals = isSales && this.payrollSalesIn ? this.payrollSalesIn(emp, cycle) : 0;
+          const isSettled = balanceDue <= 0 && totalPayable > 0;
+
+          const slipId = `PS-${(emp.empId || emp.id || 'EMP').toString().replace(/[^a-zA-Z0-9]/g, '')}-${cycle.replace('-', '')}`;
+          const issueDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+          const win = window.open('', '_blank', 'width=850,height=950');
+          if (!win) {
+            if (this.notify) this.notify('Pop-up blocked by browser. Please allow popups to view the salary slip.');
+            return;
+          }
+
+          const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Salary Slip — ${emp.name} (${formattedMonth})</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 30px 20px; color: #0f172a; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    .slip-card { max-width: 780px; margin: 0 auto; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 36px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 24px; border-bottom: 2px solid #3b82f6; }
+    .brand-title { font-size: 24px; font-weight: 700; color: #1e40af; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 12px; color: #64748b; font-weight: 500; margin-top: 2px; }
+    .slip-meta { text-align: right; }
+    .slip-title { font-size: 18px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .slip-period { font-size: 13px; font-weight: 600; color: #2563eb; margin-top: 2px; }
+    .slip-ref { font-size: 11px; color: #94a3b8; font-family: monospace; margin-top: 4px; }
+    
+    .emp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 24px 0; font-size: 13px; }
+    .emp-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .emp-lbl { color: #64748b; font-weight: 500; }
+    .emp-val { font-weight: 600; color: #0f172a; }
+    
+    .section-heading { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .table-box { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    th { background: #f1f5f9; text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; }
+    td { padding: 12px 14px; border-top: 1px solid #f1f5f9; }
+    .amount-col { text-align: right; font-weight: 600; font-family: ui-monospace, monospace; }
+    
+    .total-box { display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 20px 0; }
+    .total-lbl { font-size: 14px; font-weight: 600; color: #1e40af; }
+    .total-val { font-size: 22px; font-weight: 700; color: #1d4ed8; font-family: ui-monospace, monospace; }
+    
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .status-paid { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+    .status-pending { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+    
+    .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 36px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
+    .sign-box { text-align: center; width: 180px; border-top: 1px dashed #cbd5e1; padding-top: 6px; color: #475569; font-weight: 600; font-size: 12px; }
+    
+    .no-print-bar { text-align: center; margin-bottom: 20px; }
+    .btn-print { background: #2563eb; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .slip-card { border: none; box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+      .no-print-bar { display: none; }
+      @page { size: A4 portrait; margin: 15mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print-bar">
+    <button class="btn-print" onclick="window.print()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Print / Save PDF
+    </button>
+  </div>
+  
+  <div class="slip-card">
+    <div class="header">
+      <div>
+        <div class="brand-title">InvoicePro</div>
+        <div class="brand-sub">Enterprise CRM &amp; Admin Payroll Management</div>
+      </div>
+      <div class="slip-meta">
+        <div class="slip-title">Official Payslip</div>
+        <div class="slip-period">${formattedMonth}</div>
+        <div class="slip-ref">Ref: ${slipId}</div>
+      </div>
+    </div>
+
+    <div class="emp-grid">
+      <div>
+        <div class="emp-row"><span class="emp-lbl">Employee Name:</span><span class="emp-val">${emp.name || '—'}</span></div>
+        <div class="emp-row"><span class="emp-lbl">Employee Code:</span><span class="emp-val" style="font-family:monospace">${emp.empId || '—'}</span></div>
+        <div class="emp-row"><span class="emp-lbl">Department:</span><span class="emp-val">${emp.department || (isSales ? 'Sales' : 'Operations')}</span></div>
+      </div>
+      <div>
+        <div class="emp-row"><span class="emp-lbl">Designation:</span><span class="emp-val">${emp.designation || 'Staff'}</span></div>
+        <div class="emp-row"><span class="emp-lbl">Mobile:</span><span class="emp-val">${emp.mobile || '—'}</span></div>
+        <div class="emp-row"><span class="emp-lbl">Disbursement UPI:</span><span class="emp-val" style="font-family:monospace">${emp.upiId || emp.upi_id || 'UPI on File'}</span></div>
+      </div>
+    </div>
+
+    <div class="section-heading">Earnings &amp; Compensation Breakdown</div>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Earnings Component</th>
+            <th>Description / Performance Metrics</th>
+            <th style="text-align:right">Amount (INR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>${isSales ? 'Base Salary (Monthly Quota)' : 'Fixed Monthly Salary'}</strong></td>
+            <td>${isSales ? (salesDeals > 0 ? `${salesDeals} deal(s) completed in ${formattedMonth}` : 'Target Quota Pending') : 'Fixed Monthly Compensation'}</td>
+            <td class="amount-col">₹${netSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          ${isSales ? `
+          <tr>
+            <td><strong>Sales Performance Incentive</strong></td>
+            <td>Tiered commission qualified on sales milestone achievements</td>
+            <td class="amount-col">₹${incentive.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          ` : ''}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="total-box">
+      <div>
+        <div class="total-lbl">Total Net Payable for Cycle</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">Inclusive of Base Compensation &amp; Performance Incentives</div>
+      </div>
+      <div class="total-val">₹${totalPayable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+    </div>
+
+    <div class="section-heading">Disbursement &amp; Settlement Summary</div>
+    <div class="table-box">
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Total Amount Disbursed / Paid</strong></td>
+            <td class="amount-col" style="color:#059669">₹${totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          <tr>
+            <td><strong>Balance Remaining Due</strong></td>
+            <td class="amount-col" style="color:${balanceDue > 0 ? '#dc2626' : '#64748b'}">₹${balanceDue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          <tr>
+            <td><strong>Settlement Status</strong></td>
+            <td style="text-align:right">
+              <span class="status-badge ${isSettled ? 'status-paid' : 'status-pending'}">
+                ${isSettled ? '● Paid &amp; Settled in Full' : (balanceDue > 0 ? '● Payment Pending / Due' : '● No Payable Amount')}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div>
+        <div>System generated electronically on ${issueDate}</div>
+        <div>InvoicePro Enterprise Payroll &amp; Incentive Architecture</div>
+      </div>
+      <div class="sign-box">
+        Authorized Signatory
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+          win.document.write(html);
+          win.document.close();
         },
 
         setSalaryPaymentPreset(type) {
           if (!this.salaryPaymentEmp) return;
           this.salaryPaymentPreset = type;
-          const baseSalary = parseInt(this.salaryPaymentEmp.basicSalary) || 35000;
           const currentCycle = this.payrollMonth || new Date().toISOString().slice(0, 7);
+          const totalPayable = this.getEmpGrossPay(this.salaryPaymentEmp, currentCycle);
+          const balanceDue = this.getEmpPayrollBalance(this.salaryPaymentEmp, currentCycle);
 
-          if (type === 'ctc') {
-            this.salaryPaymentAmount = baseSalary + Math.round(baseSalary * 0.4);
-            this.salaryPaymentNote = `Monthly CTC Salary - ${currentCycle}`;
-          } else if (type === 'basic') {
-            this.salaryPaymentAmount = baseSalary;
-            this.salaryPaymentNote = `Basic Salary - ${currentCycle}`;
+          if (type === 'balance') {
+            this.salaryPaymentAmount = balanceDue > 0 ? balanceDue : 0;
+            this.salaryPaymentNote = `Salary Balance Settlement - ${currentCycle}`;
+          } else if (type === 'payable') {
+            this.salaryPaymentAmount = totalPayable > 0 ? totalPayable : 0;
+            this.salaryPaymentNote = `Salary Disbursement - ${currentCycle}`;
           } else if (type === 'commission') {
-            const bal = this.empBalance(this.salaryPaymentEmp);
-            this.salaryPaymentAmount = bal > 0 ? bal : 0;
-            this.salaryPaymentNote = `Commission Balance - ${currentCycle}`;
+            const comm = this.payrollCommIn ? this.payrollCommIn(this.salaryPaymentEmp, currentCycle) : 0;
+            this.salaryPaymentAmount = comm > 0 ? comm : 0;
+            this.salaryPaymentNote = `Commission Payout - ${currentCycle}`;
           }
+
           this.updateSalaryPaymentQR();
         },
+
 
         getSalaryPaymentUpiUri() {
           if (!this.salaryPaymentUpiId || !this.salaryPaymentEmp) return '#';

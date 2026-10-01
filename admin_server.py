@@ -1953,9 +1953,35 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 if meta_row:
                     try: meta = json.loads(meta_row[0] or "{}")
                     except Exception: pass
+                
+                raw_tickets = meta.get("tickets", [])
+                if not raw_tickets:
+                    raw_tickets = []
+                    for e in enqs:
+                        tid = e.get("id") or ("ST-" + str(random.randint(100, 999)))
+                        raw_tickets.append({
+                            "id": tid,
+                            "ticketNo": tid,
+                            "ticket_no": tid,
+                            "customerName": e.get("customer_name") or e.get("name") or "Customer",
+                            "customer_name": e.get("customer_name") or e.get("name") or "Customer",
+                            "phone": e.get("phone") or "",
+                            "mobile": e.get("phone") or "",
+                            "subject": e.get("subject") or e.get("message") or "Support Request",
+                            "category": e.get("category") or "GST & Invoicing",
+                            "channel": e.get("channel") or "Phone Call",
+                            "priority": (e.get("priority") or "Medium").capitalize(),
+                            "status": e.get("status") or "open",
+                            "assignedTo": e.get("assigned_to") or "",
+                            "assigned_to": e.get("assigned_to") or "",
+                            "assignedToName": e.get("assigned_to_name") or "Unassigned",
+                            "createdAt": e.get("created_at") or "",
+                            "created_at": e.get("created_at") or ""
+                        })
+
                 self.send_json({
                     "ok": True,
-                    "tickets": meta.get("tickets", []) or enqs,
+                    "tickets": raw_tickets,
                     "calls": meta.get("calls", []),
                     "kb": meta.get("kb", []),
                     "recurring_issues": recs

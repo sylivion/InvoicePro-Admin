@@ -1051,12 +1051,6 @@
         <span>Install InvoicePro App</span>
       </button>
 
-      <button x-show="isAdmin" @click="pinEnabled ? removePin() : (showPinSetupModal=true)"
-        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-        <i :class="pinEnabled ? 'fa-solid fa-lock text-rose-500' : 'fa-solid fa-lock-open text-slate-400'" class="w-4 text-center"></i>
-        <span x-text="pinEnabled ? 'Remove PIN Lock' : 'Set PIN Lock'"></span>
-      </button>
-
       <button x-show="isAdmin" @click="openSmtpModal()"
         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
         <i class="fa-solid fa-envelope-circle-check w-4 text-center text-slate-400"></i>

@@ -17944,27 +17944,28 @@
   <!-- ══ JS ══ -->
   <script>
       // Monkey-patch fetch to support direct local server (http://localhost:8766) communication & offline fallback
+      function resolveApiUrl(url) {
+        if (typeof url !== 'string') return url;
+        let srv = (localStorage.getItem('ip_adm_server_url') || '').trim();
+        if (!srv && typeof window !== 'undefined' && window.location && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol.startsWith('http')) {
+          srv = 'https://invoicepro-admin-backend-production.up.railway.app';
+        }
+        const base = srv ? srv.replace(/\/+$/, '') : 'http://localhost:8766';
+        if (url.includes('/api/')) {
+          const apiPath = url.substring(url.indexOf('/api/'));
+          return base + apiPath;
+        }
+        if (url.startsWith('/api') || url.startsWith('api/')) {
+          const cleanPath = url.startsWith('/') ? url : ('/' + url);
+          return base + cleanPath;
+        }
+        return url;
+      }
+      window.resolveApiUrl = resolveApiUrl;
+
       (function () {
         if (window.fetch && window.fetch.__isPatched) return;
         const nativeFetch = window.fetch;
-
-        function resolveApiUrl(url) {
-          if (typeof url !== 'string') return url;
-          let srv = (localStorage.getItem('ip_adm_server_url') || '').trim();
-          if (!srv && typeof window !== 'undefined' && window.location && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol.startsWith('http')) {
-            srv = 'https://invoicepro-admin-backend-production.up.railway.app';
-          }
-          const base = srv ? srv.replace(/\/+$/, '') : 'http://localhost:8766';
-          if (url.includes('/api/')) {
-            const apiPath = url.substring(url.indexOf('/api/'));
-            return base + apiPath;
-          }
-          if (url.startsWith('/api') || url.startsWith('api/')) {
-            const cleanPath = url.startsWith('/') ? url : ('/' + url);
-            return base + cleanPath;
-          }
-          return url;
-        }
 
         window.originalFetch = function (url, options) {
           options = options || {};
@@ -19707,23 +19708,61 @@
         },
 
         get isAdmin() {
-          return !this.currentUser || this.currentUser.role === 'admin';
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return !this.currentUser || r === 'admin';
         },
         get isManager() {
-          return this.currentUser && this.currentUser.role === 'manager';
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'manager' || r === 'operations';
         },
         get isSales() {
-          return this.currentUser && this.currentUser.role === 'sales';
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'sales' || r === 'sales_member' || r === 'sales_leader' || r === 'sales_lead';
+        },
+        get isSalesLeader() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'sales_leader' || r === 'sales_lead';
+        },
+        get isSalesMember() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'sales_member' || r === 'sales' || r === 'sales2';
+        },
+        get isDevLeader() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'dev_leader' || r === 'dev_lead';
+        },
+        get isDevMember() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'dev_member' || r === 'dev_front' || r === 'dev_back' || r === 'dev_flutter' || r === 'dev_qa';
         },
         get isSupportLeader() {
-          const r = this.currentUser?.role;
+          const r = (this.currentUser?.role || '').toLowerCase();
           return r === 'support_leader' || r === 'support_lead' || r === 'admin' || r === 'manager';
         },
+        get isSupportMember() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'support_member' || r === 'support';
+        },
         get isSupport() {
-          return this.currentUser && this.currentUser.role === 'support';
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'support' || r === 'support_leader' || r === 'support_member' || r === 'support_lead';
         },
         get isHR() {
-          return this.currentUser && this.currentUser.role === 'hr';
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return r === 'hr' || r === 'hr_manager' || r === 'hr_executive';
+        },
+        get myDevAssignedBugs() {
+          if (!this.currentUser) return [];
+          const u = (this.currentUser.username || '').toLowerCase();
+          const n = (this.currentUser.name || '').toLowerCase();
+          const r = (this.currentUser.role || '').toLowerCase();
+          const isDevLeadOrAdmin = r === 'dev_leader' || r === 'dev_lead' || r === 'admin' || r === 'manager';
+          return (this.devEscalations || []).filter(e => {
+            if (isDevLeadOrAdmin) return true;
+            const escAssignee = (e.assignee || '').toLowerCase();
+            const escAssigneeName = (e.assignee_name || '').toLowerCase();
+            return escAssignee === u || escAssigneeName === n || (u.includes('rutuja') && escAssignee.includes('rutuja')) || (escAssignee === 'dev_back' && u.includes('dev_back')) || (escAssignee === 'dev_front' && u.includes('dev_front')) || (escAssignee === 'dev_flutter' && u.includes('dev_flutter')) || (escAssignee === 'dev_qa' && escAssignee === 'dev_qa');
+          });
         },
         get filteredStaffUsers() {
           const q = (this.staffSearch || '').toLowerCase().trim();
@@ -30605,11 +30644,6 @@ get remindersCount() {
           );
         },
 
-        get isAdmin() { return this.currentUser && this.currentUser.role === 'admin'; },
-        get isManager() { return this.currentUser && this.currentUser.role === 'manager'; },
-        get isSales() { return this.currentUser && this.currentUser.role === 'sales'; },
-        get isSupport() { return this.currentUser && this.currentUser.role === 'support'; },
-        get isHR() { return this.currentUser && this.currentUser.role === 'hr'; },
         get canApproveLeaves() {
           if (!this.currentUser) return false;
           return this.currentUser.role === 'admin' || this.currentUser.role === 'manager';

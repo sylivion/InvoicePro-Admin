@@ -98,6 +98,16 @@ class PGDatabaseWrapper:
         else:
             cur.execute(sql_trans)
         return PGCursorWrapper(cur, self.conn)
+    def executemany(self, sql, params_list):
+        if sql.strip().upper().startswith("PRAGMA"):
+            cur = self.conn.cursor()
+            cur.execute("SELECT 1")
+            return PGCursorWrapper(cur, self.conn)
+        sql_trans = self._transform(sql)
+        import psycopg2.extras
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.executemany(sql_trans, params_list)
+        return PGCursorWrapper(cur, self.conn)
     def executescript(self, sql_script):
         cur = self.conn.cursor()
         for statement in sql_script.split(';'):
@@ -124,8 +134,15 @@ class PGDatabaseWrapper:
     def _transform(self, sql):
         if sql.strip().upper().startswith("PRAGMA"):
             return "SELECT 1"
-        sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
-        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE)
+        # Remove SQLite-specific collation that causes syntax errors in PostgreSQL
+        sql = re.sub(r'\s+COLLATE\s+BINARY\b', '', sql, flags=re.IGNORECASE)
+        sql = re.sub(r'\s+COLLATE\s+NOCASE\b', '', sql, flags=re.IGNORECASE)
+        # Transform INSERT OR IGNORE INTO to INSERT INTO ... ON CONFLICT DO NOTHING
+        if re.search(r'INSERT\s+OR\s+IGNORE\s+INTO', sql, re.IGNORECASE):
+            sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+            sql = sql.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
+        # Transform INSERT OR REPLACE INTO to INSERT INTO ... ON CONFLICT (pk) DO UPDATE SET ...
+        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE | re.DOTALL)
         if m:
             tbl = m.group(1)
             cols_raw = m.group(2)
@@ -145,6 +162,7 @@ def get_db():
             import psycopg2
             import psycopg2.extras
             conn = psycopg2.connect(DATABASE_URL)
+            conn.autocommit = True
             return PGDatabaseWrapper(conn)
         except Exception as e:
             print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
@@ -1308,8 +1326,8 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.wfile.write(body)
                     return
 
-            if path == "/api/ping":
-                self.send_json({"ok": True, "service": "InvoicePro Admin", "port": PORT})
+            if path in ("/api/ping", "/api/health", "/health"):
+                self.send_json({"ok": True, "status": "healthy", "service": "InvoicePro Admin", "port": PORT})
                 return
 
             if path == "/api/smtp-config":
@@ -1389,6 +1407,10 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                                 t["members"] = json.loads(t["members"])
                             except Exception:
                                 t["members"] = [t["members"]] if t["members"] else []
+                        if "targetMonthly" not in t and "targetmonthly" in t:
+                            t["targetMonthly"] = t["targetmonthly"]
+                        if "targetMonthly" not in t:
+                            t["targetMonthly"] = 0
                 self.send_json({"ok": True, "teams": teams})
                 return
 
@@ -2864,6 +2886,49 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.send_json({"ok": False, "error": f"Failed to send email: {str(e)}"})
                 return
 
+            # ── Send broadcast emails ─────────────────────────────────────────
+            if path == "/api/send-broadcast":
+                cfg = load_smtp_config()
+                stored_pw = cfg.get("password", "")
+                if data.get("cfg") and isinstance(data["cfg"], dict):
+                    client_cfg = data["cfg"]
+                    for k, v in client_cfg.items():
+                        if k == "password" and is_dummy_password(v):
+                            continue
+                        if v or k not in cfg:
+                            cfg[k] = v
+                if is_dummy_password(cfg.get("password")) and stored_pw:
+                    cfg["password"] = stored_pw
+
+                if not cfg.get("host"):
+                    self.send_json({"ok": False, "error": "SMTP not configured. Open Email Settings to set up."})
+                    return
+                to_list     = data.get("to") or []
+                if isinstance(to_list, str):
+                    to_list = [t.strip() for t in to_list.split(",") if t.strip()]
+                subject     = data.get("subject", "").strip()
+                body        = data.get("body", "").strip()
+                attachments = data.get("attachments") or ([] if not data.get("attachment") else [data.get("attachment")])
+                
+                sent_count = 0
+                errors = []
+                for recipient in to_list:
+                    r_clean = (recipient or "").strip()
+                    if not r_clean:
+                        continue
+                    try:
+                        do_send_smtp(cfg, r_clean, subject, body, attachments=attachments)
+                        sent_count += 1
+                    except Exception as err:
+                        errors.append({"to": r_clean, "error": str(err)})
+                self.send_json({"ok": True, "sent": sent_count, "errors": errors})
+                return
+
+            # ── Sync Fallback ─────────────────────────────────────────────────
+            if path == "/api/sync":
+                self.send_json({"ok": True, "msg": "Sync batch received successfully"})
+                return
+
             if path == "/api/test-email":
                 cfg = load_smtp_config()
                 stored_pw = cfg.get("password", "")
@@ -2917,7 +2982,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 with _db_lock:
                     db = get_db()
                     # Strict match for username, employee ID, or email with matching password
-                    user_row = db.execute("SELECT * FROM staff_users WHERE (username = ? COLLATE BINARY OR emp_id = ? COLLATE BINARY OR email = ? COLLATE BINARY)", (username, username, username)).fetchone()
+                    user_row = db.execute("SELECT * FROM staff_users WHERE (username = ? OR emp_id = ? OR email = ?)", (username, username, username)).fetchone()
                     user = None
                     if user_row:
                         user_dict = dict(user_row)

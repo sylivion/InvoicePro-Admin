@@ -23156,11 +23156,22 @@
           }
         },
 
-        clearAuditLog() {
+        async clearAuditLog() {
           if (!this.isAdmin) return;
           if (!confirm('Are you sure you want to clear the entire audit log history?')) return;
           this.auditLog = [];
           this._saveAuditLog();
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/activity-logs/clear` : '/api/activity-logs/clear';
+            const fetchFn = window.originalFetch || window.fetch;
+            await fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({})
+            }).catch(() => {});
+          } catch (_) { }
           this.notify('Audit log cleared successfully');
         },
 
@@ -27286,7 +27297,7 @@ get remindersCount() {
             customerId: customerId || null,
             description: description || 'Action recorded',
             icon: icons[type] || '📝',
-            user_id: user.id || user.emp_id || '',
+            user_id: user.id || user.emp_id || user.username || '',
             user_emp_id: user.emp_id || user.id || '',
             user_name: user.name || user.username || 'Master Admin',
             user_role: user.role || 'admin',
@@ -27298,6 +27309,19 @@ get remindersCount() {
           this.auditLog.unshift(entry);
           if (this.auditLog.length > 2000) this.auditLog = this.auditLog.slice(0, 2000);
           this._saveAuditLog();
+
+          // Dispatch to Railway PostgreSQL server
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/activity-logs/add` : '/api/activity-logs/add';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(entry)
+            }).catch(() => {});
+          } catch (_) { }
         },
         // ── Settings & Backup Methods ──
         saveCompanySettings() {
@@ -30594,13 +30618,14 @@ get remindersCount() {
             return String(ts);
           }
         },
-                _loadAuditLog() {
+        async _loadAuditLog() {
+          let localLogs = [];
           try {
             const raw = localStorage.getItem('ip_adm_audit');
             if (raw) {
               const parsed = JSON.parse(raw);
               if (Array.isArray(parsed)) {
-                this.auditLog = parsed.map(item => {
+                localLogs = parsed.map(item => {
                   const rawType = (item.type || item.category || 'system').toLowerCase();
                   const rawCat = (item.category || item.type || 'system').toLowerCase();
                   return {
@@ -30617,13 +30642,64 @@ get remindersCount() {
                     category: rawCat
                   };
                 });
-                return;
               }
             }
-            this.auditLog = [];
-          } catch (_) {
-            this.auditLog = [];
-          }
+          } catch (_) {}
+          this.auditLog = localLogs;
+
+          // Fetch authoritative activity & audit logs from Railway PostgreSQL database
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const getUrl = baseUrl ? `${baseUrl}/api/activity-logs` : '/api/activity-logs';
+            const fetchFn = window.originalFetch || window.fetch;
+            const res = await fetchFn(getUrl).then(r => r.json()).catch(() => null);
+            if (res && res.ok) {
+              const rawServerLogs = res.logs || res.audit_logs || res.activity_logs || [];
+              if (Array.isArray(rawServerLogs) && rawServerLogs.length > 0) {
+                const serverLogs = rawServerLogs.map(l => {
+                  let extra = {};
+                  try { if (l.details && typeof l.details === 'string' && l.details.startsWith('{')) extra = JSON.parse(l.details); } catch (_) {}
+                  try { if (l.extra_data && typeof l.extra_data === 'string' && l.extra_data.startsWith('{')) extra = { ...extra, ...JSON.parse(l.extra_data) }; } catch (_) {}
+                  const rawType = (l.module || l.activity_type || extra.type || extra.category || 'system').toLowerCase();
+                  return {
+                    id: l.id,
+                    type: rawType,
+                    category: rawType,
+                    customerId: extra.customerId || extra.customer_id || null,
+                    description: l.action || l.details || extra.description || 'Action recorded',
+                    icon: extra.icon || '📝',
+                    user_id: l.user_id || l.employee_id || extra.user_id || '',
+                    user_emp_id: extra.user_emp_id || l.user_id || l.employee_id || '',
+                    user_name: l.user_name || l.employee_name || extra.user_name || 'Staff Member',
+                    user_role: l.role || extra.user_role || 'staff',
+                    department: extra.department || (l.role ? l.role.toUpperCase() : 'GENERAL'),
+                    ts: l.timestamp || l.created_at || new Date().toISOString(),
+                    timestamp: l.timestamp || l.created_at || new Date().toISOString(),
+                    ...extra
+                  };
+                });
+
+                const seen = new Set();
+                const merged = [];
+                for (const item of [...this.auditLog, ...serverLogs]) {
+                  if (!seen.has(item.id)) {
+                    seen.add(item.id);
+                    merged.push(item);
+                  }
+                }
+                merged.sort((a, b) => (b.timestamp || b.ts || '').localeCompare(a.timestamp || a.ts || ''));
+                this.auditLog = merged.slice(0, 2000);
+                try { localStorage.setItem('ip_adm_audit', JSON.stringify(this.auditLog.slice(0, 500))); } catch (_) {}
+              } else if (localLogs.length > 0) {
+                // Seed top 30 local logs to server if server database was empty
+                const seedUrl = baseUrl ? `${baseUrl}/api/activity-logs/add` : '/api/activity-logs/add';
+                for (const item of localLogs.slice(0, 30)) {
+                  fetchFn(seedUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
+                }
+              }
+            }
+          } catch (_) {}
         },
 
         getCustomerActivity(customerId) {

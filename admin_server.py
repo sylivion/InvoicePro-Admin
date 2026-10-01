@@ -470,6 +470,16 @@ def init_db():
                 ip_address     TEXT DEFAULT '',
                 timestamp      TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id             TEXT PRIMARY KEY,
+                employee_id    TEXT DEFAULT '',
+                employee_name  TEXT DEFAULT '',
+                activity_type  TEXT DEFAULT 'call',
+                target_contact TEXT DEFAULT '',
+                details        TEXT DEFAULT '',
+                extra_data     TEXT DEFAULT '{}',
+                created_at     TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS license_keys (
                 id             TEXT PRIMARY KEY,
                 license_key    TEXT UNIQUE NOT NULL,
@@ -501,6 +511,17 @@ def init_db():
         for col in ["emp_id", "customer_id", "plan_name", "status", "target_month"]:
             try:
                 db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
+            except Exception:
+                pass
+
+        # Ensure activity_logs and audit_logs columns
+        for col in ["extra_data"]:
+            try:
+                db.execute(f"ALTER TABLE activity_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
+            except Exception:
+                pass
+            try:
+                db.execute(f"ALTER TABLE audit_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
             except Exception:
                 pass
 
@@ -1469,6 +1490,14 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json(users)
                 return
 
+            if path in ("/api/activity-logs", "/api/audit-logs", "/api/activities", "/api/logs"):
+                with _db_lock:
+                    db = get_db()
+                    audit_rows = rows_to_list(db.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 1000").fetchall())
+                    act_rows = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 1000").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "logs": audit_rows, "audit_logs": audit_rows, "activity_logs": act_rows})
+                return
             
             if path == "/api/hr/candidates":
                 with _db_lock:
@@ -2927,6 +2956,50 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             # ── Sync Fallback ─────────────────────────────────────────────────
             if path == "/api/sync":
                 self.send_json({"ok": True, "msg": "Sync batch received successfully"})
+                return
+
+            # ── Activity & Audit Logs ─────────────────────────────────────────
+            if path in ("/api/activity-logs/add", "/api/audit-logs/add", "/api/log-activity", "/api/sales/activities/add"):
+                log_id = data.get("id") or ("act-" + str(int(time.time() * 1000)) + "-" + uuid.uuid4().hex[:5])
+                user_id = data.get("user_id") or data.get("user_emp_id") or data.get("employee_id") or ""
+                user_name = data.get("user_name") or data.get("rep_name") or data.get("employee_name") or "Staff"
+                role = data.get("user_role") or data.get("role") or ""
+                action = data.get("description") or data.get("action") or data.get("summary") or "Action logged"
+                module = data.get("type") or data.get("category") or data.get("module") or "General"
+                details = data.get("details") or data.get("summary") or action
+                client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+                ts = data.get("timestamp") or data.get("ts") or data.get("created_at") or now_iso()
+                extra_json = json.dumps(data)
+
+                with _db_lock:
+                    db = get_db()
+                    # Record in audit_logs
+                    db.execute("""
+                        INSERT OR REPLACE INTO audit_logs (id, user_id, user_name, role, action, module, details, ip_address, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, role, action, module, details, client_ip, ts))
+                    
+                    # Also record in activity_logs
+                    act_type = data.get("type") or data.get("activity_type") or "call"
+                    target = data.get("lead_name") or data.get("customer_name") or data.get("target_contact") or ""
+                    db.execute("""
+                        INSERT OR REPLACE INTO activity_logs (id, employee_id, employee_name, activity_type, target_contact, details, extra_data, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, act_type, target, details, extra_json, ts))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "id": log_id})
+                return
+
+            if path in ("/api/activity-logs/clear", "/api/audit-logs/clear"):
+                with _db_lock:
+                    db = get_db()
+                    db.execute("DELETE FROM audit_logs")
+                    db.execute("DELETE FROM activity_logs")
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Logs cleared successfully"})
                 return
 
             if path == "/api/test-email":

@@ -266,14 +266,21 @@
       font-size: 14px;
       font-weight: 400;
       line-height: 1.5;
-      padding-top: var(--sat);
-      padding-bottom: var(--sab);
-      padding-left: var(--sal);
-      padding-right: var(--sar);
-      -webkit-tap-highlight-color: transparent;
-      text-rendering: optimizeLegibility;
+      letter-spacing: -0.011em;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    /* Tabular numeric alignment for SaaS data tables, metrics, and currency */
+    table, .font-mono, .tabular-nums, [x-text*="fmtCurrency"], [x-text*="fmtNumber"], [x-text*="fmtMoney"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .font-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: -0.02em;
     }
 
     /* ─── 1. Extra Small / Compact Smartphones (<= 380px) ─── */
@@ -1376,7 +1383,7 @@
             class="bg-white/10 border border-white/15 backdrop-blur-sm rounded-2xl p-3.5 cursor-pointer hover:bg-white/20 transition-all"
             @click="navigate('revenue')">
             <div class="text-brand-200 text-xs font-semibold mb-1">Total Revenue</div>
-            <div class="text-white text-2xl font-semibold" x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></div>
+            <div class="text-white text-2xl font-semibold" x-text=\"fmtCurrency(totalRevenue)\"></div>
             <div class="text-brand-300 text-xs mt-0.5" x-text="stats.licensed + ' licenses sold'"></div>
           </div>
           <div
@@ -1526,7 +1533,7 @@
                   class="fa-solid fa-coins text-green-500 text-xs"></i></div><span
                 class="text-xs text-gray-400 font-medium">Annual</span>
             </div>
-            <div class="text-xl font-semibold text-green-600" x-text=\"fmtCurrency(arr.toLocaleString('en-IN'))\"></div>
+            <div class="text-xl font-semibold text-green-600" x-text=\"fmtCurrency(arr)\"></div>
             <div class="text-xs text-gray-400 mt-0.5">ARR (Annual Recurring)</div>
           </div>
           <div class="dash-anim-8 rounded-2xl p-4 border"
@@ -1548,7 +1555,7 @@
               <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center"><i
                   class="fa-solid fa-gem text-purple-500 text-xs"></i></div>
             </div>
-            <div class="text-xl font-semibold text-purple-600" x-text=\"fmtCurrency(avgLtv.toLocaleString('en-IN'))\"></div>
+            <div class="text-xl font-semibold text-purple-600" x-text=\"fmtCurrency(avgLtv)\"></div>
             <div class="text-xs text-gray-400 mt-0.5">Avg Customer LTV</div>
           </div>
         </div>
@@ -1564,7 +1571,7 @@
               <span class="text-xs font-semibold text-gray-500">This Month</span>
             </div>
             <div class="text-xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text=\"fmtCurrency(revenueTrend.thisMonth.toLocaleString('en-IN'))\"></div>
+              x-text=\"fmtCurrency(revenueTrend.thisMonth)\"></div>
             <div class="flex items-center gap-1.5 mt-0.5">
               <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
@@ -1617,7 +1624,7 @@
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount.toLocaleString('en-IN'))\">
+                <div class="text-xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount)\">
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5" x-text="bestMonth.label"></div>
               </div>
@@ -1664,7 +1671,7 @@
                   class="w-2.5 h-2.5 rounded-sm bg-brand-500 inline-block"></span>License Sales</span>
               <div class="ml-auto">
                 <span class="text-xs text-gray-400">Total: </span>
-                <span class="text-xs font-bold text-green-600" x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></span>
+                <span class="text-xs font-bold text-green-600" x-text=\"fmtCurrency(totalRevenue)\"></span>
               </div>
             </div>
             <div class="px-4 pb-5" style="height:220px">
@@ -2623,7 +2630,7 @@
                 <span class="text-gray-600">Purchase: <strong
                     x-text="fmtDate(customerCard.purchaseDate)"></strong></span>
                 <span x-show="customerCard.purchaseAmount" class="text-green-600 font-bold ml-1"
-                  x-text="'₹'+customerCard.purchaseAmount"></span>
+                  x-text="fmtCurrency(customerCard.purchaseAmount)"></span>
               </div>
               <div x-show="customerCard.licenseKey" class="flex items-center gap-2">
                 <i class="fa-solid fa-shield-halved w-3 text-center"
@@ -2648,7 +2655,7 @@
               </div>
               <div class="pl-3">
                 <div class="font-semibold text-green-600"
-                  x-text="'₹'+(((+customerCard.purchaseAmount)||0)).toLocaleString('en-IN')">
+                  x-text="fmtCurrency((((+customerCard.purchaseAmount)||0)))">
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5">License Paid</div>
               </div>
@@ -3473,7 +3480,7 @@
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-2xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount.toLocaleString('en-IN'))\">
+                <div class="text-2xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount)\">
                 </div>
                 <div class="text-xs text-gray-400 mt-1" x-text="bestMonth.label"></div>
               </div>
@@ -3489,7 +3496,7 @@
               <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">This Month</span>
             </div>
             <div class="text-2xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text=\"fmtCurrency(revenueTrend.thisMonth.toLocaleString('en-IN'))\"></div>
+              x-text=\"fmtCurrency(revenueTrend.thisMonth)\"></div>
             <div class="flex items-center gap-1.5 mt-1">
               <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
@@ -3510,7 +3517,7 @@
               <template x-for="r in revenueForecast.upcoming.slice(0,3)" :key="r.name">
                 <div class="flex justify-between text-xs">
                   <span class="text-gray-600 dark:text-gray-400 truncate max-w-[120px]" x-text="r.name"></span>
-                  <span class="text-brand-600 font-semibold" x-text="'₹'+r.amount+' ('+r.days+'d)'"></span>
+                  <span class="text-brand-600 font-semibold" x-text="fmtCurrency(r.amount) + ' (' + r.days + 'd)'"></span>
                 </div>
               </template>
             </div>
@@ -3548,10 +3555,10 @@
             <tfoot class="bg-gray-50 dark:bg-gray-800 font-bold">
               <tr>
                 <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Total</td>
-                <td class="px-4 py-2.5 text-right text-green-600" x-text=\"fmtCurrency(licenseRevenue.toLocaleString('en-IN'))\">
+                <td class="px-4 py-2.5 text-right text-green-600" x-text=\"fmtCurrency(licenseRevenue)\">
                 </td>
                 <td class="px-4 py-2.5 text-right text-gray-900 dark:text-white"
-                  x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></td>
+                  x-text=\"fmtCurrency(totalRevenue)\"></td>
               </tr>
             </tfoot>
           </table>
@@ -3580,7 +3587,7 @@
                   <td class="px-4 py-2.5 font-semibold text-gray-700 dark:text-gray-300" x-text="row.city"></td>
                   <td class="px-4 py-2.5 text-center text-gray-500" x-text="row.count"></td>
                   <td class="px-4 py-2.5 text-right text-green-600 font-semibold"
-                    x-text=\"fmtCurrency(row.revenue.toLocaleString('en-IN'))\"></td>
+                    x-text=\"fmtCurrency(row.revenue)\"></td>
                   <td class="px-4 py-2.5 text-right text-gray-400"
                     x-text="totalRevenue?Math.round(row.revenue/totalRevenue*100)+'%':'0%'"></td>
                 </tr>
@@ -4483,7 +4490,7 @@
                     <!-- 1 Month Plan -->
                     <td class="py-3 px-3 text-center">
                       <div class="font-bold text-gray-900 dark:text-white" x-text="rep.count1m + ' Deals'"></div>
-                      <div class="text-[10px] text-gray-400 font-mono" x-text=\"fmtCurrency(rep.rev1m.toLocaleString('en-IN'))\"></div>
+                      <div class="text-[10px] text-gray-400 font-mono" x-text=\"fmtCurrency(rep.rev1m)\"></div>
                     </td>
 
                     <!-- 1 Year Plan (Target: 15) -->
@@ -4973,7 +4980,7 @@
                 <div class="space-y-1.5">
                   <div class="flex items-center justify-between text-xs font-bold">
                     <span class="text-gray-800 dark:text-gray-200" x-text="item.name"></span>
-                    <span class="text-gray-900 dark:text-white font-semibold" x-text="'₹' + item.revenue.toLocaleString('en-IN') + ' (' + item.percent + '%)'"></span>
+                    <span class="text-gray-900 dark:text-white font-semibold" x-text="fmtCurrency(item.revenue.toLocaleString('en-IN') + ' (' + item.percent + '%)')"></span>
                   </div>
                   <div class="w-full bg-gray-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden">
                     <div class="h-2.5 rounded-full transition-all"
@@ -5018,7 +5025,7 @@
                         </td>
                         <td class="py-2.5 px-3 text-center font-mono text-gray-600 dark:text-gray-300" x-text="rep.leads"></td>
                         <td class="py-2.5 px-3 text-center font-mono font-bold text-emerald-600" x-text="rep.won"></td>
-                        <td class="py-2.5 px-3 text-right font-semibold text-indigo-600" x-text="'₹' + (rep.revenue || 0).toLocaleString('en-IN')"></td>
+                        <td class="py-2.5 px-3 text-right font-semibold text-indigo-600" x-text="fmtCurrency((rep.revenue || 0))"></td>
                       </tr>
                     </template>
                   </tbody>
@@ -9488,7 +9495,7 @@
                       <td class="p-3 font-bold text-gray-900 dark:text-white" x-text="exp.title"></td>
                       <td class="p-3 text-gray-600 dark:text-gray-300" x-text="exp.employee"></td>
                       <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-800" x-text="exp.department"></span></td>
-                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text=\"fmtCurrency(exp.amount.toLocaleString('en-IN'))\"></td>
+                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text=\"fmtCurrency(exp.amount)\"></td>
                       <td class="p-3 text-gray-400" x-text="exp.date"></td>
                       <td class="p-3">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold"
@@ -10510,25 +10517,7 @@
           </div>
         </div>
 
-        <!-- Import hints -->
-        <div class="mb-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div
-            class="px-4 py-2.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-            <p class="font-bold mb-1"><i class="fa-brands fa-google mr-1"></i>Import Employees CSV — columns:</p>
-            <p><strong>Name</strong> &amp; <strong>Mobile</strong> (required) · Email · Designation · Department · Join
-              Date  . Payment Proof URLs are
-              skipped automatically.</p>
-          </div>
-          <div
-            class="px-4 py-2.5 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl text-xs text-green-700 dark:text-green-300 leading-relaxed">
-            <p class="font-bold mb-1"><i class="fa-solid fa-chart-line mr-1"></i>Import Daily Sales CSV — columns:</p>
-            <p><strong>EMP ID</strong> (required) · <strong>Customer Name</strong> · <strong>Customer Mobile</strong> ·
-              Customer City · Customer Email · Amount · Notes. New customers are auto-created; existing ones are
-              skipped.</p>
-          </div>
-        </div>
-
-        <!-- Employee table -->
+<!-- Employee table -->
         <div
           class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto">
           <div x-show="employees.length===0" class="text-center py-12 text-sm text-gray-400">
@@ -10671,14 +10660,16 @@
       <div>
         <!-- Header -->
         <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center text-sm"><i class="fa-solid fa-money-check-dollar"></i></span>
-              <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200">Payroll &amp; Salary Disbursement</h2>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 border border-purple-200/70 dark:border-purple-800/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg shadow-xs flex-shrink-0">
+              <i class="fa-solid fa-money-check-dollar"></i>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5"
-              x-text="employees.length + ' employee(s) · Fixed ₹15,000 Base Salary with Multi-Plan Deduction &amp; Post-Target Incentives · Showing: ' + (payrollMonth || 'Current Month')">
-            </p>
+            <div>
+              <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Payroll &amp; Salary Disbursement</h1>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"
+                x-text="employees.length + ' employee(s) · Fixed ₹15,000 Base Salary with Multi-Plan Deduction &amp; Post-Target Incentives · Showing: ' + (payrollMonth || 'Current Month')">
+              </p>
+            </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <div class="flex items-center gap-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-xl shadow-xs">
@@ -10721,7 +10712,7 @@
               <i class="fa-solid fa-calculator text-xs text-teal-500"></i>
             </div>
             <div class="text-2xl font-semibold text-teal-600 dark:text-teal-400"
-              x-text="'₹'+employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0).toLocaleString('en-IN')"></div>
+              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0))"></div>
             <div class="text-[11px] text-gray-400 mt-0.5">₹15k Base (Deductions Applied)</div>
           </div>
 
@@ -10732,7 +10723,7 @@
               <i class="fa-solid fa-gift text-xs text-purple-500"></i>
             </div>
             <div class="text-2xl font-semibold text-purple-600 dark:text-purple-400"
-              x-text="'₹'+employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0).toLocaleString('en-IN')"></div>
+              x-text="fmtCurrency(employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0))"></div>
             <div class="text-[11px] text-gray-400 mt-0.5">Post-Target Unlocked Deals</div>
           </div>
 
@@ -10743,7 +10734,7 @@
               <i class="fa-solid fa-money-bills text-xs text-indigo-500"></i>
             </div>
             <div class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400"
-              x-text="'₹'+employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0).toLocaleString('en-IN')"></div>
+              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0))"></div>
             <div class="text-[11px] text-gray-400 mt-0.5">Salary + Incentive</div>
           </div>
 
@@ -10755,8 +10746,8 @@
               <i class="fa-solid fa-hand-holding-dollar text-xs" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-green-500'"></i>
             </div>
             <div class="text-2xl font-semibold" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-green-600'"
-              x-text="'₹'+employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0).toLocaleString('en-IN')"></div>
-            <div class="text-[11px] text-gray-500 mt-0.5" x-text="'₹' + employees.reduce((s,e)=>s+empTotalPaid(e),0).toLocaleString('en-IN') + ' paid to date'"></div>
+              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0))"></div>
+            <div class="text-[11px] text-gray-500 mt-0.5" x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0).toLocaleString('en-IN') + ' paid to date')"></div>
           </div>
         </div>
 
@@ -10836,7 +10827,7 @@
                     <template x-if="isEmpSalesRole(emp)">
                       <div>
                         <div class="text-sm font-semibold text-gray-900 dark:text-white"
-                          x-text="'₹' + Math.round(getEmpNetSalary(emp, payrollMonth)).toLocaleString('en-IN')"></div>
+                          x-text="fmtCurrency(Math.round(getEmpNetSalary(emp, payrollMonth)))"></div>
                         <template x-if="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied">
                           <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-end gap-1 mt-0.5">
                             <i class="fa-solid fa-circle-check text-[9px]"></i> Full Salary (Target Met)
@@ -10866,7 +10857,7 @@
                       <div>
                         <div class="text-sm font-bold"
                           :class="payrollCommIn(emp, payrollMonth) > 0 ? 'text-purple-600 dark:text-purple-400 font-semibold' : 'text-gray-400'"
-                          x-text="'₹' + payrollCommIn(emp, payrollMonth).toLocaleString('en-IN')"></div>
+                          x-text="fmtCurrency(payrollCommIn(emp, payrollMonth))"></div>
                         <div class="text-[10px] text-gray-400 mt-0.5"
                           x-text="payrollCommIn(emp, payrollMonth) > 0 ? 'Post-Target Unlocked' : 'Target Pending'"></div>
                       </div>
@@ -10882,21 +10873,21 @@
                   <!-- Total Payable (Gross Pay) -->
                   <td class="px-4 py-3.5 text-right">
                     <div class="text-sm font-semibold text-brand-600 dark:text-brand-400"
-                      x-text="'₹' + getEmpGrossPay(emp, payrollMonth).toLocaleString('en-IN')"></div>
+                      x-text="fmtCurrency(getEmpGrossPay(emp, payrollMonth))"></div>
                     <div class="text-[9px] text-gray-400 mt-0.5">Salary + Incentive</div>
                   </td>
 
                   <!-- Total Paid -->
                   <td class="px-4 py-3.5 text-right">
                     <div class="text-sm font-bold text-green-600 dark:text-green-400"
-                      x-text="'₹' + empTotalPaid(emp).toLocaleString('en-IN')"></div>
+                      x-text="fmtCurrency(empTotalPaid(emp))"></div>
                   </td>
 
                   <!-- Balance Due -->
                   <td class="px-4 py-3.5 text-right">
                     <div class="text-sm font-semibold"
                       :class="getEmpPayrollBalance(emp, payrollMonth) > 0 ? 'text-red-500' : 'text-gray-400'"
-                      x-text="'₹' + getEmpPayrollBalance(emp, payrollMonth).toLocaleString('en-IN')"></div>
+                      x-text="fmtCurrency(getEmpPayrollBalance(emp, payrollMonth))"></div>
                   </td>
 
                   <!-- UPI ID / QR Preview Button -->
@@ -10950,15 +10941,15 @@
                 <td class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white"
                   x-text="employees.reduce((s,e)=>s+payrollSalesIn(e,payrollMonth),0) + ' Total Deals'"></td>
                 <td class="px-4 py-3 text-right font-semibold text-teal-600 dark:text-teal-400"
-                  x-text="'₹'+employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0).toLocaleString('en-IN')"></td>
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0))"></td>
                 <td class="px-4 py-3 text-right font-semibold text-purple-600 dark:text-purple-400"
-                  x-text="'₹'+employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0).toLocaleString('en-IN')"></td>
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0))"></td>
                 <td class="px-4 py-3 text-right font-semibold text-brand-600 dark:text-brand-400"
-                  x-text="'₹'+employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0).toLocaleString('en-IN')"></td>
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0))"></td>
                 <td class="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400"
-                  x-text="'₹'+employees.reduce((s,e)=>s+empTotalPaid(e),0).toLocaleString('en-IN')"></td>
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0))"></td>
                 <td class="px-4 py-3 text-right font-semibold text-red-500"
-                  x-text="'₹'+employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0).toLocaleString('en-IN')"></td>
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0))"></td>
                 <td colspan="2"></td>
               </tr>
             </tfoot>
@@ -11696,7 +11687,7 @@
               <span class="text-xs font-semibold text-green-600 group-hover:text-green-700 transition-colors">Sales Today</span>
               <span class="text-[10px] text-green-600 dark:text-green-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Sales &rarr;</span>
             </div>
-            <div class="text-2xl font-semibold text-green-600 mt-1" x-text="'₹' + (managerOverview.salesTodayAmount||0).toLocaleString('en-IN')"></div>
+            <div class="text-2xl font-semibold text-green-600 mt-1" x-text="fmtCurrency((managerOverview.salesTodayAmount||0))"></div>
             <p class="text-[11px] text-gray-400 mt-1" x-text="(managerOverview.salesTodayCount||0) + ' transactions'"></p>
           </div>
           <div @click="navigate('enquiries')" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all cursor-pointer group hover:-translate-y-0.5">
@@ -12254,7 +12245,7 @@
             <div class="mt-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex justify-between text-sm">
               <span class="text-gray-500">Gross Salary</span>
               <span class="font-bold"
-                x-text="'₹' + ((empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0)).toLocaleString('en-IN')"></span>
+                x-text="fmtCurrency(((empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0)))"></span>
             </div>
             <!-- Deductions -->
             <div class="mt-3 space-y-2">
@@ -12304,7 +12295,7 @@
             <div class="mt-2 bg-brand-50 dark:bg-brand-950 rounded-xl p-3 flex justify-between font-bold text-sm">
               <span class="text-brand-700 dark:text-brand-300">Estimated Net Pay</span>
               <span class="text-brand-700 dark:text-brand-300"
-                x-text="'₹' + Math.max(0,(empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0)-(empForm.pfEnabled?Math.round((empForm.basicSalary||0)*0.12):0)-(empForm.esiEnabled?Math.round(((empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0))*0.0075):0)-(empForm.ptEnabled?(empForm.ptAmount||200):0)-(empForm.tdsMonthly||0)).toLocaleString('en-IN')"></span>
+                x-text="fmtCurrency(Math.max(0,(empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0)-(empForm.pfEnabled?Math.round((empForm.basicSalary||0)*0.12):0)-(empForm.esiEnabled?Math.round(((empForm.basicSalary||0)+(empForm.hra||0)+(empForm.da||0)+(empForm.specialAllowance||0))*0.0075):0)-(empForm.ptEnabled?(empForm.ptAmount||200):0)-(empForm.tdsMonthly||0)))"></span>
             </div>
           </div><!-- /x-show salary -->
         </div>
@@ -12546,12 +12537,12 @@
                 <div class="text-xs text-gray-400">Sales</div>
               </div>
               <div class="bg-brand-50 rounded-lg p-2 text-center">
-                <div class="text-base font-semibold text-brand-600" x-text="'₹'+empTotalCommission(empCard)"></div>
+                <div class="text-base font-semibold text-brand-600" x-text="fmtCurrency(empTotalCommission(empCard))"></div>
                 <div class="text-xs text-gray-400">Earned</div>
               </div>
               <div class="rounded-lg p-2 text-center" :class="empBalance(empCard)>0?'bg-red-50':'bg-green-50'">
                 <div class="text-base font-semibold" :class="empBalance(empCard)>0?'text-red-500':'text-green-600'"
-                  x-text="'₹'+empBalance(empCard)"></div>
+                  x-text="fmtCurrency(empBalance(empCard))"></div>
                 <div class="text-xs text-gray-400">Balance</div>
               </div>
             </div>
@@ -12639,17 +12630,17 @@
               <div class="text-xs text-gray-400 mt-0.5">Total Sales</div>
             </div>
             <div class="bg-brand-50 dark:bg-brand-950 rounded-xl p-3 text-center">
-              <div class="text-2xl font-semibold text-brand-600" x-text="'₹'+empTotalCommission(empInfoModal)"></div>
+              <div class="text-2xl font-semibold text-brand-600" x-text="fmtCurrency(empTotalCommission(empInfoModal))"></div>
               <div class="text-xs text-gray-400 mt-0.5">Incentive</div>
             </div>
             <div class="bg-green-50 dark:bg-green-950 rounded-xl p-3 text-center">
-              <div class="text-2xl font-semibold text-green-600" x-text="'₹'+empTotalPaid(empInfoModal)"></div>
+              <div class="text-2xl font-semibold text-green-600" x-text="fmtCurrency(empTotalPaid(empInfoModal))"></div>
               <div class="text-xs text-gray-400 mt-0.5">Paid Out</div>
             </div>
             <div class="rounded-xl p-3 text-center"
               :class="empBalance(empInfoModal)>0?'bg-red-50 dark:bg-red-950':'bg-gray-50 dark:bg-gray-800'">
               <div class="text-2xl font-semibold" :class="empBalance(empInfoModal)>0?'text-red-500':'text-gray-400'"
-                x-text="'₹'+empBalance(empInfoModal)"></div>
+                x-text="fmtCurrency(empBalance(empInfoModal))"></div>
               <div class="text-xs text-gray-400 mt-0.5">Balance Due</div>
             </div>
           </div>
@@ -12749,24 +12740,24 @@
                   class="fa-solid fa-money-bill-wave mr-1"></i> Salary Structure</div>
               <template x-if="empInfoModal.basicSalary">
                 <div class="flex justify-between text-xs"><span class="text-gray-500">Basic:</span><span
-                    class="font-semibold" x-text="'₹'+empInfoModal.basicSalary"></span></div>
+                    class="font-semibold" x-text="fmtCurrency(empInfoModal.basicSalary)"></span></div>
               </template>
               <template x-if="empInfoModal.hra">
                 <div class="flex justify-between text-xs"><span class="text-gray-500">HRA:</span><span
-                    x-text="'₹'+empInfoModal.hra"></span></div>
+                    x-text="fmtCurrency(empInfoModal.hra)"></span></div>
               </template>
               <template x-if="empInfoModal.da">
                 <div class="flex justify-between text-xs"><span class="text-gray-500">DA:</span><span
-                    x-text="'₹'+empInfoModal.da"></span></div>
+                    x-text="fmtCurrency(empInfoModal.da)"></span></div>
               </template>
               <template x-if="empInfoModal.specialAllowance">
                 <div class="flex justify-between text-xs"><span class="text-gray-500">Special Allowance:</span><span
-                    x-text="'₹'+empInfoModal.specialAllowance"></span></div>
+                    x-text="fmtCurrency(empInfoModal.specialAllowance)"></span></div>
               </template>
               <div class="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-gray-700">
                 <span class="text-gray-600">Gross:</span>
                 <span class="text-green-600"
-                  x-text="'₹'+((empInfoModal.basicSalary||0)+(empInfoModal.hra||0)+(empInfoModal.da||0)+(empInfoModal.specialAllowance||0))"></span>
+                  x-text="fmtCurrency(((empInfoModal.basicSalary||0)+(empInfoModal.hra||0)+(empInfoModal.da||0)+(empInfoModal.specialAllowance||0)))"></span>
               </div>
             </div>
 
@@ -12847,7 +12838,7 @@
                   <div class="flex items-center gap-3 ml-3 flex-shrink-0">
                     <div class="text-right">
                       <div class="text-xs text-gray-400">Sale: <span
-                          class="font-semibold text-gray-700 dark:text-gray-300" x-text="'₹'+sale.amount"></span></div>
+                          class="font-semibold text-gray-700 dark:text-gray-300" x-text="fmtCurrency(sale.amount)"></span></div>
                       <div class="text-xs font-bold" :class="getSaleIncentiveInfo(sale, empInfoModal).isQualified ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'">
                         <span x-text="getSaleIncentiveInfo(sale, empInfoModal).label"></span>
                       </div>
@@ -12883,7 +12874,7 @@
                   class="flex items-center justify-between p-3 rounded-xl bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900">
                   <div>
                     <div class="font-bold text-sm text-green-700 dark:text-green-300"
-                      x-text="'₹' + pay.amount + ' paid'"></div>
+                      x-text="fmtCurrency(pay.amount) + ' paid'"></div>
                     <div class="text-xs text-gray-500" x-text="fmtDate(pay.date) + (pay.note ? ' · ' + pay.note : '')">
                     </div>
                   </div>
@@ -12964,17 +12955,17 @@
                   <div class="text-xs text-gray-400 mt-0.5">Sales</div>
                 </div>
                 <div class="bg-brand-50 dark:bg-brand-950 rounded-xl p-3 text-center">
-                  <div class="text-xl font-semibold text-brand-600" x-text="'₹'+empTotalCommission(empDetail)"></div>
+                  <div class="text-xl font-semibold text-brand-600" x-text="fmtCurrency(empTotalCommission(empDetail))"></div>
                   <div class="text-xs text-gray-400 mt-0.5">Incentive</div>
                 </div>
                 <div class="bg-green-50 dark:bg-green-950 rounded-xl p-3 text-center">
-                  <div class="text-xl font-semibold text-green-600" x-text="'₹'+empTotalPaid(empDetail)"></div>
+                  <div class="text-xl font-semibold text-green-600" x-text="fmtCurrency(empTotalPaid(empDetail))"></div>
                   <div class="text-xs text-gray-400 mt-0.5">Paid</div>
                 </div>
                 <div class="rounded-xl p-3 text-center"
                   :class="empBalance(empDetail)>0?'bg-red-50 dark:bg-red-950':'bg-gray-50 dark:bg-gray-800'">
                   <div class="text-xl font-semibold" :class="empBalance(empDetail)>0?'text-red-500':'text-gray-400'"
-                    x-text="'₹'+empBalance(empDetail)"></div>
+                    x-text="fmtCurrency(empBalance(empDetail))"></div>
                   <div class="text-xs text-gray-400 mt-0.5">Balance Due</div>
                 </div>
               </div>
@@ -13008,7 +12999,7 @@
                       <div class="flex items-center gap-3 ml-3 flex-shrink-0">
                         <div class="text-right">
                           <div class="text-xs text-gray-400">Sale: <span
-                              class="font-semibold text-gray-700 dark:text-gray-300" x-text="'₹'+sale.amount"></span>
+                              class="font-semibold text-gray-700 dark:text-gray-300" x-text="fmtCurrency(sale.amount)"></span>
                           </div>
                           <div class="text-xs font-bold" :class="getSaleIncentiveInfo(sale, empDetail).isQualified ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'">
                             <span x-text="getSaleIncentiveInfo(sale, empDetail).label"></span>
@@ -13035,7 +13026,7 @@
                       class="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900">
                       <div>
                         <div class="text-sm font-bold text-green-700 dark:text-green-300"
-                          x-text="'₹' + pay.amount + ' paid'"></div>
+                          x-text="fmtCurrency(pay.amount) + ' paid'"></div>
                         <div class="text-xs text-gray-500"
                           x-text="fmtDate(pay.date) + (pay.note ? ' · ' + pay.note : '')"></div>
                       </div>
@@ -13189,7 +13180,7 @@
         <div
           class="p-3 rounded-xl bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-800 text-xs text-brand-700 dark:text-brand-300 font-semibold">
           <i class="fa-solid fa-gift mr-1"></i> Tier Incentive Rate: <strong
-            x-text="'₹' + calculatePlanCommission(empSaleForm.plan || '', empSaleForm.amount, empSaleForm.note || '')" class="tabular-nums"></strong>
+            x-text="fmtCurrency(calculatePlanCommission(empSaleForm.plan || '', empSaleForm.amount, empSaleForm.note || ''))" class="tabular-nums"></strong>
           <span class="text-gray-500 font-normal"> (Unlocked after achieving monthly plan target)</span>
         </div>
 
@@ -13268,7 +13259,7 @@
               :class="salaryPaymentPreset==='ctc' ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
               class="p-2.5 rounded-xl border text-left transition-all cursor-pointer">
               <div class="text-[10px] font-bold uppercase text-gray-400">Monthly Net CTC</div>
-              <div class="font-semibold text-sm text-emerald-600 dark:text-emerald-400" x-text="'₹' + (((parseInt(salaryPaymentEmp?.basicSalary)||35000) + Math.round((parseInt(salaryPaymentEmp?.basicSalary)||35000)*0.4))).toLocaleString('en-IN')"></div>
+              <div class="font-semibold text-sm text-emerald-600 dark:text-emerald-400" x-text="fmtCurrency((((parseInt(salaryPaymentEmp?.basicSalary)||35000) + Math.round((parseInt(salaryPaymentEmp?.basicSalary)||35000)*0.4))))"></div>
             </button>
 
             <!-- Commission Balance Preset (if any) -->
@@ -13276,7 +13267,7 @@
               :class="salaryPaymentPreset==='commission' ? 'border-purple-600 bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-200' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
               class="p-2.5 rounded-xl border text-left transition-all cursor-pointer">
               <div class="text-[10px] font-bold uppercase text-gray-400">Incentive Due</div>
-              <div class="font-semibold text-sm text-purple-600 dark:text-purple-400" x-text="'₹' + (salaryPaymentEmp && empBalance(salaryPaymentEmp) > 0 ? empBalance(salaryPaymentEmp).toLocaleString('en-IN') : '0')"></div>
+              <div class="font-semibold text-sm text-purple-600 dark:text-purple-400" x-text="fmtCurrency((salaryPaymentEmp && empBalance(salaryPaymentEmp) > 0 ? empBalance(salaryPaymentEmp).toLocaleString('en-IN') : '0'))"></div>
             </button>
           </div>
         </div>
@@ -13347,7 +13338,7 @@
           </div>
 
           <div class="mt-2.5">
-            <div class="text-sm font-semibold text-gray-900 dark:text-white" x-text="'₹' + (parseFloat(salaryPaymentAmount)||0).toLocaleString('en-IN')"></div>
+            <div class="text-sm font-semibold text-gray-900 dark:text-white" x-text="fmtCurrency((parseFloat(salaryPaymentAmount)||0))"></div>
             <p class="text-[11px] text-gray-400" x-text="salaryPaymentUpiId ? 'Scan with PhonePe, Google Pay, Paytm, BHIM or Cred' : 'Payment can be recorded or made after employee adds UPI ID'"></p>
           </div>
 
@@ -13396,12 +13387,12 @@
           <div x-data="{ emp: employees.find(e=>e.id===empPayEmpId) || {} }"
             class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 space-y-1 text-xs">
             <div class="flex justify-between"><span class="text-gray-400">Total Incentive Earned:</span><span
-                class="font-bold text-brand-600" x-text="'₹'+empTotalCommission(emp)"></span></div>
+                class="font-bold text-brand-600" x-text="fmtCurrency(empTotalCommission(emp))"></span></div>
             <div class="flex justify-between"><span class="text-gray-400">Already Paid:</span><span
-                class="font-bold text-green-600" x-text="'₹'+empTotalPaid(emp)"></span></div>
+                class="font-bold text-green-600" x-text="fmtCurrency(empTotalPaid(emp))"></span></div>
             <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1"><span
                 class="text-gray-400 font-semibold">Balance Due:</span><span class="font-semibold text-red-500"
-                x-text="'₹'+empBalance(emp)"></span></div>
+                x-text="fmtCurrency(empBalance(emp))"></span></div>
           </div>
         </template>
         <div>
@@ -13588,7 +13579,7 @@
                   <div class="flex justify-between py-1.5 border-b border-gray-200/60 dark:border-gray-700/60 font-bold bg-white/70 dark:bg-gray-800/80 px-2 rounded-lg">
                     <span class="text-gray-800 dark:text-gray-200">Net Base Salary:</span>
                     <span class="font-mono font-semibold text-teal-600 dark:text-teal-400"
-                      x-text=\"fmtCurrency(selectedSalesSalaryData.netBaseSalary.toLocaleString('en-IN'))\"></span>
+                      x-text=\"fmtCurrency(selectedSalesSalaryData.netBaseSalary)\"></span>
                   </div>
 
                   <div class="flex justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
@@ -21784,24 +21775,26 @@
 <html lang="en"><head><meta charset="UTF-8"><title>Customer Card — ${c.name}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#e2e8f0;display:flex;align-items:flex-start;justify-content:center;padding:30px;min-height:100vh}
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;display:flex;align-items:flex-start;justify-content:center;padding:30px;min-height:100vh;-webkit-font-smoothing:antialiased}
   .page{background:#fff;width:560px;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.18)}
   .header{background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);padding:22px 28px;display:flex;align-items:center;justify-content:space-between}
-  .header-logo{color:#fff;font-size:18px;font-weight:900;letter-spacing:.5px}
+  .header-logo{color:#fff;font-size:18px;font-weight:700;letter-spacing:.5px}
   .header-sub{color:rgba(255,255,255,.75);font-size:11px;margin-top:3px;letter-spacing:.5px}
   .hero{display:flex;align-items:center;gap:20px;padding:24px 28px 20px;border-bottom:1px solid #f1f5f9}
-  .avatar{width:68px;height:68px;border-radius:14px;background:${avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:900;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-  .name{font-size:22px;font-weight:900;color:#0f172a;line-height:1.2}
+  .avatar{width:68px;height:68px;border-radius:12px;background:${avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .name{font-size:20px;font-weight:700;color:#0f172a;line-height:1.2}
   .sub{font-size:12px;color:#64748b;margin-top:4px}
   .badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-right:6px;margin-top:6px}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #f1f5f9}
   .stat{padding:14px 8px;text-align:center}
   .stat:not(:last-child){border-right:1px solid #f1f5f9}
-  .stat-val{font-size:18px;font-weight:900;color:#0f172a}
+  .stat-val{font-size:16px;font-weight:700;color:#0f172a;font-variant-numeric:tabular-nums;}
   .stat-lbl{font-size:10px;color:#94a3b8;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
   .body{padding:20px 28px}
   .section{margin-bottom:18px}
-  .section-title{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f1f5f9}
+  .section-title{font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f1f5f9}
   table{width:100%;border-collapse:collapse}
   .footer{background:#f8fafc;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e2e8f0}
   .footer-txt{font-size:10px;color:#94a3b8}
@@ -22136,25 +22129,27 @@
 <html lang="en"><head><meta charset="UTF-8"><title>Employee Card — ${e.name}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#e5e7eb;display:flex;align-items:flex-start;justify-content:center;padding:30px;min-height:100vh}
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;display:flex;align-items:flex-start;justify-content:center;padding:30px;min-height:100vh;-webkit-font-smoothing:antialiased}
   .page{background:#fff;width:540px;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.18)}
   .header{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:22px 28px;display:flex;align-items:center;justify-content:space-between}
-  .header-logo{color:#fff;font-size:18px;font-weight:900;letter-spacing:.5px}
+  .header-logo{color:#fff;font-size:18px;font-weight:700;letter-spacing:.5px}
   .header-sub{color:rgba(255,255,255,.7);font-size:11px;margin-top:3px;letter-spacing:.5px}
   .header-icon{font-size:32px;color:rgba(255,255,255,.25)}
   .hero{display:flex;align-items:center;gap:20px;padding:24px 28px 20px;border-bottom:1px solid #f1f5f9}
-  .avatar{width:72px;height:72px;border-radius:14px;background:${avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:900;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-  .emp-name{font-size:22px;font-weight:900;color:#111827;line-height:1.2}
+  .avatar{width:72px;height:72px;border-radius:12px;background:${avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .emp-name{font-size:20px;font-weight:700;color:#0f172a;line-height:1.2}
   .emp-sub{font-size:12px;color:#6b7280;margin-top:4px}
   .badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-right:6px;margin-top:6px}
   .empid-badge{background:#ede9fe;color:#4f46e5;font-family:monospace;font-size:12px;letter-spacing:.5px}
   .body{padding:20px 28px}
   .section{margin-bottom:18px}
-  .section-title{font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f3f4f6}
+  .section-title{font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f3f4f6}
   table{width:100%;border-collapse:collapse}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
   .stat{background:#f8fafc;border-radius:10px;padding:12px 8px;text-align:center;border:1px solid #e2e8f0}
-  .stat-val{font-size:18px;font-weight:900;color:#1e293b}
+  .stat-val{font-size:16px;font-weight:700;color:#0f172a;font-variant-numeric:tabular-nums;}
   .stat-lbl{font-size:10px;color:#94a3b8;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
   .footer{background:#f8fafc;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e2e8f0}
   .footer-txt{font-size:10px;color:#9ca3af}
@@ -23018,7 +23013,8 @@
 
         empBalance(emp) {
           if (!emp) return 0;
-          return this.empTotalIncentive(emp) - this.empTotalPaid(emp);
+          const due = (this.empTotalIncentive(emp) || 0) - (this.empTotalPaid(emp) || 0);
+          return due > 0.005 ? due : 0;
         },
 
         empApprovedLeaves(target) {
@@ -23155,7 +23151,8 @@
 <head>
   <title>Customer Directory — InvoicePro</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #1e293b; font-size: 12px; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #0f172a; font-size: 12px; -webkit-font-smoothing: antialiased; }
+    table { font-variant-numeric: tabular-nums; }
     h1 { font-size: 18px; margin: 0 0 4px; color: #0f172a; }
     p { margin: 0 0 16px; color: #64748b; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -26842,7 +26839,7 @@ get remindersCount() {
           let thBg = '#f8fafc';
           let thColor = '#64748b';
           let totalColor = '#0f172a';
-          let fontFam = '"Segoe UI",system-ui,-apple-system,sans-serif';
+          let fontFam = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
           let topBar = '';
 
           if (tplId === 'purple_wave') {
@@ -26886,7 +26883,7 @@ get remindersCount() {
 '  .ov-top-meta{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid #f1f5f9;font-size:11.5px;color:#94a3b8}' +
 '  .ov-top-title{font-weight:700;color:' + accentColor + ';font-size:12px}' +
 '  .ov-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:1px solid #f1f5f9}' +
-'  .ov-brand{font-size:24px;font-weight:900;color:' + accentColor + ';letter-spacing:-0.5px}' +
+'  .ov-brand{font-size:22px;font-weight:700;color:' + accentColor + ';letter-spacing:-0.5px}' +
 '  .ov-sub{font-size:10px;font-weight:700;color:' + subColor + ';letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}' +
 '  .ov-meta{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 0 20px}' +
 '  .ov-lbl{font-size:10px;font-weight:700;color:' + subColor + ';text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}' +
@@ -26901,7 +26898,7 @@ get remindersCount() {
 '  .ov-status svg{width:12px;height:12px;display:inline-block;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}' +
 '  .ov-total-box{text-align:right}' +
 '  .ov-tot-lbl{font-size:10px;font-weight:700;color:' + subColor + ';text-transform:uppercase;letter-spacing:0.8px}' +
-'  .ov-tot-amt{font-size:26px;font-weight:900;color:' + totalColor + ';margin-top:2px}' +
+'  .ov-tot-amt{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:' + totalColor + ';margin-top:2px}' +
 '  .ov-footer{padding-top:20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8}' +
 '  @media print{body{background:#fff;padding:0}.doc-card{border:none;box-shadow:none;width:100%;padding:0}@page{size:A4;margin:12mm}}' +
 '</style></head><body>' +
@@ -32613,11 +32610,11 @@ get remindersCount() {
 <head>
   <title>${title} — ${emp.name || 'Employee'}</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.7; font-size: 14px; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; font-size: 14px; -webkit-font-smoothing: antialiased; }
     .header { border-bottom: 2px solid #2563eb; padding-bottom: 16px; margin-bottom: 28px; }
-    .company { font-size: 20px; font-weight: 900; color: #0f172a; }
+    .company { font-size: 20px; font-weight: 700; color: #0f172a; }
     .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
-    .title { font-size: 16px; font-weight: 800; text-transform: uppercase; color: #1e3a8a; text-align: center; margin: 24px 0; letter-spacing: 1px; }
+    .title { font-size: 16px; font-weight: 600; text-transform: uppercase; color: #1e40af; text-align: center; margin: 24px 0; letter-spacing: 1px; }
     .date-ref { font-size: 12px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; }
     .content { margin-bottom: 40px; }
     ul { margin: 12px 0 16px 20px; }

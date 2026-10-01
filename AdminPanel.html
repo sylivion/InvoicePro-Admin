@@ -580,13 +580,11 @@
   <aside x-show="currentUser" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
     class="fixed lg:sticky top-0 z-50 lg:z-auto w-56 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen shadow-sm transition-transform duration-200">
     <!-- Logo -->
-    <div class="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0">
-        <i class="fa-solid fa-shield-halved text-white text-sm"></i>
-      </div>
+    <div class="px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+      <img src="assets/images/logo.png" alt="InvoicePro Logo" class="h-8 w-auto object-contain flex-shrink-0" />
       <div>
-        <div class="font-black text-base">Invoice<span class="text-brand-600">Pro</span></div>
-        <div class="text-xs font-bold text-brand-500 tracking-widest uppercase" style="font-size:.6rem" x-text="rolePanelTitle">ADMIN PANEL</div>
+        <div class="font-black text-sm tracking-tight text-gray-900 dark:text-white leading-tight">Invoice<span class="text-brand-600">Pro</span></div>
+        <div class="text-[10px] font-bold text-brand-500 tracking-wider uppercase" x-text="rolePanelTitle">ADMIN PANEL</div>
       </div>
     </div>
 
@@ -14876,191 +14874,308 @@
     <!-- Subtle Background Dot Matrix & Soft Radial Glow -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div class="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] opacity-40"></div>
-      <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-indigo-100/60 to-transparent rounded-full blur-3xl"></div>
-      <div class="absolute -bottom-20 right-10 w-[400px] h-[400px] bg-blue-100/40 rounded-full blur-3xl"></div>
+      <div class="absolute -top-40 left-1/4 w-[600px] h-[350px] bg-gradient-to-b from-indigo-100/60 to-transparent rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-20 right-10 w-[500px] h-[400px] bg-purple-100/40 rounded-full blur-3xl"></div>
     </div>
 
     <!-- Minimalist Top Navigation -->
-    <header class="relative z-10 w-full px-6 py-5 flex items-center justify-between max-w-7xl mx-auto">
+    <header class="relative z-10 w-full px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-600/20 text-white font-bold">
-          <i class="fa-solid fa-layer-group text-lg"></i>
-        </div>
-        <div>
-          <div class="font-bold text-lg tracking-tight text-slate-900 flex items-center gap-2">
-            Invoice<span class="text-indigo-600">Pro</span>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 uppercase tracking-wider">Enterprise</span>
-          </div>
-        </div>
+        <img src="assets/images/logo.png" alt="InvoicePro Logo" class="h-10 sm:h-12 w-auto object-contain flex-shrink-0" />
       </div>
 
       <div class="flex items-center gap-3">
-        <div class="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500 bg-white/80 backdrop-blur-sm border border-slate-200 px-3 py-1.5 rounded-full shadow-xs">
-          <i class="fa-solid fa-shield-check text-emerald-600 text-sm"></i>
-          <span>Secure Multi-Role RBAC Portal</span>
-        </div>
+        <span class="text-xs text-slate-500 font-medium hidden sm:inline">Business Invoicing &amp; Store Management</span>
       </div>
     </header>
 
-    <!-- Main Content / Centered SaaS Auth Form -->
-    <main class="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
-      <div class="w-full max-w-[440px] space-y-6">
+    <!-- Main Content / Split SaaS Auth & Business Illustration -->
+    <main class="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full my-auto">
+      <div class="w-full flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-14">
 
-        <!-- Card Container -->
-        <div class="bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-9 shadow-xl shadow-slate-200/60 space-y-6">
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ LEFT: BUSINESS SHOPS DOODLE & SAAS HIGHLIGHTS (DESKTOP)     ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+        <div class="hidden lg:flex flex-col lg:w-7/12 xl:w-3/5 space-y-6 text-left">
           
-          <!-- Card Header -->
-          <div class="space-y-1.5 text-center sm:text-left">
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">
-              Sign in to your account
-            </h1>
-            <p class="text-xs text-slate-500 font-normal">
-              Enter your corporate credentials to access your workspace.
+          <!-- Doodle Vector Illustration -->
+          <div class="w-full bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+            <svg viewBox="0 0 600 340" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto max-h-[320px] mx-auto select-none">
+              <!-- Background Ambient Blobs -->
+              <circle cx="80" cy="60" r="45" fill="#EEF2FF" />
+              <circle cx="520" cy="80" r="50" fill="#F5F3FF" />
+              <circle cx="490" cy="270" r="35" fill="#EEF2FF" />
+
+              <!-- Doodle Dashed Curves -->
+              <path d="M40 160 Q70 130 110 150" stroke="#818CF8" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>
+              <path d="M490 170 Q530 150 560 180" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>
+              
+              <!-- Sparkles / Stars -->
+              <path d="M75 105 L78 113 L86 116 L78 119 L75 127 L72 119 L64 116 L72 113 Z" fill="#FBBF24" />
+              <path d="M525 125 L527 131 L533 133 L527 135 L525 141 L523 135 L517 133 L523 131 Z" fill="#6366F1" />
+              <path d="M140 40 L142 45 L147 47 L142 49 L140 54 L138 49 L133 47 L138 45 Z" fill="#8B5CF6" />
+
+              <!-- Ground Base Line -->
+              <rect x="40" y="300" width="520" height="6" rx="3" fill="#E2E8F0" />
+              
+              <!-- ══ SHOP STOREFRONT BUILDING ══ -->
+              <rect x="90" y="95" width="240" height="205" rx="16" fill="#FFFFFF" stroke="#6366F1" stroke-width="3" />
+              
+              <!-- Striped Roof Awning -->
+              <path d="M80 95 L90 55 L330 55 L340 95 Z" fill="#4F46E5" />
+              <path d="M115 55 L108 95 L135 95 L140 55 Z" fill="#818CF8" />
+              <path d="M165 55 L162 95 L190 95 L190 55 Z" fill="#818CF8" />
+              <path d="M215 55 L218 95 L245 95 L240 55 Z" fill="#818CF8" />
+              <path d="M265 55 L272 95 L300 95 L290 55 Z" fill="#818CF8" />
+              <path d="M80 95 Q95 110 110 95 Q125 110 140 95 Q155 110 170 95 Q185 110 200 95 Q215 110 230 95 Q245 110 260 95 Q275 110 290 95 Q305 110 320 95 Q330 110 340 95" fill="#4F46E5" />
+
+              <!-- Store Sign Board -->
+              <rect x="140" y="32" width="140" height="28" rx="7" fill="#4F46E5" stroke="#4338CA" stroke-width="1.5" />
+              <text x="210" y="51" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#FFFFFF" text-anchor="middle">RETAIL STORE</text>
+
+              <!-- Large Glass Showcase Window -->
+              <rect x="108" y="125" width="110" height="105" rx="10" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2" />
+              <line x1="113" y1="158" x2="213" y2="158" stroke="#94A3B8" stroke-width="2" />
+              <line x1="113" y1="195" x2="213" y2="195" stroke="#94A3B8" stroke-width="2" />
+              
+              <!-- Showcase Products -->
+              <rect x="120" y="140" width="14" height="18" rx="3" fill="#818CF8" />
+              <rect x="140" y="135" width="18" height="23" rx="3" fill="#A78BFA" />
+              <rect x="165" y="142" width="16" height="16" rx="3" fill="#34D399" />
+              <circle cx="195" cy="148" r="7" fill="#FBBF24" />
+
+              <rect x="120" y="177" width="20" height="18" rx="3" fill="#F472B6" />
+              <rect x="148" y="172" width="16" height="23" rx="3" fill="#60A5FA" />
+              <rect x="172" y="179" width="26" height="16" rx="3" fill="#818CF8" />
+
+              <!-- Window Reflection Lines -->
+              <line x1="125" y1="130" x2="150" y2="225" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" />
+              <line x1="140" y1="130" x2="165" y2="225" stroke="#E2E8F0" stroke-width="1.5" stroke-linecap="round" />
+
+              <!-- Entrance Glass Door -->
+              <rect x="235" y="125" width="80" height="175" rx="6" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="2" />
+              <rect x="243" y="195" width="4" height="22" rx="2" fill="#6366F1" />
+              <rect x="250" y="148" width="50" height="22" rx="6" fill="#10B981" />
+              <text x="275" y="163" font-family="system-ui, sans-serif" font-size="9" font-weight="bold" fill="#FFFFFF" text-anchor="middle">OPEN</text>
+
+              <!-- ══ BILLING COUNTER & POS MACHINE ══ -->
+              <rect x="350" y="195" width="180" height="105" rx="12" fill="#FFFFFF" stroke="#6366F1" stroke-width="3" />
+              <rect x="365" y="220" width="150" height="18" rx="4" fill="#F1F5F9" />
+              <rect x="365" y="248" width="150" height="18" rx="4" fill="#F1F5F9" />
+
+              <!-- POS Screen Terminal -->
+              <rect x="370" y="120" width="70" height="55" rx="8" fill="#1E293B" stroke="#475569" stroke-width="2" />
+              <rect x="376" y="126" width="58" height="38" rx="4" fill="#0EA5E9" opacity="0.9" />
+              <path d="M382 152 L392 142 L402 147 L414 134 L426 140" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M400 175 L410 175 L413 195 L397 195 Z" fill="#64748B" />
+
+              <!-- Barcode Scanner -->
+              <path d="M465 165 C465 156 483 156 483 165 L479 184 L461 184 Z" fill="#6366F1" />
+              <rect x="461" y="180" width="10" height="14" rx="3" fill="#4338CA" />
+              <line x1="450" y1="170" x2="510" y2="170" stroke="#EF4444" stroke-width="2" stroke-dasharray="3 3" />
+
+              <!-- ══ FLOATING INVOICE BILL SCROLL ══ -->
+              <g transform="translate(425, 25) rotate(5)">
+                <rect x="0" y="0" width="100" height="135" rx="10" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="2" />
+                <rect x="10" y="10" width="22" height="22" rx="5" fill="#8B5CF6" />
+                <path d="M17 18 L21 22 L26 15" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                <rect x="38" y="12" width="45" height="7" rx="3" fill="#E2E8F0" />
+                <rect x="38" y="23" width="30" height="5" rx="2" fill="#CBD5E1" />
+                <line x1="10" y1="38" x2="90" y2="38" stroke="#E2E8F0" stroke-width="1.5" />
+                
+                <rect x="10" y="46" width="40" height="4" rx="2" fill="#94A3B8" />
+                <rect x="65" y="46" width="25" height="4" rx="2" fill="#94A3B8" />
+                <rect x="10" y="56" width="35" height="4" rx="2" fill="#CBD5E1" />
+                <rect x="65" y="56" width="25" height="4" rx="2" fill="#CBD5E1" />
+                <rect x="10" y="66" width="45" height="4" rx="2" fill="#CBD5E1" />
+                <rect x="65" y="66" width="25" height="4" rx="2" fill="#CBD5E1" />
+
+                <rect x="8" y="78" width="84" height="18" rx="4" fill="#EDE9FE" />
+                <text x="14" y="90" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#6D28D9">TOTAL PAID</text>
+                <text x="86" y="90" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#6D28D9" text-anchor="end">₹ 1,450</text>
+
+                <!-- Barcode -->
+                <line x1="15" y1="108" x2="15" y2="118" stroke="#1E293B" stroke-width="2" />
+                <line x1="20" y1="108" x2="20" y2="118" stroke="#1E293B" stroke-width="1" />
+                <line x1="25" y1="108" x2="25" y2="118" stroke="#1E293B" stroke-width="2.5" />
+                <line x1="32" y1="108" x2="32" y2="118" stroke="#1E293B" stroke-width="1" />
+                <line x1="38" y1="108" x2="38" y2="118" stroke="#1E293B" stroke-width="2" />
+                <line x1="45" y1="108" x2="45" y2="118" stroke="#1E293B" stroke-width="3" />
+                <line x1="53" y1="108" x2="53" y2="118" stroke="#1E293B" stroke-width="1.5" />
+                <line x1="60" y1="108" x2="60" y2="118" stroke="#1E293B" stroke-width="2" />
+                <line x1="68" y1="108" x2="68" y2="118" stroke="#1E293B" stroke-width="1" />
+                <line x1="75" y1="108" x2="75" y2="118" stroke="#1E293B" stroke-width="2" />
+              </g>
+
+              <!-- Shopping Bag & Cart -->
+              <g transform="translate(50, 210)">
+                <path d="M10 18 L32 18 L36 48 L6 48 Z" fill="#F43F5E" />
+                <path d="M15 18 C15 9 27 9 27 18" stroke="#E11D48" stroke-width="2.5" fill="none" />
+                <circle cx="21" cy="34" r="6" fill="#FFFFFF" />
+                <text x="21" y="38" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#E11D48" text-anchor="middle">%</text>
+              </g>
+              <g transform="translate(315, 245)">
+                <circle cx="7" cy="28" r="3.5" fill="#475569" />
+                <circle cx="25" cy="28" r="3.5" fill="#475569" />
+                <path d="M0 4 L5 4 L10 22 L28 22 L32 9 L8 9" stroke="#6366F1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- SaaS Copy & Value Proposition -->
+          <div class="space-y-3">
+            <h2 class="text-2xl xl:text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+              Smart Invoicing &amp; POS Billing for Modern Businesses
+            </h2>
+            <p class="text-sm text-slate-500 leading-relaxed font-normal">
+              Manage multi-counter retail billing, fast barcode checkout, automated GST calculation, customer credit, and live business analytics with one unified system.
             </p>
-          </div>
-
-          <!-- Form -->
-          <form @submit.prevent="submitLogin()" class="space-y-4">
-
-            <!-- Department / Role Selector -->
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-semibold text-slate-700">Workspace Role</label>
-                <span class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">RBAC Access</span>
-              </div>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-id-badge text-xs"></i>
-                </div>
-                <select x-model="loginForm.role"
-                  class="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all appearance-none cursor-pointer hover:border-slate-300">
-                  <option value="auto">✨ Auto-Detect Role (Recommended)</option>
-                  <option value="admin">👑 Master Administrator</option>
-                  <option value="manager">👔 Operations Manager</option>
-                  <option value="hr">👥 Human Resources (HR)</option>
-                  <option value="sales_leader">💼 Sales Team Leader</option>
-                  <option value="sales_member">🛍️ Sales Executive</option>
-                  <option value="support_leader">🎧 Technical Support Lead</option>
-                  <option value="support_member">📞 Support Specialist</option>
-                  <option value="dev_leader">💻 Development Team Lead</option>
-                  <option value="dev_member">⚡ Software Engineer / QA</option>
-                </select>
-                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Username Input -->
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username or ID</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-user text-xs"></i>
-                </div>
-                <input x-model="loginForm.username" type="text" required autofocus
-                  placeholder="e.g. admin or employee ID"
-                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 hover:border-slate-300" />
-              </div>
-            </div>
-
-            <!-- Password Input -->
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-semibold text-slate-700">Password</label>
-                <button type="button" @click="showLoginPassword = !showLoginPassword" class="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
-                  <span x-text="showLoginPassword ? 'Hide' : 'Show'"></span>
-                </button>
-              </div>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-lock text-xs"></i>
-                </div>
-                <input x-model="loginForm.password" :type="showLoginPassword ? 'text' : 'password'" required
-                  placeholder="Enter your password"
-                  class="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-mono transition-all placeholder:text-slate-400 hover:border-slate-300" />
-                <button type="button" @click="showLoginPassword = !showLoginPassword"
-                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
-                  <i class="fa-solid text-xs" :class="showLoginPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Error Notification -->
-            <div x-show="loginError" x-cloak
-              class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2.5 animate-in fade-in duration-200">
-              <i class="fa-solid fa-circle-exclamation flex-shrink-0 text-rose-500 text-sm"></i>
-              <span x-text="loginError"></span>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" :disabled="loggingIn"
-              class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mt-2">
-              <i class="fa-solid" :class="loggingIn ? 'fa-circle-notch fa-spin' : 'fa-arrow-right-to-bracket'"></i>
-              <span x-text="loggingIn ? 'Signing in...' : 'Sign In'"></span>
-            </button>
-          </form>
-
-          <!-- Quick-Access Demo Credentials Dropdown / Drawer -->
-          <div x-data="{ openDemo: false }" class="pt-2 border-t border-slate-100">
-            <button type="button" @click="openDemo = !openDemo" class="w-full flex items-center justify-between text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors py-1 cursor-pointer">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-key text-amber-500 text-xs"></i> Quick Demo Accounts</span>
-              <i class="fa-solid text-[10px] text-slate-400 transition-transform" :class="openDemo ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'"></i>
-            </button>
-
-            <div x-show="openDemo" x-cloak class="mt-3 grid grid-cols-2 gap-2 text-[11px] font-medium animate-in fade-in duration-150">
-              <button type="button" @click="fillLoginCredentials('admin', 'admin123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">👑 Admin</div>
-                <div class="text-[10px] text-slate-500 font-mono">admin / admin123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('manager', 'manager123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">👔 Manager</div>
-                <div class="text-[10px] text-slate-500 font-mono">manager / manager123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('sales_lead', 'sales123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">💼 Sales Lead</div>
-                <div class="text-[10px] text-slate-500 font-mono">sales_lead / sales123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('sales', 'sales123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">🛍️ Sales Exec</div>
-                <div class="text-[10px] text-slate-500 font-mono">sales / sales123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('dev_lead', 'dev123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">💻 Dev Lead</div>
-                <div class="text-[10px] text-slate-500 font-mono">dev_lead / dev123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('dev_back', 'dev123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">⚡ Developer</div>
-                <div class="text-[10px] text-slate-500 font-mono">dev_back / dev123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('support_lead', 'support123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">🎧 Support Lead</div>
-                <div class="text-[10px] text-slate-500 font-mono">support_lead / support123</div>
-              </button>
-              <button type="button" @click="fillLoginCredentials('hr', 'hr123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
-                <div class="font-bold text-slate-800">👥 HR Specialist</div>
-                <div class="text-[10px] text-slate-500 font-mono">hr / hr123</div>
-              </button>
+            <!-- Store Category Badges -->
+            <div class="flex items-center gap-2 flex-wrap pt-1 text-xs font-semibold text-slate-600">
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 shadow-2xs">🏪 Retail Shops</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 shadow-2xs">🛒 Supermarkets</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 shadow-2xs">💊 Pharmacies</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 shadow-2xs">📱 Electronics</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 shadow-2xs">📦 Wholesalers</span>
             </div>
           </div>
 
-          <!-- Enterprise Security Notice -->
-          <div class="pt-2 border-t border-slate-100">
-            <div class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 leading-relaxed">
-              <i class="fa-solid fa-lock text-slate-400 mt-0.5 text-xs flex-shrink-0"></i>
-              <div>
-                <strong class="font-medium text-slate-700">Protected Company Portal:</strong>
-                Account provisioning is managed by IT &amp; HR. Contact your system administrator for access inquiries.
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Single Sign-On / Help Footer Link -->
-        <div class="text-center text-xs text-slate-400 flex items-center justify-center gap-3">
-          <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-[11px] text-slate-400"></i> End-to-End Encrypted</span>
-          <span>&bull;</span>
-          <span>InvoicePro Gateway v3.2.0</span>
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ RIGHT: AUTHENTICATION LOGIN CARD                            ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+        <div class="w-full lg:w-5/12 xl:w-2/5 max-w-[440px] space-y-6">
+
+          <!-- Card Container -->
+          <div class="bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-9 shadow-xl shadow-slate-200/60 space-y-6">
+            
+            <!-- Card Header with Official Logo -->
+            <div class="space-y-2 text-center">
+              <img src="assets/images/logo.png" alt="InvoicePro Logo" class="h-12 w-auto object-contain mx-auto mb-1" />
+              <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+                Sign in to InvoicePro
+              </h1>
+              <p class="text-xs text-slate-500 font-normal">
+                Enter your credentials to access your store portal.
+              </p>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submitLogin()" class="space-y-4">
+
+              <!-- Username Input -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username or ID</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-user text-xs"></i>
+                  </div>
+                  <input x-model="loginForm.username" type="text" required autofocus
+                    placeholder="e.g. admin or employee ID"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all placeholder:text-slate-400 hover:border-slate-300" />
+                </div>
+              </div>
+
+              <!-- Password Input -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="block text-xs font-semibold text-slate-700">Password</label>
+                  <button type="button" @click="showLoginPassword = !showLoginPassword" class="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
+                    <span x-text="showLoginPassword ? 'Hide' : 'Show'"></span>
+                  </button>
+                </div>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                  </div>
+                  <input x-model="loginForm.password" :type="showLoginPassword ? 'text' : 'password'" required
+                    placeholder="Enter your password"
+                    class="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-mono transition-all placeholder:text-slate-400 hover:border-slate-300" />
+                  <button type="button" @click="showLoginPassword = !showLoginPassword"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <i class="fa-solid text-xs" :class="showLoginPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Error Notification -->
+              <div x-show="loginError" x-cloak
+                class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2.5 animate-in fade-in duration-200">
+                <i class="fa-solid fa-circle-exclamation flex-shrink-0 text-rose-500 text-sm"></i>
+                <span x-text="loginError"></span>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" :disabled="loggingIn"
+                class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mt-2">
+                <i class="fa-solid" :class="loggingIn ? 'fa-circle-notch fa-spin' : 'fa-arrow-right-to-bracket'"></i>
+                <span x-text="loggingIn ? 'Signing in...' : 'Sign In'"></span>
+              </button>
+            </form>
+
+            <!-- Quick-Access Demo Credentials Dropdown / Drawer -->
+            <div x-data="{ openDemo: false }" class="pt-2 border-t border-slate-100">
+              <button type="button" @click="openDemo = !openDemo" class="w-full flex items-center justify-between text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors py-1 cursor-pointer">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-key text-amber-500 text-xs"></i> Quick Demo Accounts</span>
+                <i class="fa-solid text-[10px] text-slate-400 transition-transform" :class="openDemo ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'"></i>
+              </button>
+
+              <div x-show="openDemo" x-cloak class="mt-3 grid grid-cols-2 gap-2 text-[11px] font-medium animate-in fade-in duration-150">
+                <button type="button" @click="fillLoginCredentials('admin', 'admin123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">👑 Admin</div>
+                  <div class="text-[10px] text-slate-500 font-mono">admin / admin123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('manager', 'manager123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">👔 Manager</div>
+                  <div class="text-[10px] text-slate-500 font-mono">manager / manager123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('sales_lead', 'sales123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">💼 Sales Lead</div>
+                  <div class="text-[10px] text-slate-500 font-mono">sales_lead / sales123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('sales', 'sales123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">🛍️ Sales Exec</div>
+                  <div class="text-[10px] text-slate-500 font-mono">sales / sales123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('dev_lead', 'dev123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">💻 Dev Lead</div>
+                  <div class="text-[10px] text-slate-500 font-mono">dev_lead / dev123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('dev_back', 'dev123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">⚡ Developer</div>
+                  <div class="text-[10px] text-slate-500 font-mono">dev_back / dev123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('support_lead', 'support123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">🎧 Support Lead</div>
+                  <div class="text-[10px] text-slate-500 font-mono">support_lead / support123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('hr', 'hr123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">👥 HR Specialist</div>
+                  <div class="text-[10px] text-slate-500 font-mono">hr / hr123</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Enterprise Security Notice -->
+            <div class="pt-2 border-t border-slate-100">
+              <div class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 leading-relaxed">
+                <i class="fa-solid fa-lock text-slate-400 mt-0.5 text-xs flex-shrink-0"></i>
+                <div>
+                  <strong class="font-medium text-slate-700">Protected Portal:</strong>
+                  Account provisioning is managed by IT &amp; HR. Contact your system administrator for access inquiries.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Single Sign-On / Help Footer Link -->
+          <div class="text-center text-xs text-slate-400 flex items-center justify-center gap-3">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-[11px] text-slate-400"></i> End-to-End Encrypted</span>
+            <span>&bull;</span>
+            <span>InvoicePro Gateway v3.2.0</span>
+          </div>
+
         </div>
 
       </div>

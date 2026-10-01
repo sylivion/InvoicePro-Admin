@@ -27334,6 +27334,22 @@ get remindersCount() {
             return;
           }
           localStorage.setItem('ip_adm_company_settings', JSON.stringify(this.companySettings));
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/system/settings/save` : '/api/system/settings/save';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                settings: {
+                  company_settings: this.companySettings,
+                  departments: this.departments
+                }
+              })
+            }).catch(() => {});
+          } catch (_) {}
           this.logActivity('system', 'Updated Company Settings & Business Details');
           this.notify('Company settings saved successfully!');
         },
@@ -27417,12 +27433,12 @@ get remindersCount() {
         },
 
         // ── SALES DEPARTMENT ARCHITECTURE (LEADER & MEMBER) ──
-        _loadSalesData() {
+        async _loadSalesData() {
           const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503']);
           const dummyActIds = new Set(['act-101', 'act-102', 'act-103']);
           const dummyEscIds = new Set(['esc-1']);
 
-          // Leads
+          // 1. Local Cache
           try {
             const savedLeads = localStorage.getItem('ip_adm_sales_leads');
             if (savedLeads) {
@@ -27433,7 +27449,6 @@ get remindersCount() {
             }
           } catch (_) { this.salesLeads = []; }
 
-          // Rep Targets
           try {
             const savedTargets = localStorage.getItem('ip_adm_sales_targets');
             if (savedTargets) {
@@ -27443,7 +27458,6 @@ get remindersCount() {
             }
           } catch (_) { this.salesRepTargets = []; }
 
-          // Activities
           try {
             const savedActs = localStorage.getItem('ip_adm_sales_activities');
             if (savedActs) {
@@ -27454,7 +27468,6 @@ get remindersCount() {
             }
           } catch (_) { this.salesActivities = []; }
 
-          // Escalations
           try {
             const savedEsc = localStorage.getItem('ip_adm_sales_escalations');
             if (savedEsc) {
@@ -27465,8 +27478,20 @@ get remindersCount() {
             }
           } catch (_) { this.salesEscalations = []; }
 
-          // Save cleaned real data back to localStorage
-          this._saveSalesData();
+          // 2. Fetch live data from Railway PostgreSQL server
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const fetchFn = window.originalFetch || window.fetch;
+            const res = await fetchFn(baseUrl + '/api/sales/data').then(r => r.json()).catch(() => null);
+            if (res && res.ok) {
+              if (Array.isArray(res.leads) && res.leads.length > 0) this.salesLeads = res.leads;
+              if (Array.isArray(res.targets) && res.targets.length > 0) this.salesRepTargets = res.targets;
+              if (Array.isArray(res.escalations) && res.escalations.length > 0) this.salesEscalations = res.escalations;
+            } else if (this.salesLeads.length > 0 || this.salesRepTargets.length > 0) {
+              this._saveSalesData();
+            }
+          } catch (_) {}
         },
 
         _saveSalesData() {
@@ -27475,6 +27500,20 @@ get remindersCount() {
             localStorage.setItem('ip_adm_sales_targets', JSON.stringify(this.salesRepTargets));
             localStorage.setItem('ip_adm_sales_activities', JSON.stringify(this.salesActivities));
             localStorage.setItem('ip_adm_sales_escalations', JSON.stringify(this.salesEscalations));
+
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/sales/data/save` : '/api/sales/data/save';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                leads: this.salesLeads,
+                targets: this.salesRepTargets,
+                escalations: this.salesEscalations
+              })
+            }).catch(() => {});
           } catch (_) {}
         },
 
@@ -28125,7 +28164,7 @@ get remindersCount() {
         // ── DEVELOPMENT DEPARTMENT ARCHITECTURE (LEADER & MEMBERS) ──────
         // ═════════════════════════════════════════════════════════════════
 
-        _loadDevData() {
+        async _loadDevData() {
           // 1. Sprints
           try {
             const savedSprints = localStorage.getItem('ip_adm_dev_sprints');
@@ -28226,6 +28265,24 @@ get remindersCount() {
               localStorage.setItem('ip_adm_dev_docs', JSON.stringify(this.devArchitectureDocs));
             }
           } catch (_) {}
+
+          // 7. Fetch live Dev Data from Railway PostgreSQL Server
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const fetchFn = window.originalFetch || window.fetch;
+            const res = await fetchFn(baseUrl + '/api/dev/data').then(r => r.json()).catch(() => null);
+            if (res && res.ok) {
+              if (Array.isArray(res.tasks) && res.tasks.length > 0) this.devTasks = res.tasks;
+              if (Array.isArray(res.releases) && res.releases.length > 0) this.devReleases = res.releases;
+              if (Array.isArray(res.sprints) && res.sprints.length > 0) this.devSprints = res.sprints;
+              if (Array.isArray(res.prs) && res.prs.length > 0) this.devPRs = res.prs;
+              if (Array.isArray(res.escalations) && res.escalations.length > 0) this.devEscalations = res.escalations;
+              if (Array.isArray(res.docs) && res.docs.length > 0) this.devArchitectureDocs = res.docs;
+            } else if (this.devTasks.length > 0 || this.devReleases.length > 0) {
+              this._saveDevData();
+            }
+          } catch (_) {}
         },
 
         _saveDevData() {
@@ -28236,6 +28293,23 @@ get remindersCount() {
             localStorage.setItem('ip_adm_dev_releases', JSON.stringify(this.devReleases));
             localStorage.setItem('ip_adm_dev_escalations', JSON.stringify(this.devEscalations));
             localStorage.setItem('ip_adm_dev_docs', JSON.stringify(this.devArchitectureDocs));
+
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/dev/data/save` : '/api/dev/data/save';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                tasks: this.devTasks,
+                releases: this.devReleases,
+                sprints: this.devSprints,
+                prs: this.devPRs,
+                escalations: this.devEscalations,
+                docs: this.devArchitectureDocs
+              })
+            }).catch(() => {});
           } catch (_) {}
         },
 
@@ -29038,7 +29112,7 @@ get remindersCount() {
         // ══════════════════════════════════════════
         // 🎧 SUPPORT DEPARTMENT METHODS
         // ══════════════════════════════════════════
-        _loadSupportData() {
+        async _loadSupportData() {
           // 1. Support Tickets
           try {
             const savedTickets = localStorage.getItem('ip_adm_support_tickets');
@@ -29085,6 +29159,29 @@ get remindersCount() {
               ];
             }
           } catch (_) { this.supportRecurringIssues = []; }
+
+          // 5. Fetch live Support Data from Railway PostgreSQL Server
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const fetchFn = window.originalFetch || window.fetch;
+            const res = await fetchFn(baseUrl + '/api/support/data').then(r => r.json()).catch(() => null);
+            if (res && res.ok) {
+              if (Array.isArray(res.tickets) && res.tickets.length > 0) {
+                this.supportTickets = res.tickets;
+                (this.supportTickets || []).forEach(t => {
+                  if (t.assignedTo) {
+                    t.assignedToName = this.getTicketAssigneeName(t);
+                  }
+                });
+              }
+              if (Array.isArray(res.calls) && res.calls.length > 0) this.supportCallLogs = res.calls;
+              if (Array.isArray(res.kb) && res.kb.length > 0) this.supportKB = res.kb;
+              if (Array.isArray(res.recurring) && res.recurring.length > 0) this.supportRecurringIssues = res.recurring;
+            } else if (this.supportTickets.length > 0 || this.supportRecurringIssues.length > 0) {
+              this._saveSupportData();
+            }
+          } catch (_) {}
         },
 
         _saveSupportData() {
@@ -29093,6 +29190,21 @@ get remindersCount() {
             localStorage.setItem('ip_adm_support_calls', JSON.stringify(this.supportCallLogs));
             localStorage.setItem('ip_adm_support_kb', JSON.stringify(this.supportKB));
             localStorage.setItem('ip_adm_support_recurring', JSON.stringify(this.supportRecurringIssues));
+
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/support/data/save` : '/api/support/data/save';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                tickets: this.supportTickets,
+                calls: this.supportCallLogs,
+                kb: this.supportKB,
+                recurring: this.supportRecurringIssues
+              })
+            }).catch(() => {});
           } catch (_) {}
         },
 
@@ -29935,26 +30047,57 @@ get remindersCount() {
         },
 
         // ── Departments & Multi-Teams Structure ──
-        _loadDepartments() {
+        async _loadDepartments() {
           try {
             const saved = localStorage.getItem('ip_adm_departments');
             if (saved) {
               this.departments = JSON.parse(saved);
-              return;
+            } else {
+              this.departments = [
+                { id: 'dept-1', name: 'Sales & Business Development', code: 'SALES', targetMonthly: '₹25,00,000', progress: 65 },
+                { id: 'dept-2', name: 'Customer Support & Helpdesk', code: 'SUPPORT', targetMonthly: '< 10m First Response', progress: 90 },
+                { id: 'dept-3', name: 'Software Development & IT', code: 'TECH', targetMonthly: 'Sprint 24 Releases', progress: 85 },
+                { id: 'dept-4', name: 'Human Resources & Talent', code: 'HR', targetMonthly: '12 Monthly Hires', progress: 75 },
+                { id: 'dept-5', name: 'Operations & Facilities', code: 'OPS', targetMonthly: '100% Policy Compliance', progress: 95 }
+              ];
             }
           } catch (e) {}
-          this.departments = [
-            { id: 'dept-1', name: 'Sales & Business Development', code: 'SALES', targetMonthly: '₹25,00,000', progress: 65 },
-            { id: 'dept-2', name: 'Customer Support & Helpdesk', code: 'SUPPORT', targetMonthly: '< 10m First Response', progress: 90 },
-            { id: 'dept-3', name: 'Software Development & IT', code: 'TECH', targetMonthly: 'Sprint 24 Releases', progress: 85 },
-            { id: 'dept-4', name: 'Human Resources & Talent', code: 'HR', targetMonthly: '12 Monthly Hires', progress: 75 },
-            { id: 'dept-5', name: 'Operations & Facilities', code: 'OPS', targetMonthly: '100% Policy Compliance', progress: 95 }
-          ];
-          this._saveDepartments();
+
+          // Fetch system settings from Railway PostgreSQL server
+          try {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const fetchFn = window.originalFetch || window.fetch;
+            const res = await fetchFn(baseUrl + '/api/system/settings').then(r => r.json()).catch(() => null);
+            if (res && res.settings) {
+              if (res.settings.departments && Array.isArray(res.settings.departments) && res.settings.departments.length > 0) {
+                this.departments = res.settings.departments;
+                localStorage.setItem('ip_adm_departments', JSON.stringify(this.departments));
+              }
+              if (res.settings.company_settings && typeof res.settings.company_settings === 'object') {
+                this.companySettings = { ...this.companySettings, ...res.settings.company_settings };
+                localStorage.setItem('ip_adm_company_settings', JSON.stringify(this.companySettings));
+              }
+            }
+          } catch (_) {}
         },
         _saveDepartments() {
           try {
             localStorage.setItem('ip_adm_departments', JSON.stringify(this.departments));
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const postUrl = baseUrl ? `${baseUrl}/api/system/settings/save` : '/api/system/settings/save';
+            const fetchFn = window.originalFetch || window.fetch;
+            fetchFn(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                settings: {
+                  company_settings: this.companySettings,
+                  departments: this.departments
+                }
+              })
+            }).catch(() => {});
           } catch (e) {}
         },
         openAddDeptModal() {

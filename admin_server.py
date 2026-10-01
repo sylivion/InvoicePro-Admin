@@ -1840,6 +1840,91 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 })
                 return
 
+            if path in ("/api/system/settings", "/api/system-settings"):
+                with _db_lock:
+                    db = get_db()
+                    rows = rows_to_list(db.execute("SELECT * FROM system_settings").fetchall())
+                    db.close()
+                settings = {}
+                for r in rows:
+                    k = r.get("key")
+                    v = r.get("value")
+                    try:
+                        settings[k] = json.loads(v)
+                    except Exception:
+                        settings[k] = v
+                self.send_json({"ok": True, "settings": settings})
+                return
+
+            if path in ("/api/dev/data", "/api/dev/tasks"):
+                with _db_lock:
+                    db = get_db()
+                    tasks = rows_to_list(db.execute("SELECT * FROM dev_tasks ORDER BY created_at DESC").fetchall())
+                    releases = rows_to_list(db.execute("SELECT * FROM dev_releases ORDER BY release_date DESC").fetchall())
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='dev_metadata'").fetchone()
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "tasks": tasks,
+                    "releases": releases,
+                    "sprints": meta.get("sprints", []),
+                    "prs": meta.get("prs", []),
+                    "escalations": meta.get("escalations", []),
+                    "docs": meta.get("docs", [])
+                })
+                return
+
+            if path == "/api/sales/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='sales_metadata'").fetchone()
+                    acts = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 500").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "leads": meta.get("leads", []),
+                    "targets": meta.get("targets", []),
+                    "escalations": meta.get("escalations", []),
+                    "activities": acts
+                })
+                return
+
+            if path == "/api/support/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='support_metadata'").fetchone()
+                    recs = rows_to_list(db.execute("SELECT * FROM recurring_issues ORDER BY impacted_count DESC").fetchall())
+                    enqs = rows_to_list(db.execute("SELECT * FROM enquiries ORDER BY created_at DESC").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "tickets": meta.get("tickets", []) or enqs,
+                    "calls": meta.get("calls", []),
+                    "kb": meta.get("kb", []),
+                    "recurring_issues": recs
+                })
+                return
+
+            if path == "/api/license-keys":
+                with _db_lock:
+                    db = get_db()
+                    keys = rows_to_list(db.execute("SELECT * FROM license_keys ORDER BY created_at DESC").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "license_keys": keys})
+                return
+
             if path == "/api/export":
                 with _db_lock:
                     db = get_db()
@@ -3000,6 +3085,104 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.commit()
                     db.close()
                 self.send_json({"ok": True, "message": "Logs cleared successfully"})
+                return
+
+            if path in ("/api/system/settings/save", "/api/system/settings", "/api/system-settings/save"):
+                settings_map = data.get("settings") if isinstance(data.get("settings"), dict) else data
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    for k, v in settings_map.items():
+                        v_str = json.dumps(v) if not isinstance(v, str) else v
+                        cat = "company" if "company" in k else "security" if "pin" in k or "sec" in k else "general"
+                        db.execute("""
+                            INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                            VALUES (?, ?, ?, ?)
+                        """, (k, v_str, cat, now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Settings saved successfully"})
+                return
+
+            if path in ("/api/dev/data/save", "/api/dev/tasks/save"):
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    tasks = data.get("tasks") or []
+                    for t in tasks:
+                        tid = t.get("id") or ("TASK-" + str(int(time.time() * 1000)))
+                        db.execute("""
+                            INSERT OR REPLACE INTO dev_tasks (id, title, description, category, priority, status, assignee_id, assignee_name, dev_notes, branch_name, pr_link, due_date, created_by_id, created_by_name, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            tid,
+                            t.get("title", ""),
+                            t.get("description", "") or t.get("dev_notes", ""),
+                            t.get("category", "Bug"),
+                            t.get("priority", "High"),
+                            t.get("status", "todo"),
+                            t.get("assignee_id", "") or t.get("assignee", ""),
+                            t.get("assignee_name", "") or t.get("assigneeName", ""),
+                            t.get("dev_notes", ""),
+                            t.get("branch", "") or t.get("branch_name", ""),
+                            t.get("pr_link", "") or t.get("prLink", ""),
+                            t.get("due_date", ""),
+                            t.get("created_by_id", ""),
+                            t.get("created_by_name", ""),
+                            t.get("created_at") or now_str,
+                            t.get("updated_at") or now_str
+                        ))
+                    
+                    meta = {
+                        "sprints": data.get("sprints", []),
+                        "prs": data.get("prs", []),
+                        "escalations": data.get("escalations", []),
+                        "docs": data.get("docs", [])
+                    }
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('dev_metadata', ?, 'development', ?)
+                    """, (json.dumps(meta), now_str))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Dev data synchronized successfully"})
+                return
+
+            if path == "/api/sales/data/save":
+                now_str = now_iso()
+                meta = {
+                    "leads": data.get("leads", []),
+                    "targets": data.get("targets", []),
+                    "escalations": data.get("escalations", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('sales_metadata', ?, 'sales', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Sales data synchronized successfully"})
+                return
+
+            if path == "/api/support/data/save":
+                now_str = now_iso()
+                meta = {
+                    "tickets": data.get("tickets", []),
+                    "calls": data.get("calls", []),
+                    "kb": data.get("kb", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('support_metadata', ?, 'support', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Support data synchronized successfully"})
                 return
 
             if path == "/api/test-email":

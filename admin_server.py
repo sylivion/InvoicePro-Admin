@@ -155,6 +155,45 @@ class PGDatabaseWrapper:
         return sql.replace('?', '%s')
 
 
+class SQLiteDatabaseWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+    def execute(self, sql, params=None):
+        if params is not None:
+            return self.conn.execute(sql, params)
+        return self.conn.execute(sql)
+    def executemany(self, sql, params_list):
+        return self.conn.executemany(sql, params_list)
+    def executescript(self, sql):
+        return self.conn.executescript(sql)
+    def cursor(self):
+        return self.conn.cursor()
+    def commit(self):
+        try:
+            self.conn.commit()
+        except Exception:
+            pass
+    def rollback(self):
+        try:
+            self.conn.rollback()
+        except Exception:
+            pass
+    def close(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass
+    @property
+    def row_factory(self):
+        return self.conn.row_factory
+    @row_factory.setter
+    def row_factory(self, val):
+        self.conn.row_factory = val
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
     if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
@@ -167,16 +206,17 @@ def get_db():
         except Exception as e:
             print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
 
-    conn = sqlite3.connect(DB_PATH, timeout=60.0, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=60000")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA wal_autocheckpoint=100")
     except Exception:
         pass
-    return conn
+    return SQLiteDatabaseWrapper(conn)
 
 
 def init_db():

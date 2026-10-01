@@ -1376,7 +1376,7 @@
             class="bg-white/10 border border-white/15 backdrop-blur-sm rounded-lg p-3.5 cursor-pointer hover:bg-white/20 transition-all"
             @click="navigate('revenue')">
             <div class="text-brand-200 text-xs font-semibold mb-1">Total Revenue</div>
-            <div class="text-white text-2xl font-semibold" x-text="'₹'+totalRevenue.toLocaleString('en-IN')"></div>
+            <div class="text-white text-2xl font-semibold" x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></div>
             <div class="text-brand-300 text-xs mt-0.5" x-text="stats.licensed + ' licenses sold'"></div>
           </div>
           <div
@@ -1517,7 +1517,7 @@
                   class="fa-solid fa-chart-line text-blue-600 text-xs"></i></div><span
                 class="text-xs text-gray-400 font-medium">Monthly</span>
             </div>
-            <div class="text-xl font-semibold text-blue-600" x-text="'₹'+mrr.toLocaleString('en-IN')"></div>
+            <div class="text-xl font-semibold text-blue-600" x-text=\"fmtCurrency(mrr.toLocaleString('en-IN'))\"></div>
             <div class="text-xs text-gray-400 mt-0.5">MRR (Monthly Recurring)</div>
           </div>
           <div
@@ -1527,7 +1527,7 @@
                   class="fa-solid fa-coins text-green-500 text-xs"></i></div><span
                 class="text-xs text-gray-400 font-medium">Annual</span>
             </div>
-            <div class="text-xl font-semibold text-green-600" x-text="'₹'+arr.toLocaleString('en-IN')"></div>
+            <div class="text-xl font-semibold text-green-600" x-text=\"fmtCurrency(arr.toLocaleString('en-IN'))\"></div>
             <div class="text-xs text-gray-400 mt-0.5">ARR (Annual Recurring)</div>
           </div>
           <div class="dash-anim-8 rounded-lg p-4 border"
@@ -1549,7 +1549,7 @@
               <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center"><i
                   class="fa-solid fa-gem text-purple-500 text-xs"></i></div>
             </div>
-            <div class="text-xl font-semibold text-purple-600" x-text="'₹'+avgLtv.toLocaleString('en-IN')"></div>
+            <div class="text-xl font-semibold text-purple-600" x-text=\"fmtCurrency(avgLtv.toLocaleString('en-IN'))\"></div>
             <div class="text-xs text-gray-400 mt-0.5">Avg Customer LTV</div>
           </div>
         </div>
@@ -1565,7 +1565,7 @@
               <span class="text-xs font-semibold text-gray-500">This Month</span>
             </div>
             <div class="text-xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text="'₹'+revenueTrend.thisMonth.toLocaleString('en-IN')"></div>
+              x-text=\"fmtCurrency(revenueTrend.thisMonth.toLocaleString('en-IN'))\"></div>
             <div class="flex items-center gap-1.5 mt-0.5">
               <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
@@ -1618,7 +1618,7 @@
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-xl font-semibold text-amber-600" x-text="'₹'+bestMonth.amount.toLocaleString('en-IN')">
+                <div class="text-xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount.toLocaleString('en-IN'))\">
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5" x-text="bestMonth.label"></div>
               </div>
@@ -1634,7 +1634,7 @@
                   class="fa-solid fa-binoculars text-blue-600 text-xs"></i></div>
               <span class="text-xs font-semibold text-gray-500">90-Day Forecast</span>
             </div>
-            <div class="text-xl font-semibold text-blue-600" x-text="'₹'+revenueForecast.total.toLocaleString('en-IN')">
+            <div class="text-xl font-semibold text-blue-600" x-text=\"fmtCurrency(revenueForecast.total.toLocaleString('en-IN'))\">
             </div>
             <div class="text-xs text-gray-400 mt-0.5" x-text="revenueForecast.upcoming.length + ' renewals due'"></div>
           </div>
@@ -1666,7 +1666,7 @@
                   class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span>License Sales</span>
               <div class="ml-auto">
                 <span class="text-xs text-gray-400">Total: </span>
-                <span class="text-xs font-bold text-green-600" x-text="'₹'+totalRevenue.toLocaleString('en-IN')"></span>
+                <span class="text-xs font-bold text-green-600" x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></span>
               </div>
             </div>
             <div class="px-4 pb-5" style="height:220px">
@@ -3457,11 +3457,11 @@
       <div class="space-y-5">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-white rounded-xl p-5 border border-slate-200 col-span-2">
-            <div class="text-3xl font-semibold text-green-600" x-text="'₹' + totalRevenue.toLocaleString('en-IN')"></div>
+            <div class="text-3xl font-semibold text-green-600" x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></div>
             <div class="text-sm text-gray-400 mt-1">Total Revenue Earned</div>
           </div>
           <div class="bg-white rounded-xl p-5 border border-slate-200 col-span-2">
-            <div class="text-2xl font-semibold text-blue-600" x-text="'₹' + licenseRevenue.toLocaleString('en-IN')"></div>
+            <div class="text-2xl font-semibold text-blue-600" x-text=\"fmtCurrency(licenseRevenue.toLocaleString('en-IN'))\"></div>
             <div class="text-xs text-gray-400 mt-1">License Sales</div>
           </div>
         </div>
@@ -3476,7 +3476,7 @@
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-2xl font-semibold text-amber-600" x-text="'₹'+bestMonth.amount.toLocaleString('en-IN')">
+                <div class="text-2xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount.toLocaleString('en-IN'))\">
                 </div>
                 <div class="text-xs text-gray-400 mt-1" x-text="bestMonth.label"></div>
               </div>
@@ -3492,7 +3492,7 @@
               <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">This Month</span>
             </div>
             <div class="text-2xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text="'₹'+revenueTrend.thisMonth.toLocaleString('en-IN')"></div>
+              x-text=\"fmtCurrency(revenueTrend.thisMonth.toLocaleString('en-IN'))\"></div>
             <div class="flex items-center gap-1.5 mt-1">
               <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
@@ -3507,7 +3507,7 @@
                   class="fa-solid fa-binoculars text-blue-600 text-sm"></i></div>
               <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">90-Day Forecast</span>
             </div>
-            <div class="text-2xl font-semibold text-blue-600" x-text="'₹'+revenueForecast.total.toLocaleString('en-IN')">
+            <div class="text-2xl font-semibold text-blue-600" x-text=\"fmtCurrency(revenueForecast.total.toLocaleString('en-IN'))\">
             </div>
             <div class="text-xs text-gray-400 mt-1" x-text="revenueForecast.upcoming.length+' renewals expected'"></div>
             <div x-show="revenueForecast.upcoming.length>0" class="mt-2 space-y-1">
@@ -3545,17 +3545,17 @@
                   <td class="px-4 py-2.5 text-right text-green-600 font-semibold"
                     x-text="c.purchaseAmount?'₹'+c.purchaseAmount:'—'"></td>
                   <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-gray-200"
-                    x-text="'₹'+(c._total).toLocaleString('en-IN')"></td>
+                    x-text=\"fmtCurrency(c._total)\"></td>
                 </tr>
               </template>
             </tbody>
             <tfoot class="bg-slate-50 dark:bg-gray-800 font-bold">
               <tr>
                 <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Total</td>
-                <td class="px-4 py-2.5 text-right text-green-600" x-text="'₹'+licenseRevenue.toLocaleString('en-IN')">
+                <td class="px-4 py-2.5 text-right text-green-600" x-text=\"fmtCurrency(licenseRevenue.toLocaleString('en-IN'))\">
                 </td>
                 <td class="px-4 py-2.5 text-right text-gray-900 dark:text-white"
-                  x-text="'₹'+totalRevenue.toLocaleString('en-IN')"></td>
+                  x-text=\"fmtCurrency(totalRevenue.toLocaleString('en-IN'))\"></td>
               </tr>
             </tfoot>
           </table>
@@ -3584,7 +3584,7 @@
                   <td class="px-4 py-2.5 font-semibold text-gray-700 dark:text-gray-300" x-text="row.city"></td>
                   <td class="px-4 py-2.5 text-center text-gray-500" x-text="row.count"></td>
                   <td class="px-4 py-2.5 text-right text-green-600 font-semibold"
-                    x-text="'₹'+row.revenue.toLocaleString('en-IN')"></td>
+                    x-text=\"fmtCurrency(row.revenue.toLocaleString('en-IN'))\"></td>
                   <td class="px-4 py-2.5 text-right text-gray-400"
                     x-text="totalRevenue?Math.round(row.revenue/totalRevenue*100)+'%':'0%'"></td>
                 </tr>
@@ -4487,7 +4487,7 @@
                     <!-- 1 Month Plan -->
                     <td class="py-3 px-3 text-center">
                       <div class="font-bold text-gray-900 dark:text-white" x-text="rep.count1m + ' Deals'"></div>
-                      <div class="text-[10px] text-gray-400 font-mono" x-text="'₹' + rep.rev1m.toLocaleString('en-IN')"></div>
+                      <div class="text-[10px] text-gray-400 font-mono" x-text=\"fmtCurrency(rep.rev1m.toLocaleString('en-IN'))\"></div>
                     </td>
 
                     <!-- 1 Year Plan (Target: 15) -->
@@ -9492,7 +9492,7 @@
                       <td class="p-3 font-bold text-gray-900 dark:text-white" x-text="exp.title"></td>
                       <td class="p-3 text-gray-600 dark:text-gray-300" x-text="exp.employee"></td>
                       <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-800" x-text="exp.department"></span></td>
-                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text="'₹' + exp.amount.toLocaleString('en-IN')"></td>
+                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text=\"fmtCurrency(exp.amount.toLocaleString('en-IN'))\"></td>
                       <td class="p-3 text-gray-400" x-text="exp.date"></td>
                       <td class="p-3">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold"
@@ -10572,7 +10572,7 @@
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap">
                     <span
-                      class="font-mono text-xs font-bold text-blue-600 dark:text-brand-400 bg-blue-50 dark:bg-brand-950 px-2 py-0.5 rounded whitespace-nowrap"
+                      class="font-mono text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded whitespace-nowrap"
                       x-text="emp.empId"></span>
                   </td>
                   <td class="px-4 py-3">
@@ -10590,16 +10590,16 @@
                       x-text="empTotalSales(emp)"></span>
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <span class="text-sm font-bold text-blue-600 dark:text-brand-400"
-                      x-text="'₹' + empTotalCommission(emp)"></span>
+                    <span class="text-sm font-semibold font-mono text-blue-600"
+                      x-text="fmtCurrency(empTotalCommission(emp))"></span>
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <span class="text-sm font-bold text-green-600 dark:text-green-400"
-                      x-text="'₹' + empTotalPaid(emp)"></span>
+                    <span class="text-sm font-semibold font-mono text-emerald-600"
+                      x-text="fmtCurrency(empTotalPaid(emp))"></span>
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <span class="text-sm font-bold" :class="empBalance(emp)>0?'text-red-500':'text-gray-400'"
-                      x-text="'₹' + empBalance(emp)"></span>
+                    <span class="text-sm font-semibold font-mono" :class="empBalance(emp)>0?'text-rose-600':'text-slate-500'"
+                      x-text="fmtCurrency(empBalance(emp))"></span>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-1" @click.stop>
@@ -10659,12 +10659,12 @@
                 </td>
                 <td class="px-4 py-2.5 text-center text-gray-700 dark:text-gray-300"
                   x-text="employees.reduce((s,e)=>s+(e.sales||[]).length,0)"></td>
-                <td class="px-4 py-2.5 text-right text-blue-600"
-                  x-text="'₹'+employees.reduce((s,e)=>s+empTotalCommission(e),0)"></td>
-                <td class="px-4 py-2.5 text-right text-green-600"
-                  x-text="'₹'+employees.reduce((s,e)=>s+empTotalPaid(e),0)"></td>
-                <td class="px-4 py-2.5 text-right text-red-500" x-text="'₹'+employees.reduce((s,e)=>s+empBalance(e),0)">
-                </td>
+                <td class="px-4 py-2.5 text-right font-mono font-semibold text-blue-600"
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalCommission(e),0))"></td>
+                <td class="px-4 py-2.5 text-right font-mono font-semibold text-emerald-600"
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0))"></td>
+                <td class="px-4 py-2.5 text-right font-mono font-semibold text-rose-600"
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empBalance(e),0))"></td>
                 <td></td>
               </tr>
             </tfoot>
@@ -13595,7 +13595,7 @@
                   <div class="flex justify-between py-1.5 border-b border-slate-200/60 dark:border-gray-700/60 font-bold bg-white/70 dark:bg-gray-800/80 px-2 rounded-lg">
                     <span class="text-gray-800 dark:text-gray-200">Net Base Salary:</span>
                     <span class="font-mono font-semibold text-teal-600 dark:text-teal-400"
-                      x-text="'₹' + selectedSalesSalaryData.netBaseSalary.toLocaleString('en-IN')"></span>
+                      x-text=\"fmtCurrency(selectedSalesSalaryData.netBaseSalary.toLocaleString('en-IN'))\"></span>
                   </div>
 
                   <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-gray-700/60">
@@ -13607,7 +13607,7 @@
                   <div class="flex justify-between pt-2 text-sm font-semibold bg-gradient-to-r from-teal-500/10 to-transparent p-2.5 rounded-xl">
                     <span class="text-gray-900 dark:text-white">Total Gross Payout (Salary + Incentive):</span>
                     <span class="font-mono text-base text-blue-600 dark:text-brand-400"
-                      x-text="'₹' + selectedSalesSalaryData.totalGrossPay.toLocaleString('en-IN')"></span>
+                      x-text=\"fmtCurrency(selectedSalesSalaryData.totalGrossPay.toLocaleString('en-IN'))\"></span>
                   </div>
                 </div>
               </div>
@@ -33584,7 +33584,29 @@ get remindersCount() {
           };
         },
 
-        fmtDate(d) {
+            fmtCurrency(val) {
+      if (val === null || val === undefined || isNaN(val) || val === '') return '₹0';
+      const n = Number(val);
+      return '₹' + n.toLocaleString('en-IN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    },
+
+    fmtMoney(val) {
+      return this.fmtCurrency(val);
+    },
+
+    fmtNumber(val) {
+      if (val === null || val === undefined || isNaN(val) || val === '') return '0';
+      const n = Number(val);
+      return n.toLocaleString('en-IN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    },
+
+    fmtDate(d) {
           if (!d) return '—';
           try {
             const s = String(d);

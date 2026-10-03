@@ -1386,7 +1386,7 @@
             class="bg-white/10 border border-white/15 backdrop-blur-sm rounded-2xl p-3.5 cursor-pointer hover:bg-white/20 transition-all"
             @click="navigate('revenue')">
             <div class="text-brand-200 text-xs font-semibold mb-1">Total Revenue</div>
-            <div class="text-white text-2xl font-semibold" x-text=\"fmtCurrency(totalRevenue)\"></div>
+            <div class="text-white text-2xl font-semibold" x-text="fmtCurrency(totalRevenue)"></div>
             <div class="text-brand-300 text-xs mt-0.5" x-text="stats.licensed + ' licenses sold'"></div>
           </div>
           <div
@@ -1536,7 +1536,7 @@
                   class="fa-solid fa-coins text-green-500 text-xs"></i></div><span
                 class="text-xs text-gray-400 font-medium">Annual</span>
             </div>
-            <div class="text-xl font-semibold text-green-600" x-text=\"fmtCurrency(arr)\"></div>
+            <div class="text-xl font-semibold text-green-600" x-text="fmtCurrency(arr)"></div>
             <div class="text-xs text-gray-400 mt-0.5">ARR (Annual Recurring)</div>
           </div>
           <div class="dash-anim-8 rounded-2xl p-4 border"
@@ -1558,7 +1558,7 @@
               <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center"><i
                   class="fa-solid fa-gem text-purple-500 text-xs"></i></div>
             </div>
-            <div class="text-xl font-semibold text-purple-600" x-text=\"fmtCurrency(avgLtv)\"></div>
+            <div class="text-xl font-semibold text-purple-600" x-text="fmtCurrency(avgLtv)"></div>
             <div class="text-xs text-gray-400 mt-0.5">Avg Customer LTV</div>
           </div>
         </div>
@@ -1574,7 +1574,7 @@
               <span class="text-xs font-semibold text-gray-500">This Month</span>
             </div>
             <div class="text-xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text=\"fmtCurrency(revenueTrend.thisMonth)\"></div>
+              x-text="fmtCurrency(revenueTrend.thisMonth)"></div>
             <div class="flex items-center gap-1.5 mt-0.5">
               <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
@@ -1627,7 +1627,7 @@
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount)\">
+                <div class="text-xl font-semibold text-amber-600" x-text="fmtCurrency(bestMonth.amount)">
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5" x-text="bestMonth.label"></div>
               </div>
@@ -1674,7 +1674,7 @@
                   class="w-2.5 h-2.5 rounded-sm bg-brand-500 inline-block"></span>License Sales</span>
               <div class="ml-auto">
                 <span class="text-xs text-gray-400">Total: </span>
-                <span class="text-xs font-bold text-green-600" x-text=\"fmtCurrency(totalRevenue)\"></span>
+                <span class="text-xs font-bold text-green-600" x-text="fmtCurrency(totalRevenue)"></span>
               </div>
             </div>
             <div class="px-4 pb-5" style="height:220px">
@@ -3461,143 +3461,229 @@
     </main>
 
     <!-- ══ REVENUE ══ -->
-    <main class="flex-1 overflow-y-auto p-6" x-show="view==='revenue' && canAccess('revenue')" x-cloak>
-      <div class="space-y-5">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 col-span-2">
-            <div class="text-3xl font-semibold text-green-600" x-text="fmtCurrency(totalRevenue)"></div>
-            <div class="text-sm text-gray-400 mt-1">Total Revenue Earned</div>
+        <main class="flex-1 overflow-y-auto p-6" x-show="view==='revenue' && canAccess('revenue')" x-cloak>
+      <div class="space-y-6">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-xs flex-shrink-0">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Financial Revenue &amp; Analytics</h1>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Track software license earnings, performance trends, renewal forecasts, and city distribution</p>
+            </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 col-span-2">
-            <div class="text-2xl font-semibold text-brand-600" x-text="fmtCurrency(licenseRevenue)"></div>            <div class="text-xs text-gray-400 mt-1">License Sales</div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-xs">
+              <i class="fa-regular fa-calendar text-emerald-500"></i>
+              <span x-text="'Updated: ' + new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })"></span>
+            </span>
           </div>
         </div>
 
-        <!-- Best Month + Forecast + Trend row -->
+        <!-- ══ TOP ROW KPI CARDS ══ -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Total Revenue Card -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs col-span-2 relative overflow-hidden">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Revenue Earned</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+              </div>
+            </div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono tracking-tight" x-text="fmtCurrency(totalRevenue)"></div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+              <span>Cumulative Lifetime Revenue</span>
+              <span>•</span>
+              <span class="font-semibold text-slate-700 dark:text-slate-300" x-text="(filteredCustomers || []).length + ' Customers Closed'"></span>
+            </div>
+          </div>
+
+          <!-- License Sales -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs col-span-2">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">License Sales Revenue</span>
+              <div class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-receipt"></i>
+              </div>
+            </div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-brand-600 dark:text-brand-400 font-mono tracking-tight" x-text="fmtCurrency(licenseRevenue)"></div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct software package purchases</div>
+          </div>
+        </div>
+
+        <!-- ══ PERFORMANCE TRENDS ROW (Best Month, This Month, 90-Day Forecast) ══ -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800">
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center"><i
-                  class="fa-solid fa-trophy text-amber-500 text-sm"></i></div>
-              <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Best Month Ever</span>
+          <!-- Best Month Ever -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/70 border border-amber-200/60 dark:border-amber-800/50 flex items-center justify-center text-amber-500 text-sm">
+                  <i class="fa-solid fa-trophy"></i>
+                </div>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Best Month Ever</span>
+              </div>
             </div>
             <template x-if="bestMonth">
               <div>
-                <div class="text-2xl font-semibold text-amber-600" x-text=\"fmtCurrency(bestMonth.amount)\">
+                <div class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 font-mono" x-text="fmtCurrency(bestMonth.amount)"></div>
+                <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                  <i class="fa-regular fa-calendar-check text-amber-500"></i>
+                  <span x-text="bestMonth.label"></span>
                 </div>
-                <div class="text-xs text-gray-400 mt-1" x-text="bestMonth.label"></div>
               </div>
             </template>
             <template x-if="!bestMonth">
-              <div class="text-sm text-gray-400">No sales yet</div>
+              <div class="text-sm text-slate-400 font-medium py-2">No sales recorded yet</div>
             </template>
           </div>
-          <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800">
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-8 h-8 rounded-xl bg-green-50 dark:bg-green-950 flex items-center justify-center"><i
-                  class="fa-solid fa-arrow-trend-up text-green-500 text-sm"></i></div>
-              <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">This Month</span>
+
+          <!-- This Month Performance -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/50 flex items-center justify-center text-emerald-500 text-sm">
+                  <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">This Month</span>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-gray-800 dark:text-gray-200"
-              x-text=\"fmtCurrency(revenueTrend.thisMonth)\"></div>
-            <div class="flex items-center gap-1.5 mt-1">
-              <span class="text-xs font-bold px-1.5 py-0.5 rounded-full"
-                :class="revenueTrend.up?'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300':'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
-                x-text="(revenueTrend.up?'▲ +':'▼ ')+Math.abs(revenueTrend.pct)+'%'"></span>
-              <span class="text-xs text-gray-400"
-                x-text="'vs ₹'+revenueTrend.lastMonth.toLocaleString('en-IN')+' last month'"></span>
+            <div class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono" x-text="fmtCurrency(revenueTrend.thisMonth)"></div>
+            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                :class="revenueTrend.up ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border border-red-200 dark:border-red-800'"
+                x-text="(revenueTrend.up ? '▲ +' : '▼ ') + Math.abs(revenueTrend.pct) + '%'"></span>
+              <span class="text-xs text-slate-500 dark:text-slate-400"
+                x-text="'vs ₹' + revenueTrend.lastMonth.toLocaleString('en-IN') + ' last month'"></span>
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800">
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950 flex items-center justify-center"><i
-                  class="fa-solid fa-binoculars text-brand-500 text-sm"></i></div>
-              <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">90-Day Forecast</span>
+
+          <!-- 90-Day Forecast -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/60 dark:border-indigo-800/50 flex items-center justify-center text-indigo-500 text-sm">
+                  <i class="fa-solid fa-binoculars"></i>
+                </div>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">90-Day Renewal Forecast</span>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-brand-600" x-text="fmtCurrency(revenueForecast.total)">            </div>
-            <div class="text-xs text-gray-400 mt-1" x-text="revenueForecast.upcoming.length+' renewals expected'"></div>
-            <div x-show="revenueForecast.upcoming.length>0" class="mt-2 space-y-1">
+            <div class="text-2xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400 font-mono" x-text="fmtCurrency(revenueForecast.total)"></div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="revenueForecast.upcoming.length + ' upcoming renewals expected'"></div>
+            <div x-show="revenueForecast.upcoming.length > 0" class="mt-2.5 space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-2">
               <template x-for="r in revenueForecast.upcoming.slice(0,3)" :key="r.name">
-                <div class="flex justify-between text-xs">
-                  <span class="text-gray-600 dark:text-gray-400 truncate max-w-[120px]" x-text="r.name"></span>
-                  <span class="text-brand-600 font-semibold" x-text="fmtCurrency(r.amount) + ' (' + r.days + 'd)'"></span>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[130px]" x-text="r.name"></span>
+                  <span class="text-indigo-600 dark:text-indigo-400 font-mono font-bold" x-text="fmtCurrency(r.amount) + ' (' + r.days + 'd)'"></span>
                 </div>
               </template>
             </div>
           </div>
         </div>
 
-        <div
-          class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto">
-          <div class="px-5 py-4 border-b border-gray-50 dark:border-gray-800">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">All Customers — Revenue</h3>
+        <!-- ══ ALL CUSTOMERS REVENUE LEDGER ══ -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+              <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">All Customers — Revenue Breakdown</h3>
+            </div>
+            <span class="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400"
+              x-text="(revenueRows || []).length + ' Customer Records'"></span>
           </div>
-          <div x-show="customers.length===0" class="text-center py-8 text-gray-400 text-sm">No customers yet.</div>
-          <table x-show="customers.length>0" class="w-full text-xs">
-            <thead class="bg-gray-50 dark:bg-gray-800 text-gray-400 uppercase tracking-wide">
-              <tr>
-                <th class="text-left px-4 py-2.5">Customer</th>
-                <th class="text-right px-4 py-2.5">License Amount</th>
-                <th class="text-right px-4 py-2.5">Total</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-              <template x-for="c in revenueRows" :key="c.id">
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td class="px-4 py-2.5">
-                    <div class="font-semibold text-gray-700 dark:text-gray-300" x-text="c.name"></div>
-                    <div class="text-gray-400" x-text="fmtDate(c.purchaseDate)"></div>
-                  </td>
-                  <td class="px-4 py-2.5 text-right text-green-600 font-semibold"
-                    x-text="c.purchaseAmount?'₹'+c.purchaseAmount:'—'"></td>
-                  <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-gray-200"
-                    x-text=\"fmtCurrency(c._total)\"></td>
+
+          <div x-show="customers.length===0" class="text-center py-12 text-slate-400 text-sm">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300 dark:text-slate-700"></i>
+            No customer revenue records found.
+          </div>
+
+          <div x-show="customers.length>0" class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
+                <tr>
+                  <th class="text-left px-4 py-3.5 whitespace-nowrap">Customer</th>
+                  <th class="text-left px-4 py-3.5 whitespace-nowrap">Purchase Date</th>
+                  <th class="text-right px-4 py-3.5 whitespace-nowrap">License Amount</th>
+                  <th class="text-right px-4 py-3.5 whitespace-nowrap">Total Contributed</th>
                 </tr>
-              </template>
-            </tbody>
-            <tfoot class="bg-gray-50 dark:bg-gray-800 font-bold">
-              <tr>
-                <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Total</td>
-                <td class="px-4 py-2.5 text-right text-green-600" x-text=\"fmtCurrency(licenseRevenue)\">
-                </td>
-                <td class="px-4 py-2.5 text-right text-gray-900 dark:text-white"
-                  x-text=\"fmtCurrency(totalRevenue)\"></td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <template x-for="c in revenueRows" :key="c.id">
+                  <tr @click="openDetail(c.id)" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+                    <td class="px-4 py-3.5">
+                      <div class="font-bold text-slate-900 dark:text-white text-sm sm:text-[15px]" x-text="c.name"></div>
+                      <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span x-show="c.city" x-text="c.city"></span>
+                        <span x-show="c.planLabel" class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" x-text="c.planLabel"></span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3.5 text-xs font-mono text-slate-600 dark:text-slate-400" x-text="fmtDate(c.purchaseDate)"></td>
+                    <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm sm:text-[14px]"
+                      x-text="c.purchaseAmount ? '₹' + Number(c.purchaseAmount).toLocaleString('en-IN') : '—'"></td>
+                    <td class="px-4 py-3.5 text-right font-mono font-bold text-slate-900 dark:text-white text-sm sm:text-[15px]"
+                      x-text="fmtCurrency(c._total || c.purchaseAmount || 0)"></td>
+                  </tr>
+                </template>
+              </tbody>
+              <tfoot class="bg-slate-50/90 dark:bg-slate-800/90 font-bold border-t-2 border-slate-200 dark:border-slate-700">
+                <tr>
+                  <td colspan="2" class="px-4 py-3 text-slate-700 dark:text-slate-200 text-xs uppercase tracking-wider">Total Revenue</td>
+                  <td class="px-4 py-3 text-right text-emerald-600 font-mono text-sm sm:text-[15px]" x-text="fmtCurrency(licenseRevenue)"></td>
+                  <td class="px-4 py-3 text-right text-slate-900 dark:text-white font-mono text-sm sm:text-[15px]" x-text="fmtCurrency(totalRevenue)"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
-        <!-- City Analytics -->
-        <div
-          class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto"
+        <!-- ══ CITY ANALYTICS TABLE ══ -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden"
           x-show="cityAnalytics.length>0">
-          <div class="px-5 py-4 border-b border-gray-50 dark:border-gray-800">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300"><i
-                class="fa-solid fa-map-location-dot text-brand-500 mr-1.5"></i> Revenue by City</h3>
+          <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-brand-500"></i>
+              <span>Revenue Distribution by City</span>
+            </h3>
+            <span class="text-xs font-mono text-slate-400" x-text="cityAnalytics.length + ' Cities'"></span>
           </div>
-          <table class="w-full text-xs">
-            <thead class="bg-gray-50 dark:bg-gray-800 text-gray-400 uppercase tracking-wide">
-              <tr>
-                <th class="text-left px-4 py-2.5">City</th>
-                <th class="text-center px-4 py-2.5">Customers</th>
-                <th class="text-right px-4 py-2.5">Revenue</th>
-                <th class="text-right px-4 py-2.5">Share</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-              <template x-for="row in cityAnalytics" :key="row.city">
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td class="px-4 py-2.5 font-semibold text-gray-700 dark:text-gray-300" x-text="row.city"></td>
-                  <td class="px-4 py-2.5 text-center text-gray-500" x-text="row.count"></td>
-                  <td class="px-4 py-2.5 text-right text-green-600 font-semibold"
-                    x-text=\"fmtCurrency(row.revenue)\"></td>
-                  <td class="px-4 py-2.5 text-right text-gray-400"
-                    x-text="totalRevenue?Math.round(row.revenue/totalRevenue*100)+'%':'0%'"></td>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
+                <tr>
+                  <th class="text-left px-4 py-3.5 whitespace-nowrap">City / Region</th>
+                  <th class="text-center px-4 py-3.5 whitespace-nowrap">Customers</th>
+                  <th class="text-right px-4 py-3.5 whitespace-nowrap">Total Revenue</th>
+                  <th class="text-right px-4 py-3.5 whitespace-nowrap">Revenue Share</th>
                 </tr>
-              </template>
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <template x-for="row in cityAnalytics" :key="row.city">
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-3.5 font-bold text-slate-800 dark:text-slate-200 text-sm sm:text-[14px]">
+                      <span x-text="row.city || 'Unspecified'"></span>
+                    </td>
+                    <td class="px-4 py-3.5 text-center font-mono font-semibold text-slate-600 dark:text-slate-400" x-text="row.count"></td>
+                    <td class="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm sm:text-[14px]"
+                      x-text="fmtCurrency(row.revenue)"></td>
+                    <td class="px-4 py-3.5 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <div class="w-16 bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden hidden sm:block">
+                          <div class="bg-brand-500 h-2 rounded-full"
+                            :style="'width: ' + (totalRevenue ? Math.round(row.revenue/totalRevenue*100) : 0) + '%'"></div>
+                        </div>
+                        <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 min-w-[36px]"
+                          x-text="totalRevenue ? Math.round(row.revenue/totalRevenue*100) + '%' : '0%'"></span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </div>
     </main>
 
@@ -4493,7 +4579,7 @@
                     <!-- 1 Month Plan -->
                     <td class="py-3 px-3 text-center">
                       <div class="font-bold text-gray-900 dark:text-white" x-text="rep.count1m + ' Deals'"></div>
-                      <div class="text-[10px] text-gray-400 font-mono" x-text=\"fmtCurrency(rep.rev1m)\"></div>
+                      <div class="text-[10px] text-gray-400 font-mono" x-text="fmtCurrency(rep.rev1m)"></div>
                     </td>
 
                     <!-- 1 Year Plan (Target: 15) -->
@@ -9498,7 +9584,7 @@
                       <td class="p-3 font-bold text-gray-900 dark:text-white" x-text="exp.title"></td>
                       <td class="p-3 text-gray-600 dark:text-gray-300" x-text="exp.employee"></td>
                       <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-800" x-text="exp.department"></span></td>
-                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text=\"fmtCurrency(exp.amount)\"></td>
+                      <td class="p-3 font-bold text-emerald-600 text-sm" x-text="fmtCurrency(exp.amount)"></td>
                       <td class="p-3 text-gray-400" x-text="exp.date"></td>
                       <td class="p-3">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold"
@@ -10480,8 +10566,8 @@
         <!-- Header actions -->
         <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
-            <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200">Employee Management</h2>
-            <p class="text-xs text-gray-400 mt-0.5"
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Employee Management</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"
               x-text="employees.length + ' employee(s) · Incentive: 1Y ₹499 | 3Y ₹999 | 5Y ₹1,499 (Post-Target)'"></p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
@@ -10520,125 +10606,142 @@
           </div>
         </div>
 
-<!-- Employee table -->
-        <div
-          class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto">
-          <div x-show="employees.length===0" class="text-center py-12 text-sm text-gray-400">
-            <i class="fa-solid fa-user-tie text-3xl mb-2 block text-gray-300 dark:text-gray-700"></i>
+        <!-- Employees Table Container -->
+        <div class="my-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden overflow-x-auto">
+          <div x-show="employees.length===0" class="text-center py-12 text-sm text-slate-400">
+            <i class="fa-solid fa-user-tie text-3xl mb-2 block text-slate-300 dark:text-slate-700"></i>
             No employees added yet.<br />
-            <button @click="openAddEmployee()" class="text-brand-600 hover:underline text-xs mt-1">Add your first
-              employee →</button>
+            <button @click="openAddEmployee()" class="text-brand-600 hover:underline text-xs mt-1 font-bold">Add your first employee →</button>
           </div>
-          <table x-show="employees.length>0" class="w-full text-sm min-w-[1060px]">
-            <thead class="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <table x-show="employees.length>0" class="w-full text-sm border-collapse min-w-[1280px]">
+            <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
               <tr>
-                <th class="px-3 py-3 w-8">
-                  <input type="checkbox" class="rounded"
+                <th class="px-3 py-3.5 w-12 text-center whitespace-nowrap">
+                  <input type="checkbox" class="rounded cursor-pointer"
                     :checked="selectedEmps.length === filteredEmployees.length && filteredEmployees.length > 0"
                     :indeterminate="selectedEmps.length > 0 && selectedEmps.length < filteredEmployees.length"
                     @change="toggleSelectAllEmps($event.target.checked)" />
                 </th>
-                <th class="text-left px-4 py-3">EMP ID</th>
-                <th class="text-left px-4 py-3">Name</th>
-                <th class="text-left px-4 py-3">Mobile</th>
-                <th class="text-left px-4 py-3">Designation</th>
-                <th class="text-center px-4 py-3">Sales</th>
-                <th class="text-right px-4 py-3">Incentive</th>
-                <th class="text-right px-4 py-3">Paid</th>
-                <th class="text-right px-4 py-3">Balance</th>
-                <th class="text-left px-4 py-3">Actions</th>
+                <th class="text-left px-4 py-3.5 whitespace-nowrap min-w-[130px]">EMP ID</th>
+                <th class="text-left px-4 py-3.5 whitespace-nowrap min-w-[160px]">Name</th>
+                <th class="text-left px-4 py-3.5 whitespace-nowrap min-w-[130px]">Mobile</th>
+                <th class="text-left px-4 py-3.5 whitespace-nowrap min-w-[180px]">Designation / Dept</th>
+                <th class="text-center px-4 py-3.5 whitespace-nowrap min-w-[130px]">Sales</th>
+                <th class="text-right px-4 py-3.5 whitespace-nowrap min-w-[150px]">Incentive</th>
+                <th class="text-right px-4 py-3.5 whitespace-nowrap min-w-[140px]">Total Paid</th>
+                <th class="text-right px-4 py-3.5 whitespace-nowrap min-w-[140px]">Balance Due</th>
+                <th class="text-center px-4 py-3.5 whitespace-nowrap min-w-[200px]">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
               <template x-for="emp in filteredEmployees" :key="emp.id">
                 <tr @click="empInfoModalId=emp.id; showEmpInfoModal=true"
-                  class="hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
-                  :class="selectedEmps.includes(emp.id) ? 'bg-brand-100 dark:bg-brand-900' : ''">
-                  <td class="px-3 py-3" @click.stop>
-                    <input type="checkbox" class="rounded" :checked="selectedEmps.includes(emp.id)"
+                  class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                  :class="selectedEmps.includes(emp.id) ? 'bg-brand-50/80 dark:bg-brand-950/40' : ''">
+                  
+                  <!-- Checkbox -->
+                  <td class="px-3 py-3.5 text-center whitespace-nowrap" @click.stop>
+                    <input type="checkbox" class="rounded cursor-pointer" :checked="selectedEmps.includes(emp.id)"
                       @change="toggleEmpSelect(emp.id, $event.target.checked)" />
                   </td>
-                  <td class="px-4 py-3 whitespace-nowrap">
-                    <span
-                      class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded whitespace-nowrap"                      x-text="emp.empId"></span>
+
+                  <!-- EMP ID -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    <span class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-md border border-brand-200/60 dark:border-brand-800/60 whitespace-nowrap inline-block"
+                      x-text="emp.empId"></span>
                   </td>
-                  <td class="px-4 py-3">
-                    <div class="font-semibold text-gray-800 dark:text-gray-200" x-text="emp.name"></div>
-                    <div class="text-xs text-gray-400" x-text="emp.email || ''"></div>
+
+                  <!-- Name -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    <div class="font-bold text-slate-900 dark:text-white text-sm sm:text-[15px] leading-tight" x-text="emp.name"></div>
+                    <div class="text-xs text-slate-400 mt-0.5" x-text="emp.email || ''"></div>
                   </td>
-                  <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400" x-text="emp.mobile"></td>
-                  <td class="px-4 py-3">
-                    <div class="text-sm text-gray-600 dark:text-gray-400" x-text="emp.designation || '—'"></div>
-                    <div class="text-xs text-gray-400" x-text="emp.department || ''"></div>
+
+                  <!-- Mobile -->
+                  <td class="px-4 py-3.5 text-sm font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium" x-text="emp.mobile"></td>
+
+                  <!-- Designation / Dept -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight" x-text="emp.designation || '—'"></div>
+                    <div class="text-xs text-slate-400 mt-0.5" x-text="emp.department || ''"></div>
                   </td>
                   
-                  <td class="px-4 py-3 text-center">
+                  <!-- Sales -->
+                  <td class="px-4 py-3.5 text-center whitespace-nowrap">
                     <template x-if="isEmpSalesRole(emp)">
-                      <span class="text-sm font-bold text-gray-700 dark:text-gray-300"
-                        x-text="empTotalSales(emp)"></span>
+                      <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 whitespace-nowrap inline-block"
+                        x-text="empTotalSales(emp) + ' Deals'"></span>
                     </template>
                     <template x-if="!isEmpSalesRole(emp)">
-                      <span class="text-xs text-slate-400 font-medium bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded">Fixed Staff</span>
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 whitespace-nowrap">Fixed Staff</span>
                     </template>
                   </td>
-                  <td class="px-4 py-3 text-right">
+
+                  <!-- Incentive -->
+                  <td class="px-4 py-3.5 text-right whitespace-nowrap">
                     <template x-if="isEmpSalesRole(emp)">
-                      <span class="text-sm font-bold text-brand-600 dark:text-brand-400 font-mono"
+                      <span class="text-sm sm:text-[15px] font-bold text-brand-600 dark:text-brand-400 font-mono leading-tight whitespace-nowrap inline-block"
                         x-text="fmtCurrency(empTotalCommission(emp))"></span>
                     </template>
                     <template x-if="!isEmpSalesRole(emp)">
-                      <span class="text-xs text-slate-500 dark:text-slate-400 font-mono"
+                      <span class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-mono font-semibold whitespace-nowrap inline-block"
                         x-text="fmtCurrency(parseInt(emp.basicSalary) || 10000) + ' /mo'"></span>
                     </template>
                   </td>
-                  <td class="px-4 py-3 text-right">
-                    <span class="text-sm font-semibold font-mono text-emerald-600"
+
+                  <!-- Total Paid -->
+                  <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                    <span class="text-sm sm:text-[15px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-tight whitespace-nowrap inline-block"
                       x-text="fmtCurrency(empTotalPaid(emp))"></span>
                   </td>
-                  <td class="px-4 py-3 text-right">
-                    <span class="text-sm font-semibold font-mono" :class="empBalance(emp)>0?'text-rose-600':'text-slate-500'"
+
+                  <!-- Balance Due -->
+                  <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                    <span class="text-sm sm:text-[15px] font-bold font-mono leading-tight whitespace-nowrap inline-block" :class="empBalance(emp)>0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 font-medium'"
                       x-text="fmtCurrency(empBalance(emp))"></span>
                   </td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-1" @click.stop>
+
+                  <!-- Actions -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    <div class="flex items-center justify-center gap-1.5" @click.stop>
                       <button @click="openDirectSalaryPaymentModal(emp)"
-                        class="p-1.5 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors cursor-pointer"
                         title="Direct UPI Salary / Commission Payment">
                         <i class="fa-solid fa-bolt text-xs"></i>
                       </button>
                       <button x-show="['sales', 'sales_member', 'sales_leader'].includes((emp.role || '').toLowerCase()) || (emp.department || '').toLowerCase().includes('sales')"
                         @click="openSalesSalaryModal ? openSalesSalaryModal(emp) : openDirectSalaryPaymentModal(emp)"
-                        class="p-1.5 rounded text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors cursor-pointer"
                         title="Sales Salary & Quota Breakdown">
                         <i class="fa-solid fa-calculator text-xs"></i>
                       </button>
                       <button @click="openEmpDetail(emp.id)"
-                        class="p-1.5 rounded text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
                         title="View Sales & Payments">
                         <i class="fa-solid fa-eye text-xs"></i>
                       </button>
                       <button @click="empCardId=emp.id; showEmpCardModal=true"
-                        class="p-1.5 rounded text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
                         title="Employee Card">
                         <i class="fa-solid fa-id-card text-xs"></i>
                       </button>
                       <button @click="openEmpSaleModal(emp.id)"
-                        class="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950 transition-colors cursor-pointer"
                         title="Record Sale">
                         <i class="fa-solid fa-circle-plus text-xs"></i>
                       </button>
                       <button @click="openEmpPayModal(emp.id)"
-                        class="p-1.5 rounded text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors cursor-pointer"
                         title="Pay Incentive">
                         <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
                       </button>
                       <button @click="editEmployee(emp.id)"
-                        class="p-1.5 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         title="Edit">
                         <i class="fa-solid fa-pencil text-xs"></i>
                       </button>
                       <button @click="deleteEmployee(emp.id)"
-                        class="p-1.5 rounded text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors cursor-pointer"
+                        class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors cursor-pointer"
                         title="Delete">
                         <i class="fa-solid fa-trash text-xs"></i>
                       </button>
@@ -10648,20 +10751,20 @@
               </template>
             </tbody>
             <tfoot x-show="employees.length>1"
-              class="bg-gray-50 dark:bg-gray-800 font-bold text-xs border-t border-gray-100 dark:border-gray-700">
+              class="bg-slate-50/90 dark:bg-slate-800/90 font-bold text-xs sm:text-[13px] border-t-2 border-slate-200 dark:border-slate-700">
               <tr>
-                <td class="px-3 py-2.5"></td>
-                <td class="px-4 py-2.5 text-gray-500 dark:text-gray-400" colspan="4">
+                <td class="px-3 py-3.5"></td>
+                <td class="px-4 py-3.5 text-slate-600 dark:text-slate-300" colspan="4">
                   <span>Total (<span x-text="employees.length"></span> Staff Members)</span>
                 </td>
-                <td class="px-4 py-2.5 text-center text-gray-700 dark:text-gray-300"
-                  x-text="employees.reduce((s,e)=>s+empTotalSales(e),0)"></td>
-                <td class="px-4 py-2.5 text-right text-brand-600 font-mono"
+                <td class="px-4 py-3.5 text-center text-slate-800 dark:text-slate-200 font-mono whitespace-nowrap"
+                  x-text="employees.reduce((s,e)=>s+empTotalSales(e),0) + ' Deals'"></td>
+                <td class="px-4 py-3.5 text-right text-brand-600 dark:text-brand-400 font-mono text-sm sm:text-[15px] whitespace-nowrap"
                   x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalCommission(e),0))"></td>
-                <td class="px-4 py-2.5 text-right text-emerald-600 font-mono"
+                <td class="px-4 py-3.5 text-right text-emerald-600 dark:text-emerald-400 font-mono text-sm sm:text-[15px] whitespace-nowrap"
                   x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0))"></td>
-                <td class="px-4 py-2.5 text-right text-red-500 font-mono" x-text="fmtCurrency(employees.reduce((s,e)=>s+empBalance(e),0))">
-                </td>
+                <td class="px-4 py-3.5 text-right text-red-500 font-mono text-sm sm:text-[15px] whitespace-nowrap"
+                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empBalance(e),0))"></td>
                 <td></td>
               </tr>
             </tfoot>
@@ -10671,7 +10774,7 @@
     </main>
 
     <!-- ══ PAYROLL ══ -->
-    <main class="flex-1 overflow-y-auto p-6" x-show="view==='payroll' && canAccess('payroll')" x-cloak>
+        <main class="flex-1 overflow-y-auto p-6" x-show="view==='payroll' && canAccess('payroll')" x-cloak>
       <div>
         <!-- Header -->
         <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -10681,6 +10784,7 @@
             </div>
             <div>
               <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Payroll &amp; Salary Disbursement</h1>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Manage pending salary disbursements, run payroll payouts, and review past payment history</p>
             </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
@@ -10703,7 +10807,50 @@
           </div>
         </div>
 
-        <!-- No employees -->
+        <!-- ══ TWO CATEGORY SELECTOR TABS ══ -->
+        <div class="flex items-center justify-between gap-3 mb-5 border-b border-slate-200 dark:border-slate-800 pb-3 flex-wrap">
+          <div class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+            <!-- Run Payroll Tab (Pending Payments) -->
+            <button @click="payrollTab='run'"
+              :class="payrollTab==='run' ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs font-bold border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'"
+              class="px-4 py-2 rounded-lg text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-bolt-lightning text-xs" :class="payrollTab==='run' ? 'text-amber-500' : 'text-slate-400'"></i>
+              <span>Run Payroll</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                :class="employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0).length > 0 ? (payrollTab==='run' ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600') : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'"
+                x-text="employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0).length + ' Pending'"></span>
+            </button>
+
+            <!-- Salary History Tab (Paid Salaries) -->
+            <button @click="payrollTab='history'"
+              :class="payrollTab==='history' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'"
+              class="px-4 py-2 rounded-lg text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-clock-rotate-left text-xs" :class="payrollTab==='history' ? 'text-emerald-500' : 'text-slate-400'"></i>
+              <span>Salary History</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                :class="payrollTab==='history' ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'"
+                x-text="employees.filter(e => empTotalPaid(e) > 0).length + ' Paid'"></span>
+            </button>
+          </div>
+
+          <!-- Quick Context / Help Badge -->
+          <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <template x-if="payrollTab==='run'">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <span>Showing <strong>only unpaid balances</strong> ready for disbursement</span>
+              </span>
+            </template>
+            <template x-if="payrollTab==='history'">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <i class="fa-solid fa-circle-check text-xs"></i>
+                <span>Showing <strong>settled salaries &amp; disbursement logs</strong></span>
+              </span>
+            </template>
+          </div>
+        </div>
+
+        <!-- No employees at all in system -->
         <div x-show="employees.length===0"
           class="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <i class="fa-solid fa-money-check-dollar text-3xl mb-2 block text-gray-300 dark:text-gray-700"></i>
@@ -10711,400 +10858,654 @@
               class="text-brand-600 hover:underline font-bold">Add employees →</button></p>
         </div>
 
-        <!-- Summary cards (5 KPI Cards) -->
-        <div x-show="employees.length>0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-          <!-- Total Deals Made -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
-            <div class="flex items-center justify-between text-gray-400 mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Deals Completed</span>
-              <i class="fa-solid fa-receipt text-xs text-brand-500"></i>
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- CATEGORY 1: RUN PAYROLL (PENDING PAYMENTS ONLY)           -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <div x-show="payrollTab==='run' && employees.length > 0">
+          
+          <!-- Run Payroll Summary KPI Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+            <!-- Total Balance Due (Pending Payout) -->
+            <div class="rounded-2xl p-4 border shadow-xs"
+              :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900' : 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900'">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Pending Payout Due</span>
+                <i class="fa-solid fa-hand-holding-dollar text-xs" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-emerald-500'"></i>
+              </div>
+              <div class="text-2xl font-bold font-mono" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'"
+                x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0))"></div>
+              <div class="text-[11px] font-semibold mt-0.5" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-emerald-600'"
+                x-text="employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0).length + ' employees pending'"></div>
             </div>
-            <div class="text-2xl font-semibold text-brand-600 dark:text-brand-400"
-              x-text="employees.reduce((s,e)=>s+payrollSalesIn(e,payrollMonth),0)"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5" x-text="payrollMonth ? 'Sales in ' + payrollMonth : 'Total Recorded Sales'"></div>
+
+            <!-- Total Deals Made -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Deals Completed</span>
+                <i class="fa-solid fa-receipt text-xs text-brand-500"></i>
+              </div>
+              <div class="text-2xl font-semibold text-brand-600 dark:text-brand-400 font-mono"
+                x-text="employees.reduce((s,e)=>s+payrollSalesIn(e,payrollMonth),0)"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5" x-text="payrollMonth ? 'Sales in ' + payrollMonth : 'Total Recorded Sales'"></div>
+            </div>
+
+            <!-- Net Base Salary -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Net Base Salary</span>
+                <i class="fa-solid fa-calculator text-xs text-teal-500"></i>
+              </div>
+              <div class="text-2xl font-semibold text-teal-600 dark:text-teal-400 font-mono"
+                x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0))"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">₹15k Base (Deductions Applied)</div>
+            </div>
+
+            <!-- Qualified Incentives -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Total Incentive</span>
+                <i class="fa-solid fa-gift text-xs text-purple-500"></i>
+              </div>
+              <div class="text-2xl font-semibold text-purple-600 dark:text-purple-400 font-mono"
+                x-text="fmtCurrency(employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0))"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">Post-Target Unlocked Deals</div>
+            </div>
+
+            <!-- Total Gross Payable -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Total Payable</span>
+                <i class="fa-solid fa-money-bills text-xs text-indigo-500"></i>
+              </div>
+              <div class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 font-mono"
+                x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0))"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">Salary + Incentive Obligation</div>
+            </div>
           </div>
 
-          <!-- Total Net Base Salaries -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
-            <div class="flex items-center justify-between text-gray-400 mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Net Base Salary</span>
-              <i class="fa-solid fa-calculator text-xs text-teal-500"></i>
+          <!-- Pending Disbursements Table (Only Employees with Balance Due > 0) -->
+          <div x-show="employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0).length > 0"
+            class="my-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden overflow-x-auto">
+            <div class="px-4 py-3 bg-amber-50/60 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900/50 flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-amber-600 text-xs"></i>
+                <span class="text-xs sm:text-[13px] font-bold text-amber-900 dark:text-amber-200">Pending Salary Disbursements Queue</span>
+                <span class="text-xs text-amber-700/80 dark:text-amber-300/80 font-medium">Click "Pay" to disburse via UPI/QR code or manual entry</span>
+              </div>
+              <div class="text-xs font-mono font-bold text-amber-800 dark:text-amber-300"
+                x-text="'Total Due: ₹' + employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0).toLocaleString('en-IN')"></div>
             </div>
-            <div class="text-2xl font-semibold text-teal-600 dark:text-teal-400"
-              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0))"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5">₹15k Base (Deductions Applied)</div>
-          </div>
 
-          <!-- Qualified Incentives -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
-            <div class="flex items-center justify-between text-gray-400 mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Total Incentive</span>
-              <i class="fa-solid fa-gift text-xs text-purple-500"></i>
-            </div>
-            <div class="text-2xl font-semibold text-purple-600 dark:text-purple-400"
-              x-text="fmtCurrency(employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0))"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5">Post-Target Unlocked Deals</div>
-          </div>
+            <table class="w-full text-sm border-collapse">
+              <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
+                <tr>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Employee</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Sales (Breakdown)</th>
+                  <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Net Base Salary</th>
+                  <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Incentive</th>
+                  <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Total Payable</th>
+                  <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Total Paid</th>
+                  <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Balance Due</th>
+                  <th class="text-center px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <template x-for="emp in employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0)" :key="emp.id">
+                  <tr @click="empInfoModalId=emp.id; showEmpInfoModal=true"
+                    class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+                    
+                    <!-- Employee Info -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5">
+                      <div class="font-bold text-slate-900 dark:text-white text-sm sm:text-[15px] leading-tight" x-text="emp.name"></div>
+                      <div class="text-xs text-brand-600 dark:text-brand-400 font-mono font-bold leading-tight mt-1" x-text="emp.empId"></div>
+                      <div class="text-xs text-slate-500 dark:text-slate-400 leading-tight mt-0.5"
+                        x-text="[emp.designation, emp.department].filter(Boolean).join(' · ')"></div>
+                    </td>
 
-          <!-- Total Gross Payable -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
-            <div class="flex items-center justify-between text-gray-400 mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Total Payable</span>
-              <i class="fa-solid fa-money-bills text-xs text-indigo-500"></i>
-            </div>
-            <div class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400"
-              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0))"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5">Salary + Incentive</div>
-          </div>
+                    <!-- Sales Completed -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-left">
+                      <template x-if="isEmpSalesRole(emp)">
+                        <div>
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-semibold text-slate-900 dark:text-white font-mono"
+                              x-text="payrollSalesIn(emp, payrollMonth) + ' Deals'"></span>
+                            <template x-if="getEmpPlanBreakdown(emp, payrollMonth).hasSales">
+                              <div class="flex items-center gap-1.5 flex-wrap">
+                                <!-- 1Y Badge -->
+                                <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count1y > 0"
+                                  class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                                  x-text="'1Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count1y"></span>
+                                <!-- 3Y Badge -->
+                                <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count3y > 0"
+                                  class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                                  x-text="'3Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count3y"></span>
+                                <!-- 5Y Badge -->
+                                <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count5y > 0"
+                                  class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                  x-text="'5Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count5y"></span>
+                                <!-- VIP Badge -->
+                                <span x-show="getEmpPlanBreakdown(emp, payrollMonth).countVip > 0"
+                                  class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                                  x-text="'VIP: ' + getEmpPlanBreakdown(emp, payrollMonth).countVip"></span>
+                              </div>
+                            </template>
+                          </div>
+                          <div x-show="!getEmpPlanBreakdown(emp, payrollMonth).hasSales" class="text-xs text-slate-400 mt-1">
+                            No deals recorded
+                          </div>
+                        </div>
+                      </template>
+                      <template x-if="!isEmpSalesRole(emp)">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
+                          <i class="fa-solid fa-briefcase text-xs text-slate-400"></i>
+                          <span>Fixed Staff (<span x-text="emp.department || 'Operations'"></span>)</span>
+                        </div>
+                      </template>
+                    </td>
 
-          <!-- Total Balance Due -->
-          <div class="rounded-2xl p-4 border shadow-xs"
-            :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'bg-red-50/70 dark:bg-red-950/40 border-red-200 dark:border-red-900' : 'bg-green-50/70 dark:bg-green-950/40 border-green-200 dark:border-green-900'">
-            <div class="flex items-center justify-between text-gray-400 mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Balance Due</span>
-              <i class="fa-solid fa-hand-holding-dollar text-xs" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-green-500'"></i>
-            </div>
-            <div class="text-2xl font-semibold" :class="employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0) > 0 ? 'text-red-500' : 'text-green-600'"
-              x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0))"></div>
-            <div class="text-[11px] text-gray-500 mt-0.5" x-text="'₹' + employees.reduce((s,e)=>s+empTotalPaid(e),0).toLocaleString('en-IN') + ' paid to date'"></div>
-          </div>
-        </div>
-
-        <!-- Payroll Table -->
-        <div x-show="employees.length>0"
-          class="my-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden overflow-x-auto">
-          <table class="w-full text-xs border-collapse">
-            <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
-              <tr>
-                <th class="text-left px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Employee</th>
-                <th class="text-left px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Sales (Breakdown)</th>
-                <th class="text-right px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Net Base Salary</th>
-                <th class="text-right px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Incentive</th>
-                <th class="text-right px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Total Payable</th>
-                <th class="text-right px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Total Paid</th>
-                <th class="text-right px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Balance Due</th>
-                <th class="text-center px-2.5 sm:px-3 py-2.5 whitespace-nowrap">UPI ID</th>
-                <th class="text-center px-2.5 sm:px-3 py-2.5 whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
-              <template x-for="emp in employees" :key="emp.id">
-                <tr @click="empInfoModalId=emp.id; showEmpInfoModal=true"
-                  class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
-                  
-                  <!-- Employee Info -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5">
-                    <div class="font-bold text-slate-800 dark:text-slate-200 text-[11px] sm:text-xs leading-tight" x-text="emp.name"></div>
-                    <div class="text-[10px] text-brand-600 dark:text-brand-400 font-mono font-bold leading-tight mt-0.5" x-text="emp.empId"></div>
-                    <div class="text-[10px] text-slate-400 leading-tight mt-0.5"
-                      x-text="[emp.designation, emp.department].filter(Boolean).join(' · ')"></div>
-                  </td>
-
-                  <!-- Sales Completed (Plan-wise for Sales, Fixed Staff info for others) -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-left">
-                    <template x-if="isEmpSalesRole(emp)">
-                      <div>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                          <span class="text-xs font-semibold text-slate-900 dark:text-white"
-                            x-text="payrollSalesIn(emp, payrollMonth) + ' Deals'"></span>
-                          <template x-if="getEmpPlanBreakdown(emp, payrollMonth).hasSales">
-                            <div class="flex items-center gap-1 flex-wrap">
-                              <!-- 1Y Badge -->
-                              <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count1y > 0"
-                                class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                                x-text="'1Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count1y"></span>
-                              <!-- 3Y Badge -->
-                              <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count3y > 0"
-                                class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
-                                x-text="'3Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count3y"></span>
-                              <!-- 5Y Badge -->
-                              <span x-show="getEmpPlanBreakdown(emp, payrollMonth).count5y > 0"
-                                class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                                x-text="'5Y: ' + getEmpPlanBreakdown(emp, payrollMonth).count5y"></span>
-                              <!-- VIP Badge -->
-                              <span x-show="getEmpPlanBreakdown(emp, payrollMonth).countVip > 0"
-                                class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                                x-text="'VIP: ' + getEmpPlanBreakdown(emp, payrollMonth).countVip"></span>
+                    <!-- Net Salary Column -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                      <template x-if="isEmpSalesRole(emp)">
+                        <div>
+                          <div class="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-white font-mono leading-tight"
+                            x-text="fmtCurrency(Math.round(getEmpNetSalary(emp, payrollMonth)))"></div>
+                          <template x-if="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied">
+                            <div class="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-end gap-1 mt-1">
+                              <i class="fa-solid fa-circle-check text-xs"></i> Met Target
+                            </div>
+                          </template>
+                          <template x-if="!getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied">
+                            <div class="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center justify-end gap-1 mt-1 whitespace-nowrap">
+                              <i class="fa-solid fa-calculator text-[10px]"></i>
+                              <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).totalSales > 0 ? (getSalesSalaryBreakdown(emp, payrollMonth).totalSales + ' deals @ ₹' + Math.round(getSalesSalaryBreakdown(emp, payrollMonth).activeRate || (getSalesSalaryBreakdown(emp, payrollMonth).netBaseSalary / getSalesSalaryBreakdown(emp, payrollMonth).totalSales)).toLocaleString('en-IN') + '/sale') : '0 deals'"></span>
                             </div>
                           </template>
                         </div>
-                        <div x-show="!getEmpPlanBreakdown(emp, payrollMonth).hasSales" class="text-[10px] text-slate-400 mt-0.5">
-                          No deals recorded
-                        </div>
-                      </div>
-                    </template>
-                    <template x-if="!isEmpSalesRole(emp)">
-                      <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
-                        <i class="fa-solid fa-briefcase text-[10px] text-slate-400"></i>
-                        <span>Fixed Staff (<span x-text="emp.department || 'Operations'"></span>)</span>
-                      </div>
-                    </template>
-                  </td>
-
-                  <!-- Net Salary Column: ₹15k Base with deduction for Sales, ₹10k Fixed for Non-Sales -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-right">
-                    <template x-if="isEmpSalesRole(emp)">
-                      <div>
-                        <div class="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white font-mono leading-tight"
-                          x-text="fmtCurrency(Math.round(getEmpNetSalary(emp, payrollMonth)))"></div>
-                        <template x-if="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied">
-                          <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-end gap-0.5 mt-0.5">
-                            <i class="fa-solid fa-circle-check text-[10px]"></i> Met Target
-                          </div>
-                        </template>
-                        <template x-if="!getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied">
-                          <div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium flex items-center justify-end gap-0.5 mt-0.5 whitespace-nowrap">
-                            <i class="fa-solid fa-calculator text-[9px]"></i>
-                            <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).totalSales > 0 ? (getSalesSalaryBreakdown(emp, payrollMonth).totalSales + ' deals @ ₹' + Math.round(getSalesSalaryBreakdown(emp, payrollMonth).activeRate || (getSalesSalaryBreakdown(emp, payrollMonth).netBaseSalary / getSalesSalaryBreakdown(emp, payrollMonth).totalSales)).toLocaleString('en-IN') + '/sale') : '0 deals'"></span>
-                          </div>
-                        </template>
-                      </div>
-                    </template>
-                    <template x-if="!isEmpSalesRole(emp)">
-                      <div>
-                        <div class="text-xs sm:text-[13px] font-bold text-emerald-600 dark:text-emerald-400 font-mono leading-tight">₹10,000</div>
-                        <div class="text-[10px] text-slate-400 font-medium flex items-center justify-end gap-0.5 mt-0.5">
-                          <span>Fixed Monthly Pay</span>
-                        </div>
-                      </div>
-                    </template>
-                  </td>
-
-                  <!-- Incentive Column: Only for Sales Persons -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-right">
-                    <template x-if="isEmpSalesRole(emp)">
-                      <div>
-                        <div class="text-xs sm:text-[13px] font-bold font-mono leading-tight"
-                          :class="payrollCommIn(emp, payrollMonth) > 0 ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-400 font-medium'"
-                          x-text="fmtCurrency(payrollCommIn(emp, payrollMonth))"></div>
-                        <div class="text-[10px] text-slate-400 leading-tight mt-0.5 whitespace-nowrap"
-                          x-text="payrollCommIn(emp, payrollMonth) > 0 ? 'Post-Target' : 'Target Pending'"></div>
-                      </div>
-                    </template>
-                    <template x-if="!isEmpSalesRole(emp)">
-                      <div>
-                        <div class="text-xs font-medium text-slate-400 font-mono">₹0</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">N/A (Non-Sales)</div>
-                      </div>
-                    </template>
-                  </td>
-
-                  <!-- Total Payable (Gross Pay) -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-right">
-                    <div class="text-xs sm:text-[13px] font-bold text-brand-600 dark:text-brand-400 font-mono leading-tight"
-                      x-text="fmtCurrency(getEmpGrossPay(emp, payrollMonth))"></div>
-                    <div class="text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">Salary + Incentive</div>
-                  </td>
-
-                  <!-- Total Paid -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-right">
-                    <div class="text-xs sm:text-[13px] font-bold text-green-600 dark:text-green-400 font-mono leading-tight"
-                      x-text="fmtCurrency(empTotalPaid(emp))"></div>
-                  </td>
-
-                  <!-- Balance Due -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-right">
-                    <div class="text-xs sm:text-[13px] font-mono leading-tight"
-                      :class="getEmpPayrollBalance(emp, payrollMonth) > 0 ? 'text-red-500 font-bold' : 'text-slate-400 font-medium'"
-                      x-text="fmtCurrency(getEmpPayrollBalance(emp, payrollMonth))"></div>
-                  </td>
-
-                  <!-- UPI ID / QR Preview Button -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5 text-center">
-                    <button @click.stop="openDirectSalaryPaymentModal(emp)" class="group inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer max-w-[125px]"
-                      :class="(emp.upiId || emp.upi_id || emp.upi_qr_image || emp.upiQrImage) ? 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50/70 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-dashed border-amber-300 dark:border-amber-800'"
-                      :title="(emp.upiId || emp.upi_id || emp.upi_qr_image || emp.upiQrImage) ? 'Click to open UPI QR Payment for ' + emp.name : 'UPI ID / QR not added yet by ' + emp.name">
-                      <i class="fa-solid fa-qrcode text-[10px]" :class="(emp.upiId || emp.upi_id || emp.upi_qr_image || emp.upiQrImage) ? 'text-emerald-600' : 'text-amber-500'"></i>
-                      <span class="truncate" :class="!(emp.upiId || emp.upi_id || emp.upi_qr_image || emp.upiQrImage) ? 'text-[10px] font-sans font-medium' : ''" x-text="(emp.upiId || emp.upi_id) || (emp.upi_qr_image || emp.upiQrImage ? 'Custom QR' : 'UPI not added')"></span>
-                    </button>
-                  </td>
-
-                  <!-- Actions -->
-                  <td class="px-2.5 sm:px-3 py-2 sm:py-2.5">
-                    <div class="flex items-center justify-center gap-1" @click.stop>
-                      <!-- View Salary & Quota Deduction Breakdown -->
-                      <button @click="openSalesSalaryModal(emp)"
-                        class="p-1 sm:p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors"
-                        title="View Full Salary Deduction Breakdown">
-                        <i class="fa-solid fa-calculator text-[11px]"></i>
-                      </button>
-
-                      <!-- Direct UPI / QR Salary Payment (Disabled when fully paid or 0 balance) -->
-                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) <= 0 && getEmpGrossPay(emp, payrollMonth) > 0">
-                        <button disabled
-                          class="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center gap-1 cursor-not-allowed select-none"
-                          title="Fully Paid — No Balance Due">
-                          <i class="fa-solid fa-circle-check text-[10px] text-emerald-600"></i>
-                          <span>Paid</span>
-                        </button>
                       </template>
-                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) <= 0 && getEmpGrossPay(emp, payrollMonth) === 0">
-                        <button disabled
-                          class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium text-[10px] flex items-center gap-1 cursor-not-allowed opacity-60 select-none"
-                          title="No Payable Amount for this cycle">
-                          <i class="fa-solid fa-ban text-[10px]"></i>
-                          <span>Pay</span>
-                        </button>
+                      <template x-if="!isEmpSalesRole(emp)">
+                        <div>
+                          <div class="text-sm sm:text-[15px] font-bold text-emerald-600 dark:text-emerald-400 font-mono leading-tight">₹10,000</div>
+                          <div class="text-xs text-slate-400 font-medium flex items-center justify-end gap-1 mt-1">
+                            <span>Fixed Monthly Pay</span>
+                          </div>
+                        </div>
                       </template>
-                      <template x-if="getEmpPayrollBalance(emp, payrollMonth) > 0">
+                    </td>
+
+                    <!-- Incentive Column -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                      <template x-if="isEmpSalesRole(emp)">
+                        <div>
+                          <div class="text-sm sm:text-[15px] font-bold font-mono leading-tight"
+                            :class="payrollCommIn(emp, payrollMonth) > 0 ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-400 font-medium'"
+                            x-text="fmtCurrency(payrollCommIn(emp, payrollMonth))"></div>
+                          <div class="text-xs text-slate-400 leading-tight mt-1 whitespace-nowrap"
+                            x-text="payrollCommIn(emp, payrollMonth) > 0 ? 'Post-Target' : 'Target Pending'"></div>
+                        </div>
+                      </template>
+                      <template x-if="!isEmpSalesRole(emp)">
+                        <div>
+                          <div class="text-sm font-medium text-slate-400 font-mono">₹0</div>
+                          <div class="text-xs text-slate-400 mt-1">N/A (Non-Sales)</div>
+                        </div>
+                      </template>
+                    </td>
+
+                    <!-- Total Payable (Gross Pay) -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                      <div class="text-sm sm:text-[15px] font-bold text-brand-600 dark:text-brand-400 font-mono leading-tight"
+                        x-text="fmtCurrency(getEmpGrossPay(emp, payrollMonth))"></div>
+                      <div class="text-[10px] text-slate-400 mt-1 whitespace-nowrap">Salary + Incentive</div>
+                    </td>
+
+                    <!-- Total Paid -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                      <div class="text-sm sm:text-[15px] font-bold text-green-600 dark:text-green-400 font-mono leading-tight"
+                        x-text="fmtCurrency(empTotalPaid(emp))"></div>
+                    </td>
+
+                    <!-- Balance Due -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                      <div class="text-sm sm:text-[15px] font-mono leading-tight font-bold text-red-500"
+                        x-text="fmtCurrency(getEmpPayrollBalance(emp, payrollMonth))"></div>
+                      <div class="text-[10px] text-red-400 mt-0.5">Pending Payout</div>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5">
+                      <div class="flex items-center justify-center gap-1.5" @click.stop>
+                        <!-- View Salary & Quota Deduction Breakdown -->
+                        <button @click="openSalesSalaryModal(emp)"
+                          class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors cursor-pointer"
+                          title="View Full Salary Deduction Breakdown">
+                          <i class="fa-solid fa-calculator text-xs"></i>
+                        </button>
+
+                        <!-- Direct UPI / QR Salary Payment -->
                         <button @click="openDirectSalaryPaymentModal(emp, getEmpPayrollBalance(emp, payrollMonth))"
-                          class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                          class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                           :title="'Pay Outstanding Balance: ₹' + getEmpPayrollBalance(emp, payrollMonth).toLocaleString('en-IN')">
-                          <i class="fa-solid fa-bolt text-[9px]"></i>
-                          <i class="fa-solid fa-qrcode text-[10px]"></i>
+                          <i class="fa-solid fa-bolt text-[10px]"></i>
+                          <i class="fa-solid fa-qrcode text-xs"></i>
                           <span>Pay</span>
                         </button>
-                      </template>
 
-                      <!-- Generate & Print Official Salary Slip -->
-                      <button @click="generateSalarySlip(emp, payrollMonth)"
-                        class="p-1 sm:p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
-                        title="Generate &amp; Print Official Salary Slip">
-                        <i class="fa-solid fa-file-invoice text-[11px]"></i>
-                      </button>
+                        <!-- Generate & Print Official Salary Slip -->
+                        <button @click="generateSalarySlip(emp, payrollMonth)"
+                          class="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
+                          title="Generate &amp; Print Official Salary Slip">
+                          <i class="fa-solid fa-file-invoice text-xs"></i>
+                        </button>
 
-                      <!-- Pay record manual (Disabled if 0 balance) -->
-                      <button @click="openEmpPayModal(emp.id)"
-                        :disabled="getEmpPayrollBalance(emp, payrollMonth) <= 0"
-                        :class="getEmpPayrollBalance(emp, payrollMonth) <= 0 ? 'opacity-30 cursor-not-allowed' : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 cursor-pointer'"
-                        class="p-1 sm:p-1.5 rounded-lg transition-colors"
-                        :title="getEmpPayrollBalance(emp, payrollMonth) <= 0 ? 'Fully Paid - No Manual Payment Needed' : 'Record Payment Manual'">
-                        <i class="fa-solid fa-indian-rupee-sign text-[11px]"></i>
-                      </button>
+                        <!-- Pay record manual -->
+                        <button @click="openEmpPayModal(emp.id)"
+                          class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors cursor-pointer"
+                          title="Record Payment Manual">
+                          <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
+                        </button>
 
-                      <!-- View detail -->
-                      <button @click="openEmpDetail(emp.id)"
-                        class="p-1 sm:p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors"
-                        title="View Sales &amp; Payments">
-                        <i class="fa-solid fa-eye text-[11px]"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-            <tfoot x-show="employees.length>1"
-              class="bg-slate-50/90 dark:bg-slate-800/90 font-bold text-xs border-t-2 border-slate-200 dark:border-slate-700">
-              <tr>
-                <td class="px-2.5 sm:px-3 py-2.5 text-slate-500 uppercase tracking-wider text-[10px]">Total</td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-left font-bold text-slate-900 dark:text-white"
-                  x-text="employees.reduce((s,e)=>s+payrollSalesIn(e,payrollMonth),0) + ' Total Deals'"></td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-right font-bold text-teal-600 dark:text-teal-400 font-mono"
-                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpNetSalary(e,payrollMonth),0))"></td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-right font-bold text-purple-600 dark:text-purple-400 font-mono"
-                  x-text="fmtCurrency(employees.reduce((s,e)=>s+payrollCommIn(e,payrollMonth),0))"></td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-right font-bold text-brand-600 dark:text-brand-400 font-mono"
-                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpGrossPay(e,payrollMonth),0))"></td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-right font-bold text-green-600 dark:text-green-400 font-mono"
-                  x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0))"></td>
-                <td class="px-2.5 sm:px-3 py-2.5 text-right font-bold text-red-500 font-mono"
-                  x-text="fmtCurrency(employees.reduce((s,e)=>s+getEmpPayrollBalance(e,payrollMonth),0))"></td>
-                <td colspan="2"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                        <!-- View detail -->
+                        <button @click="openEmpDetail(emp.id)"
+                          class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
+                          title="View Sales &amp; Payments">
+                          <i class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- Interactive Monthly Plan Sales & Salary Deduction Breakdown Cards -->
-        <div x-show="employees.length>0" class="mt-6 space-y-4">
-          <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
-            <div>
-              <h3 class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
-                <i class="fa-solid fa-list-check text-purple-500 text-sm sm:text-base"></i>
-                <span>Sales Plan Breakdown &amp; Salary Computation — <span class="text-purple-600 dark:text-purple-400" x-text="payrollMonth || 'All Time'"></span></span>
-              </h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Transparent breakdown of major plan benchmarks, deal counts, shortfall deductions, and net salary payout</p>
+          <!-- Empty State: All Paid / Settled in this cycle -->
+          <div x-show="employees.filter(e => getEmpPayrollBalance(e, payrollMonth) > 0).length === 0"
+            class="text-center py-12 px-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-800/80 my-5 shadow-xs">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-xl mx-auto mb-3 shadow-xs">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-200">All Payroll Settled!</h3>
+            <p class="text-xs text-emerald-700/80 dark:text-emerald-400/80 max-w-md mx-auto mt-1">
+              There are no pending salary disbursements for <span class="font-bold" x-text="payrollMonth ? payrollMonth : 'this period'"></span>. All employees have received their full compensation.
+            </p>
+            <div class="mt-4 flex items-center justify-center gap-2">
+              <button @click="payrollTab='history'"
+                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                <span>View Salary History &amp; Slips →</span>
+              </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <template x-for="emp in employees" :key="'payroll-card-'+emp.id">
-              <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 shadow-xs space-y-3">
-                
-                <div class="flex items-start justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold flex items-center justify-center text-sm shadow-xs"
-                      x-text="(emp.name || 'E').charAt(0).toUpperCase()"></div>
-                    <div>
-                      <h4 class="font-bold text-sm text-gray-900 dark:text-white" x-text="emp.name"></h4>
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <span class="text-xs font-mono font-bold text-brand-600 dark:text-brand-400" x-text="emp.empId"></span>
-                        <span class="text-xs text-gray-400" x-text="emp.designation || emp.department || 'Sales Executive'"></span>
-                      </div>
-                    </div>
-                  </div>
-                  <button @click="openSalesSalaryModal(emp)" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-950 text-teal-700 dark:text-teal-300 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer">
-                    <i class="fa-solid fa-calculator"></i> Full Modal
-                  </button>
-                </div>
-
-                <!-- For Sales Staff: Multi-Plan Target Pills & Shortfall Deduction Engine -->
-                <template x-if="isEmpSalesRole(emp)">
-                  <div class="space-y-3">
-                    <div class="grid grid-cols-4 gap-2 pt-1 text-center text-xs">
-                      <div class="p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
-                        <div class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300">1 Year</div>
-                        <div class="text-base font-semibold text-indigo-900 dark:text-indigo-200" x-text="getEmpPlanBreakdown(emp, payrollMonth).count1y"></div>
-                        <div class="text-[9px] text-gray-400">Target 15</div>
-                      </div>
-                      <div class="p-2 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900">
-                        <div class="text-[10px] font-bold text-purple-700 dark:text-purple-300">3 Year</div>
-                        <div class="text-base font-semibold text-purple-900 dark:text-purple-200" x-text="getEmpPlanBreakdown(emp, payrollMonth).count3y"></div>
-                        <div class="text-[9px] text-gray-400">Target 10</div>
-                      </div>
-                      <div class="p-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900">
-                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">5 Year</div>
-                        <div class="text-base font-semibold text-emerald-900 dark:text-emerald-200" x-text="getEmpPlanBreakdown(emp, payrollMonth).count5y"></div>
-                        <div class="text-[9px] text-gray-400">Target 7</div>
-                      </div>
-                      <div class="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900">
-                        <div class="text-[10px] font-bold text-amber-700 dark:text-amber-300">VIP Lifetime</div>
-                        <div class="text-base font-semibold text-amber-900 dark:text-amber-200" x-text="getEmpPlanBreakdown(emp, payrollMonth).countVip"></div>
-                        <div class="text-[9px] text-gray-400">Target 3</div>
-                      </div>
-                    </div>
-
-                    <div class="p-3 rounded-xl border text-xs space-y-1.5"
-                      :class="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' : 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'">
-                      <div class="flex items-center justify-between font-bold">
-                        <span>
-                          <i class="fa-solid" :class="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'fa-circle-check text-emerald-600' : 'fa-triangle-exclamation text-amber-600'"></i>
-                          <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'Quota Satisfied (Full ₹15,000 Base Salary)' : 'Benchmark Target: ' + getSalesSalaryBreakdown(emp, payrollMonth).majorPlan.name + ' (' + getSalesSalaryBreakdown(emp, payrollMonth).benchmarkTarget + ' Deals)'"></span>
-                        </span>
-                        <span class="font-mono text-sm font-semibold" x-text="'Net Salary: ₹' + getEmpNetSalary(emp, payrollMonth).toLocaleString('en-IN')"></span>
-                      </div>
-                      <div class="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
-                        <span>Total Deals: <strong x-text="getSalesSalaryBreakdown(emp, payrollMonth).totalSales"></strong> · Major Plan Sales: <strong x-text="getSalesSalaryBreakdown(emp, payrollMonth).majorPlan.count"></strong></span>
-                        <span x-show="!getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied" class="text-red-500 font-semibold">
-                          Shortfall: <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).shortfallSales"></span> deals &rarr; -₹<span x-text="getSalesSalaryBreakdown(emp, payrollMonth).shortfallDeduction.toLocaleString('en-IN')"></span> deduction (@ ₹<span x-text="getSalesSalaryBreakdown(emp, payrollMonth).deductionRatePerSale"></span>/deal)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-
-                <!-- For Non-Sales Staff: Clean Fixed 10k Salary Banner -->
-                <template x-if="!isEmpSalesRole(emp)">
-                  <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2.5">
-                      <span class="w-8 h-8 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-semibold">
-                        <i class="fa-solid fa-briefcase"></i>
-                      </span>
-                      <div>
-                        <div class="font-bold text-gray-800 dark:text-gray-200"><span x-text="emp.department || 'Operations'"></span> Department (Fixed Staff)</div>
-                        <div class="text-[11px] text-gray-400">Fixed Monthly Salary: ₹10,000 · No sales targets or shortfall deductions applied.</div>
-                      </div>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-base font-semibold text-emerald-600 dark:text-emerald-400 font-mono">₹10,000</div>
-                      <div class="text-[10px] text-gray-400 font-medium">Monthly Net Pay</div>
-                    </div>
-                  </div>
-                </template>
-
+          <!-- Plan Quota Performance Breakdown Cards -->
+          <div class="mt-8">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Sales Plan Quota &amp; Shortfall Breakdown</h3>
               </div>
-            </template>
+              <span class="text-xs text-gray-400">Benchmark target applies to major sold plan</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <template x-for="emp in employees" :key="'plan-card-' + emp.id">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs hover:border-brand-200 dark:hover:border-brand-800 transition-colors">
+                  <!-- Card Header -->
+                  <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold flex items-center justify-center text-sm shadow-xs"
+                        x-text="(emp.name || 'E').charAt(0).toUpperCase()"></div>
+                      <div>
+                        <h4 class="font-bold text-sm text-gray-900 dark:text-white" x-text="emp.name"></h4>
+                        <div class="flex items-center gap-2 mt-0.5">
+                          <span class="text-xs font-mono font-bold text-brand-600 dark:text-brand-400" x-text="emp.empId"></span>
+                          <span class="text-xs text-gray-400" x-text="emp.designation || emp.department || 'Sales Executive'"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <button @click="openSalesSalaryModal(emp)" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-950 text-teal-700 dark:text-teal-300 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer">
+                      <i class="fa-solid fa-calculator"></i> Full Modal
+                    </button>
+                  </div>
+
+                  <!-- For Sales Staff: Multi-Plan Target Pills & Shortfall Deduction Engine -->
+                  <template x-if="isEmpSalesRole(emp)">
+                    <div class="space-y-3">
+                      <div class="grid grid-cols-4 gap-2 pt-1 text-center text-xs">
+                        <div class="p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
+                          <div class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300">1 Year</div>
+                          <div class="text-base font-semibold text-indigo-900 dark:text-indigo-200 font-mono" x-text="getEmpPlanBreakdown(emp, payrollMonth).count1y"></div>
+                          <div class="text-[9px] text-gray-400">Target 15</div>
+                        </div>
+                        <div class="p-2 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900">
+                          <div class="text-[10px] font-bold text-purple-700 dark:text-purple-300">3 Year</div>
+                          <div class="text-base font-semibold text-purple-900 dark:text-purple-200 font-mono" x-text="getEmpPlanBreakdown(emp, payrollMonth).count3y"></div>
+                          <div class="text-[9px] text-gray-400">Target 10</div>
+                        </div>
+                        <div class="p-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900">
+                          <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">5 Year</div>
+                          <div class="text-base font-semibold text-emerald-900 dark:text-emerald-200 font-mono" x-text="getEmpPlanBreakdown(emp, payrollMonth).count5y"></div>
+                          <div class="text-[9px] text-gray-400">Target 7</div>
+                        </div>
+                        <div class="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900">
+                          <div class="text-[10px] font-bold text-amber-700 dark:text-amber-300">VIP Lifetime</div>
+                          <div class="text-base font-semibold text-amber-900 dark:text-amber-200 font-mono" x-text="getEmpPlanBreakdown(emp, payrollMonth).countVip"></div>
+                          <div class="text-[9px] text-gray-400">Target 3</div>
+                        </div>
+                      </div>
+
+                      <div class="p-3 rounded-xl border text-xs space-y-1.5"
+                        :class="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' : 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'">
+                        <div class="flex items-center justify-between font-bold">
+                          <span>
+                            <i class="fa-solid" :class="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'fa-circle-check text-emerald-600' : 'fa-triangle-exclamation text-amber-600'"></i>
+                            <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied ? 'Quota Satisfied (Full ₹15,000 Base Salary)' : 'Benchmark Target: ' + getSalesSalaryBreakdown(emp, payrollMonth).majorPlan.name + ' (' + getSalesSalaryBreakdown(emp, payrollMonth).benchmarkTarget + ' Deals)'"></span>
+                          </span>
+                          <span class="font-mono text-sm font-semibold" x-text="'Net Salary: ₹' + getEmpNetSalary(emp, payrollMonth).toLocaleString('en-IN')"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
+                          <span>Total Deals: <strong x-text="getSalesSalaryBreakdown(emp, payrollMonth).totalSales"></strong> · Major Plan Sales: <strong x-text="getSalesSalaryBreakdown(emp, payrollMonth).majorPlan.count"></strong></span>
+                          <span x-show="!getSalesSalaryBreakdown(emp, payrollMonth).isTargetSatisfied" class="text-red-500 font-semibold">
+                            Shortfall: <span x-text="getSalesSalaryBreakdown(emp, payrollMonth).shortfallSales"></span> deals &rarr; -₹<span x-text="getSalesSalaryBreakdown(emp, payrollMonth).shortfallDeduction.toLocaleString('en-IN')"></span> deduction (@ ₹<span x-text="getSalesSalaryBreakdown(emp, payrollMonth).deductionRatePerSale"></span>/deal)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- For Non-Sales Staff: Clean Fixed 10k Salary Banner -->
+                  <template x-if="!isEmpSalesRole(emp)">
+                    <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs">
+                      <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-semibold">
+                          <i class="fa-solid fa-briefcase"></i>
+                        </span>
+                        <div>
+                          <div class="font-bold text-gray-800 dark:text-gray-200"><span x-text="emp.department || 'Operations'"></span> Department (Fixed Staff)</div>
+                          <div class="text-[11px] text-gray-400">Fixed Monthly Salary: ₹10,000 · No sales targets or shortfall deductions applied.</div>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-base font-semibold text-emerald-600 dark:text-emerald-400 font-mono">₹10,000</div>
+                        <div class="text-[10px] text-gray-400 font-medium">Monthly Net Pay</div>
+                      </div>
+                    </div>
+                  </template>
+
+                </div>
+              </template>
+            </div>
           </div>
+
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- CATEGORY 2: SALARY HISTORY (PAID RECORDS & LEDGER)         -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <div x-show="payrollTab==='history' && employees.length > 0">
+          
+          <!-- History KPI Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            <!-- Total Disbursed To Date -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-950/80 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total Disbursed</span>
+                <i class="fa-solid fa-circle-check text-xs text-emerald-500"></i>
+              </div>
+              <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono"
+                x-text="fmtCurrency(employees.reduce((s,e)=>s+empTotalPaid(e),0))"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">Paid salary &amp; incentive compensation</div>
+            </div>
+
+            <!-- Employees With Paid Records -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Employees Paid</span>
+                <i class="fa-solid fa-users text-xs text-brand-500"></i>
+              </div>
+              <div class="text-2xl font-bold text-brand-600 dark:text-brand-400 font-mono"
+                x-text="employees.filter(e => empTotalPaid(e) > 0).length"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5" x-text="'Out of ' + employees.length + ' total staff'"></div>
+            </div>
+
+            <!-- Total Payment Transactions -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Payment Transactions</span>
+                <i class="fa-solid fa-receipt text-xs text-purple-500"></i>
+              </div>
+              <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 font-mono"
+                x-text="getAllPayrollPayments().length"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">Recorded disbursement entries</div>
+            </div>
+
+            <!-- Avg Disbursed Per Paid Employee -->
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-xs">
+              <div class="flex items-center justify-between text-gray-400 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider">Avg Disbursed</span>
+                <i class="fa-solid fa-chart-line text-xs text-indigo-500"></i>
+              </div>
+              <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono"
+                x-text="fmtCurrency(employees.filter(e => empTotalPaid(e) > 0).length > 0 ? Math.round(employees.reduce((s,e)=>s+empTotalPaid(e),0) / employees.filter(e => empTotalPaid(e) > 0).length) : 0)"></div>
+              <div class="text-[11px] text-gray-400 mt-0.5">Average payout per employee</div>
+            </div>
+          </div>
+
+          <!-- History Sub-Controls: View Switcher & Search Bar -->
+          <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <div class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
+              <button @click="payrollHistoryView='summary'"
+                :class="payrollHistoryView==='summary' ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-users text-xs"></i>
+                <span>Employee Payout Summary</span>
+              </button>
+              <button @click="payrollHistoryView='ledger'"
+                :class="payrollHistoryView==='ledger' ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-list-check text-xs"></i>
+                <span>Disbursement Transactions Ledger</span>
+              </button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative min-w-[220px]">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" x-model="payrollHistorySearch" placeholder="Search employee, ID, note..."
+                class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-xs" />
+              <button x-show="payrollHistorySearch" @click="payrollHistorySearch=''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+            </div>
+          </div>
+
+          <!-- ── SUB-VIEW A: EMPLOYEE PAID SUMMARY ── -->
+          <div x-show="payrollHistoryView==='summary'">
+            <div x-show="employees.filter(e => empTotalPaid(e) > 0).length > 0"
+              class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
+                  <tr>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Employee</th>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Role / Dept</th>
+                    <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Total Payable</th>
+                    <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Total Disbursed (Paid)</th>
+                    <th class="text-center px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Settlement Status</th>
+                    <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Balance Due</th>
+                    <th class="text-center px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Actions &amp; Slips</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  <template x-for="emp in employees.filter(e => empTotalPaid(e) > 0).filter(e => !payrollHistorySearch || (e.name && e.name.toLowerCase().includes(payrollHistorySearch.toLowerCase())) || (e.empId && e.empId.toLowerCase().includes(payrollHistorySearch.toLowerCase())) || (e.department && e.department.toLowerCase().includes(payrollHistorySearch.toLowerCase())))" :key="'paid-emp-' + emp.id">
+                    <tr @click="empInfoModalId=emp.id; showEmpInfoModal=true"
+                      class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+                      
+                      <!-- Employee Info -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <div class="font-bold text-slate-900 dark:text-white text-sm sm:text-[15px] leading-tight" x-text="emp.name"></div>
+                        <div class="text-xs text-brand-600 dark:text-brand-400 font-mono font-bold leading-tight mt-1" x-text="emp.empId"></div>
+                      </td>
+
+                      <!-- Role / Department -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-left">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300" x-text="emp.designation || emp.department || 'Staff'"></span>
+                        <div class="text-[11px] text-slate-400 mt-0.5" x-text="isEmpSalesRole(emp) ? 'Sales Commission Staff' : 'Fixed Monthly Staff'"></div>
+                      </td>
+
+                      <!-- Total Payable -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right font-mono text-sm sm:text-[15px] font-semibold text-slate-700 dark:text-slate-300"
+                        x-text="fmtCurrency(getEmpGrossPay(emp, payrollMonth))"></td>
+
+                      <!-- Total Paid (Disbursed) -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right">
+                        <div class="text-sm sm:text-[15px] font-bold text-emerald-600 dark:text-emerald-400 font-mono leading-tight"
+                          x-text="fmtCurrency(empTotalPaid(emp))"></div>
+                        <div class="text-[10px] text-slate-400 mt-0.5" x-text="(emp.payments ? emp.payments.length : 0) + ' transactions'"></div>
+                      </td>
+
+                      <!-- Settlement Status Badge -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
+                        <template x-if="getEmpPayrollBalance(emp, payrollMonth) <= 0">
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <i class="fa-solid fa-circle-check text-xs text-emerald-600"></i> Fully Settled
+                          </span>
+                        </template>
+                        <template x-if="getEmpPayrollBalance(emp, payrollMonth) > 0">
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            <i class="fa-solid fa-clock text-xs text-amber-600"></i> Partially Paid
+                          </span>
+                        </template>
+                      </td>
+
+                      <!-- Balance Due -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right font-mono text-sm sm:text-[15px]"
+                        :class="getEmpPayrollBalance(emp, payrollMonth) > 0 ? 'text-red-500 font-bold' : 'text-slate-400 font-medium'"
+                        x-text="fmtCurrency(getEmpPayrollBalance(emp, payrollMonth))"></td>
+
+                      <!-- Actions & Slips -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <div class="flex items-center justify-center gap-1.5" @click.stop>
+                          <!-- Generate & Print Salary Slip -->
+                          <button @click="generateSalarySlip(emp, payrollMonth)"
+                            class="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            title="Generate &amp; Print Official Salary Slip">
+                            <i class="fa-solid fa-file-invoice text-xs"></i>
+                            <span>Salary Slip</span>
+                          </button>
+
+                          <!-- View Details & Transactions -->
+                          <button @click="openEmpDetail(emp.id)"
+                            class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
+                            title="View Full Payment History">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                          </button>
+
+                          <!-- Calculation Breakdown -->
+                          <button @click="openSalesSalaryModal(emp)"
+                            class="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors cursor-pointer"
+                            title="View Calculation Breakdown">
+                            <i class="fa-solid fa-calculator text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State for Paid Summary -->
+            <div x-show="employees.filter(e => empTotalPaid(e) > 0).length === 0"
+              class="text-center py-12 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 my-5 shadow-xs">
+              <i class="fa-solid fa-clock-rotate-left text-3xl text-slate-300 dark:text-slate-700 mb-2 block"></i>
+              <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">No Disbursed Salaries Found</h4>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                No salary payments have been recorded yet for the selected cycle. Go to "Run Payroll" to initiate payouts.
+              </p>
+              <button @click="payrollTab='run'"
+                class="mt-4 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-bolt text-xs"></i>
+                <span>Go to Run Payroll →</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ── SUB-VIEW B: TRANSACTIONS LEDGER ── -->
+          <div x-show="payrollHistoryView==='ledger'">
+            <div x-show="getAllPayrollPayments().length > 0"
+              class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 select-none">
+                  <tr>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Payment Date &amp; Time</th>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Employee</th>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Payment Mode</th>
+                    <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Reference / Note</th>
+                    <th class="text-right px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Amount Disbursed</th>
+                    <th class="text-center px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  <template x-for="(p, idx) in getAllPayrollPayments().filter(p => !payrollHistorySearch || (p.empName && p.empName.toLowerCase().includes(payrollHistorySearch.toLowerCase())) || (p.empId && p.empId.toLowerCase().includes(payrollHistorySearch.toLowerCase())) || (p.note && p.note.toLowerCase().includes(payrollHistorySearch.toLowerCase())) || (p.method && p.method.toLowerCase().includes(payrollHistorySearch.toLowerCase())))" :key="'pay-tx-' + idx">
+                    <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                      <!-- Date -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">
+                        <div class="font-mono text-xs sm:text-[13px] font-bold text-slate-800 dark:text-slate-200" x-text="p.date ? p.date.slice(0, 10) : (p.createdAt ? p.createdAt.slice(0, 10) : '—')"></div>
+                        <div class="text-[10px] text-slate-400 mt-0.5" x-text="p.date && p.date.length > 10 ? p.date.slice(11, 16) : (p.createdAt && p.createdAt.length > 10 ? p.createdAt.slice(11, 16) : '')"></div>
+                      </td>
+
+                      <!-- Employee -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <div class="font-bold text-slate-900 dark:text-white text-sm sm:text-[14px]" x-text="p.empName"></div>
+                        <div class="text-xs text-brand-600 dark:text-brand-400 font-mono font-bold mt-0.5" x-text="p.empId"></div>
+                      </td>
+
+                      <!-- Mode -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          <i class="fa-solid" :class="p.method==='upi'||p.method==='qr' ? 'fa-qrcode text-emerald-500' : (p.method==='bank' ? 'fa-building-columns text-blue-500' : (p.method==='cash' ? 'fa-money-bill-wave text-amber-500' : 'fa-credit-card text-purple-500'))"></i>
+                          <span x-text="(p.method || 'Direct Transfer').toUpperCase()"></span>
+                        </span>
+                      </td>
+
+                      <!-- Reference / Note -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-xs text-slate-600 dark:text-slate-400 max-w-xs truncate"
+                        x-text="p.note || p.reference || 'Salary Disbursement'"></td>
+
+                      <!-- Amount -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-right font-mono text-sm sm:text-[15px] font-bold text-emerald-600 dark:text-emerald-400"
+                        x-text="fmtCurrency(p.amount || 0)"></td>
+
+                      <!-- Actions -->
+                      <td class="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                          <button @click="generateSalarySlip(p.emp, payrollMonth)"
+                            class="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
+                            title="Print Salary Slip">
+                            <i class="fa-solid fa-file-invoice text-xs"></i>
+                          </button>
+                          <button @click="openEmpDetail(p.emp.id)"
+                            class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
+                            title="View Employee Detail">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State for Transactions Ledger -->
+            <div x-show="getAllPayrollPayments().length === 0"
+              class="text-center py-12 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 my-5 shadow-xs">
+              <i class="fa-solid fa-receipt text-3xl text-slate-300 dark:text-slate-700 mb-2 block"></i>
+              <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">No Transactions Recorded</h4>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                No individual payment transactions exist for the selected cycle.
+              </p>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -13629,7 +14030,7 @@
                   <div class="flex justify-between py-1.5 border-b border-gray-200/60 dark:border-gray-700/60 font-bold bg-white/70 dark:bg-gray-800/80 px-2 rounded-lg">
                     <span class="text-gray-800 dark:text-gray-200">Net Base Salary:</span>
                     <span class="font-mono font-semibold text-teal-600 dark:text-teal-400"
-                      x-text=\"fmtCurrency(selectedSalesSalaryData.netBaseSalary)\"></span>
+                      x-text="fmtCurrency(selectedSalesSalaryData.netBaseSalary)"></span>
                   </div>
 
                   <div class="flex justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
@@ -18272,6 +18673,9 @@
 
         // ── Payroll & Direct UPI Salary Payment ──
         payrollMonth: new Date().toISOString().slice(0, 7),
+        payrollTab: 'run', // 'run' (pending) | 'history' (paid)
+        payrollHistoryView: 'summary', // 'summary' | 'ledger'
+        payrollHistorySearch: '',
         showCommissionQRModal: false,
         commissionQRData: null,
         commissionQRDataUrl: '',
@@ -23152,6 +23556,27 @@
           const breakdown = this.getSalesSalaryBreakdown(emp, monthStr !== undefined ? monthStr : this.payrollMonth);
           if (!breakdown) return this.isEmpSalesRole(emp) ? 15000 : 10000;
           return breakdown.netBaseSalary;
+        },
+
+                getAllPayrollPayments() {
+          const list = [];
+          (this.employees || []).forEach(emp => {
+            (emp.payments || []).forEach(p => {
+              if (this.payrollMonth) {
+                const pMonth = (p.date || p.createdAt || '').slice(0, 7);
+                if (pMonth && pMonth !== this.payrollMonth) return;
+              }
+              list.push({
+                ...p,
+                empId: emp.empId || emp.id,
+                empName: emp.name,
+                empDesignation: emp.designation,
+                empDepartment: emp.department,
+                emp: emp
+              });
+            });
+          });
+          return list.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
         },
 
         getEmpGrossPay(emp, monthStr) {

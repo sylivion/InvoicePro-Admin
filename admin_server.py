@@ -98,6 +98,16 @@ class PGDatabaseWrapper:
         else:
             cur.execute(sql_trans)
         return PGCursorWrapper(cur, self.conn)
+    def executemany(self, sql, params_list):
+        if sql.strip().upper().startswith("PRAGMA"):
+            cur = self.conn.cursor()
+            cur.execute("SELECT 1")
+            return PGCursorWrapper(cur, self.conn)
+        sql_trans = self._transform(sql)
+        import psycopg2.extras
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.executemany(sql_trans, params_list)
+        return PGCursorWrapper(cur, self.conn)
     def executescript(self, sql_script):
         cur = self.conn.cursor()
         for statement in sql_script.split(';'):
@@ -124,8 +134,15 @@ class PGDatabaseWrapper:
     def _transform(self, sql):
         if sql.strip().upper().startswith("PRAGMA"):
             return "SELECT 1"
-        sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
-        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE)
+        # Remove SQLite-specific collation that causes syntax errors in PostgreSQL
+        sql = re.sub(r'\s+COLLATE\s+BINARY\b', '', sql, flags=re.IGNORECASE)
+        sql = re.sub(r'\s+COLLATE\s+NOCASE\b', '', sql, flags=re.IGNORECASE)
+        # Transform INSERT OR IGNORE INTO to INSERT INTO ... ON CONFLICT DO NOTHING
+        if re.search(r'INSERT\s+OR\s+IGNORE\s+INTO', sql, re.IGNORECASE):
+            sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+            sql = sql.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
+        # Transform INSERT OR REPLACE INTO to INSERT INTO ... ON CONFLICT (pk) DO UPDATE SET ...
+        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE | re.DOTALL)
         if m:
             tbl = m.group(1)
             cols_raw = m.group(2)
@@ -138,6 +155,45 @@ class PGDatabaseWrapper:
         return sql.replace('?', '%s')
 
 
+class SQLiteDatabaseWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+    def execute(self, sql, params=None):
+        if params is not None:
+            return self.conn.execute(sql, params)
+        return self.conn.execute(sql)
+    def executemany(self, sql, params_list):
+        return self.conn.executemany(sql, params_list)
+    def executescript(self, sql):
+        return self.conn.executescript(sql)
+    def cursor(self):
+        return self.conn.cursor()
+    def commit(self):
+        try:
+            self.conn.commit()
+        except Exception:
+            pass
+    def rollback(self):
+        try:
+            self.conn.rollback()
+        except Exception:
+            pass
+    def close(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass
+    @property
+    def row_factory(self):
+        return self.conn.row_factory
+    @row_factory.setter
+    def row_factory(self, val):
+        self.conn.row_factory = val
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
     if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
@@ -145,15 +201,22 @@ def get_db():
             import psycopg2
             import psycopg2.extras
             conn = psycopg2.connect(DATABASE_URL)
+            conn.autocommit = True
             return PGDatabaseWrapper(conn)
         except Exception as e:
             print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
 
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
-    return conn
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=60000")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA wal_autocheckpoint=100")
+    except Exception:
+        pass
+    return SQLiteDatabaseWrapper(conn)
 
 
 def init_db():
@@ -452,6 +515,16 @@ def init_db():
                 ip_address     TEXT DEFAULT '',
                 timestamp      TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id             TEXT PRIMARY KEY,
+                employee_id    TEXT DEFAULT '',
+                employee_name  TEXT DEFAULT '',
+                activity_type  TEXT DEFAULT 'call',
+                target_contact TEXT DEFAULT '',
+                details        TEXT DEFAULT '',
+                extra_data     TEXT DEFAULT '{}',
+                created_at     TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS license_keys (
                 id             TEXT PRIMARY KEY,
                 license_key    TEXT UNIQUE NOT NULL,
@@ -483,6 +556,17 @@ def init_db():
         for col in ["emp_id", "customer_id", "plan_name", "status", "target_month"]:
             try:
                 db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
+            except Exception:
+                pass
+
+        # Ensure activity_logs and audit_logs columns
+        for col in ["extra_data"]:
+            try:
+                db.execute(f"ALTER TABLE activity_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
+            except Exception:
+                pass
+            try:
+                db.execute(f"ALTER TABLE audit_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
             except Exception:
                 pass
 
@@ -1308,8 +1392,8 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.wfile.write(body)
                     return
 
-            if path == "/api/ping":
-                self.send_json({"ok": True, "service": "InvoicePro Admin", "port": PORT})
+            if path in ("/api/ping", "/api/health", "/health"):
+                self.send_json({"ok": True, "status": "healthy", "service": "InvoicePro Admin", "port": PORT})
                 return
 
             if path == "/api/smtp-config":
@@ -1389,6 +1473,10 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                                 t["members"] = json.loads(t["members"])
                             except Exception:
                                 t["members"] = [t["members"]] if t["members"] else []
+                        if "targetMonthly" not in t and "targetmonthly" in t:
+                            t["targetMonthly"] = t["targetmonthly"]
+                        if "targetMonthly" not in t:
+                            t["targetMonthly"] = 0
                 self.send_json({"ok": True, "teams": teams})
                 return
 
@@ -1447,6 +1535,14 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json(users)
                 return
 
+            if path in ("/api/activity-logs", "/api/audit-logs", "/api/activities", "/api/logs"):
+                with _db_lock:
+                    db = get_db()
+                    audit_rows = rows_to_list(db.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 1000").fetchall())
+                    act_rows = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 1000").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "logs": audit_rows, "audit_logs": audit_rows, "activity_logs": act_rows})
+                return
             
             if path == "/api/hr/candidates":
                 with _db_lock:
@@ -1787,6 +1883,117 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     "recentLeaves": recent_leaves,
                     "recentEnquiries": recent_enquiries
                 })
+                return
+
+            if path in ("/api/system/settings", "/api/system-settings"):
+                with _db_lock:
+                    db = get_db()
+                    rows = rows_to_list(db.execute("SELECT * FROM system_settings").fetchall())
+                    db.close()
+                settings = {}
+                for r in rows:
+                    k = r.get("key")
+                    v = r.get("value")
+                    try:
+                        settings[k] = json.loads(v)
+                    except Exception:
+                        settings[k] = v
+                self.send_json({"ok": True, "settings": settings})
+                return
+
+            if path in ("/api/dev/data", "/api/dev/tasks"):
+                with _db_lock:
+                    db = get_db()
+                    tasks = rows_to_list(db.execute("SELECT * FROM dev_tasks ORDER BY created_at DESC").fetchall())
+                    releases = rows_to_list(db.execute("SELECT * FROM dev_releases ORDER BY release_date DESC").fetchall())
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='dev_metadata'").fetchone()
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "tasks": tasks,
+                    "releases": releases,
+                    "sprints": meta.get("sprints", []),
+                    "prs": meta.get("prs", []),
+                    "escalations": meta.get("escalations", []),
+                    "docs": meta.get("docs", [])
+                })
+                return
+
+            if path == "/api/sales/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='sales_metadata'").fetchone()
+                    acts = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 500").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "leads": meta.get("leads", []),
+                    "targets": meta.get("targets", []),
+                    "escalations": meta.get("escalations", []),
+                    "activities": acts
+                })
+                return
+
+            if path == "/api/support/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='support_metadata'").fetchone()
+                    recs = rows_to_list(db.execute("SELECT * FROM recurring_issues ORDER BY impacted_count DESC").fetchall())
+                    enqs = rows_to_list(db.execute("SELECT * FROM enquiries ORDER BY created_at DESC").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                
+                raw_tickets = meta.get("tickets", [])
+                if not raw_tickets:
+                    raw_tickets = []
+                    for e in enqs:
+                        tid = e.get("id") or ("ST-" + str(random.randint(100, 999)))
+                        raw_tickets.append({
+                            "id": tid,
+                            "ticketNo": tid,
+                            "ticket_no": tid,
+                            "customerName": e.get("customer_name") or e.get("name") or "Customer",
+                            "customer_name": e.get("customer_name") or e.get("name") or "Customer",
+                            "phone": e.get("phone") or "",
+                            "mobile": e.get("phone") or "",
+                            "subject": e.get("subject") or e.get("message") or "Support Request",
+                            "category": e.get("category") or "GST & Invoicing",
+                            "channel": e.get("channel") or "Phone Call",
+                            "priority": (e.get("priority") or "Medium").capitalize(),
+                            "status": e.get("status") or "open",
+                            "assignedTo": e.get("assigned_to") or "",
+                            "assigned_to": e.get("assigned_to") or "",
+                            "assignedToName": e.get("assigned_to_name") or "Unassigned",
+                            "createdAt": e.get("created_at") or "",
+                            "created_at": e.get("created_at") or ""
+                        })
+
+                self.send_json({
+                    "ok": True,
+                    "tickets": raw_tickets,
+                    "calls": meta.get("calls", []),
+                    "kb": meta.get("kb", []),
+                    "recurring_issues": recs
+                })
+                return
+
+            if path == "/api/license-keys":
+                with _db_lock:
+                    db = get_db()
+                    keys = rows_to_list(db.execute("SELECT * FROM license_keys ORDER BY created_at DESC").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "license_keys": keys})
                 return
 
             if path == "/api/export":
@@ -2864,6 +3071,191 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.send_json({"ok": False, "error": f"Failed to send email: {str(e)}"})
                 return
 
+            # ── Send broadcast emails ─────────────────────────────────────────
+            if path == "/api/send-broadcast":
+                cfg = load_smtp_config()
+                stored_pw = cfg.get("password", "")
+                if data.get("cfg") and isinstance(data["cfg"], dict):
+                    client_cfg = data["cfg"]
+                    for k, v in client_cfg.items():
+                        if k == "password" and is_dummy_password(v):
+                            continue
+                        if v or k not in cfg:
+                            cfg[k] = v
+                if is_dummy_password(cfg.get("password")) and stored_pw:
+                    cfg["password"] = stored_pw
+
+                if not cfg.get("host"):
+                    self.send_json({"ok": False, "error": "SMTP not configured. Open Email Settings to set up."})
+                    return
+                to_list     = data.get("to") or []
+                if isinstance(to_list, str):
+                    to_list = [t.strip() for t in to_list.split(",") if t.strip()]
+                subject     = data.get("subject", "").strip()
+                body        = data.get("body", "").strip()
+                attachments = data.get("attachments") or ([] if not data.get("attachment") else [data.get("attachment")])
+                
+                sent_count = 0
+                errors = []
+                for recipient in to_list:
+                    r_clean = (recipient or "").strip()
+                    if not r_clean:
+                        continue
+                    try:
+                        do_send_smtp(cfg, r_clean, subject, body, attachments=attachments)
+                        sent_count += 1
+                    except Exception as err:
+                        errors.append({"to": r_clean, "error": str(err)})
+                self.send_json({"ok": True, "sent": sent_count, "errors": errors})
+                return
+
+            # ── Sync Fallback ─────────────────────────────────────────────────
+            if path == "/api/sync":
+                self.send_json({"ok": True, "msg": "Sync batch received successfully"})
+                return
+
+            # ── Activity & Audit Logs ─────────────────────────────────────────
+            if path in ("/api/activity-logs/add", "/api/audit-logs/add", "/api/log-activity", "/api/sales/activities/add"):
+                log_id = data.get("id") or ("act-" + str(int(time.time() * 1000)) + "-" + uuid.uuid4().hex[:5])
+                user_id = data.get("user_id") or data.get("user_emp_id") or data.get("employee_id") or ""
+                user_name = data.get("user_name") or data.get("rep_name") or data.get("employee_name") or "Staff"
+                role = data.get("user_role") or data.get("role") or ""
+                action = data.get("description") or data.get("action") or data.get("summary") or "Action logged"
+                module = data.get("type") or data.get("category") or data.get("module") or "General"
+                details = data.get("details") or data.get("summary") or action
+                client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+                ts = data.get("timestamp") or data.get("ts") or data.get("created_at") or now_iso()
+                extra_json = json.dumps(data)
+
+                with _db_lock:
+                    db = get_db()
+                    # Record in audit_logs
+                    db.execute("""
+                        INSERT OR REPLACE INTO audit_logs (id, user_id, user_name, role, action, module, details, ip_address, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, role, action, module, details, client_ip, ts))
+                    
+                    # Also record in activity_logs
+                    act_type = data.get("type") or data.get("activity_type") or "call"
+                    target = data.get("lead_name") or data.get("customer_name") or data.get("target_contact") or ""
+                    db.execute("""
+                        INSERT OR REPLACE INTO activity_logs (id, employee_id, employee_name, activity_type, target_contact, details, extra_data, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, act_type, target, details, extra_json, ts))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "id": log_id})
+                return
+
+            if path in ("/api/activity-logs/clear", "/api/audit-logs/clear"):
+                with _db_lock:
+                    db = get_db()
+                    db.execute("DELETE FROM audit_logs")
+                    db.execute("DELETE FROM activity_logs")
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Logs cleared successfully"})
+                return
+
+            if path in ("/api/system/settings/save", "/api/system/settings", "/api/system-settings/save"):
+                settings_map = data.get("settings") if isinstance(data.get("settings"), dict) else data
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    for k, v in settings_map.items():
+                        v_str = json.dumps(v) if not isinstance(v, str) else v
+                        cat = "company" if "company" in k else "security" if "pin" in k or "sec" in k else "general"
+                        db.execute("""
+                            INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                            VALUES (?, ?, ?, ?)
+                        """, (k, v_str, cat, now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Settings saved successfully"})
+                return
+
+            if path in ("/api/dev/data/save", "/api/dev/tasks/save"):
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    tasks = data.get("tasks") or []
+                    for t in tasks:
+                        tid = t.get("id") or ("TASK-" + str(int(time.time() * 1000)))
+                        db.execute("""
+                            INSERT OR REPLACE INTO dev_tasks (id, title, description, category, priority, status, assignee_id, assignee_name, dev_notes, branch_name, pr_link, due_date, created_by_id, created_by_name, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            tid,
+                            t.get("title", ""),
+                            t.get("description", "") or t.get("dev_notes", ""),
+                            t.get("category", "Bug"),
+                            t.get("priority", "High"),
+                            t.get("status", "todo"),
+                            t.get("assignee_id", "") or t.get("assignee", ""),
+                            t.get("assignee_name", "") or t.get("assigneeName", ""),
+                            t.get("dev_notes", ""),
+                            t.get("branch", "") or t.get("branch_name", ""),
+                            t.get("pr_link", "") or t.get("prLink", ""),
+                            t.get("due_date", ""),
+                            t.get("created_by_id", ""),
+                            t.get("created_by_name", ""),
+                            t.get("created_at") or now_str,
+                            t.get("updated_at") or now_str
+                        ))
+                    
+                    meta = {
+                        "sprints": data.get("sprints", []),
+                        "prs": data.get("prs", []),
+                        "escalations": data.get("escalations", []),
+                        "docs": data.get("docs", [])
+                    }
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('dev_metadata', ?, 'development', ?)
+                    """, (json.dumps(meta), now_str))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Dev data synchronized successfully"})
+                return
+
+            if path == "/api/sales/data/save":
+                now_str = now_iso()
+                meta = {
+                    "leads": data.get("leads", []),
+                    "targets": data.get("targets", []),
+                    "escalations": data.get("escalations", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('sales_metadata', ?, 'sales', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Sales data synchronized successfully"})
+                return
+
+            if path == "/api/support/data/save":
+                now_str = now_iso()
+                meta = {
+                    "tickets": data.get("tickets", []),
+                    "calls": data.get("calls", []),
+                    "kb": data.get("kb", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('support_metadata', ?, 'support', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Support data synchronized successfully"})
+                return
+
             if path == "/api/test-email":
                 cfg = load_smtp_config()
                 stored_pw = cfg.get("password", "")
@@ -2917,7 +3309,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 with _db_lock:
                     db = get_db()
                     # Strict match for username, employee ID, or email with matching password
-                    user_row = db.execute("SELECT * FROM staff_users WHERE (username = ? COLLATE BINARY OR emp_id = ? COLLATE BINARY OR email = ? COLLATE BINARY)", (username, username, username)).fetchone()
+                    user_row = db.execute("SELECT * FROM staff_users WHERE (username = ? OR emp_id = ? OR email = ?)", (username, username, username)).fetchone()
                     user = None
                     if user_row:
                         user_dict = dict(user_row)
@@ -2994,11 +3386,18 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.close()
                         self.send_json({"ok": False, "error": "This account is inactive/suspended. Please contact the administrator."})
                         return
-                    # Update last login
+                    # Update last login safely
                     now_str = now_iso()
-                    db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
-                    db.commit()
-                    db.close()
+                    try:
+                        db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
+                        db.commit()
+                    except Exception as db_err:
+                        print(f"  [AUTH] Warning: Failed to update last_login timestamp: {db_err}")
+                    finally:
+                        try:
+                            db.close()
+                        except Exception:
+                            pass
 
                 # Normalize username-to-role mappings
                 un_lower = (user_dict.get("username") or "").lower()

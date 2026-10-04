@@ -545,8 +545,8 @@ def init_db():
             );
 
         """)
-        # Ensure customer table columns for sales attribution, checkout tracking & commission
-        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label", "payment_method", "transaction_id", "checkout_source", "status", "order_id"]:
+        # Ensure customer table columns for sales attribution, checkout tracking, GSTIN & commission
+        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label", "payment_method", "transaction_id", "checkout_source", "status", "order_id", "gstin"]:
             try:
                 db.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
             except Exception:
@@ -2165,32 +2165,38 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 print(f"  [Report IN] [{data.get('category','?')}] {(data.get('message') or '')[:60]}")
             # ── Sylivion Checkout Integration ────────────────────────────────
             if path in ("/api/checkout/order", "/api/checkout/webhook"):
-                c_name = (data.get("customer_name") or data.get("name") or "").strip()
+                c_company = (data.get("company") or data.get("customer_name") or data.get("name") or "").strip()
+                c_owner = (data.get("owner") or c_company).strip()
+                c_name = c_company if c_company else c_owner
                 if not c_name:
-                    self.send_err("customer_name is required", 400)
+                    self.send_err("customer_name or company is required", 400)
                     return
                 
                 c_email = (data.get("customer_email") or data.get("email") or "").strip()
                 c_phone = (data.get("customer_phone") or data.get("phone") or "").strip()
                 c_city = (data.get("city") or "").strip()
+                c_gstin = (data.get("gstin") or "").strip()
                 plan_name = (data.get("plan_name") or data.get("plan") or "1 Year Plan").strip()
-                amount = float(data.get("amount") or data.get("price") or 1499.0)
+                amount = float(data.get("amount") or data.get("price") or data.get("total_amount") or 1499.0)
                 currency = (data.get("currency") or "INR").strip()
-                tx_id = (data.get("transaction_id") or data.get("payment_id") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
-                pay_method = (data.get("payment_method") or "Sylivion Checkout").strip()
+                tx_id = (data.get("transaction_id") or data.get("payment_id") or data.get("utr") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
+                is_upi = bool(data.get("is_manual_upi") or "upi" in (data.get("payment_method") or "").lower())
+                pay_method = (data.get("payment_method") or ("Direct UPI QR Code" if is_upi else "Razorpay Gateway")).strip()
                 order_num = (data.get("order_id") or f"ORD-{int(time.time())}-{os.urandom(2).hex().upper()}").strip()
                 raw_emp_id = (data.get("emp_id") or data.get("empId") or data.get("referral_code") or "").strip()
+                c_status = "pending_verification" if is_upi else "active"
+                order_status = "pending_verification" if is_upi else "completed"
                 
                 # License Key Generation
                 lic_key = (data.get("license_key") or "").strip()
-                if not lic_key:
+                if not lic_key and not is_upi:
                     lic_key = f"INV-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}"
                 
                 # Plan duration calculation
                 plan_years = 1
                 if "3" in plan_name or "3y" in plan_name.lower(): plan_years = 3
                 elif "5" in plan_name or "5y" in plan_name.lower(): plan_years = 5
-                elif "lifetime" in plan_name.lower() or "vip" in plan_name.lower(): plan_years = 99
+                elif "lifetime" in plan_name.lower() or "vip" in plan_name.lower() or "life" in plan_name.lower(): plan_years = 99
                 
                 today_str = datetime.now().strftime("%Y-%m-%d")
                 try:
@@ -2226,26 +2232,26 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     if cust_row:
                         cid = cust_row["id"]
                         db.execute("""UPDATE customers SET 
-                            license_key=?, purchase_date=?, purchase_amount=?, 
+                            name=?, owner=?, city=?, gstin=?, license_key=?, purchase_date=?, purchase_amount=?, 
                             plan_end_date=?, plan_label=?, sold_by_emp_id=?, sold_by_emp_name=?, 
                             sales_person=?, payment_method=?, transaction_id=?, checkout_source=?, 
-                            order_id=?, updated_at=?
+                            status=?, order_id=?, updated_at=?
                             WHERE id=?""",
-                            (lic_key, today_str, amount, plan_end_date, plan_name,
+                            (c_name, c_owner, c_city, c_gstin, lic_key, today_str, amount, plan_end_date, plan_name,
                              emp_code, emp_real_name, emp_real_name, pay_method, tx_id,
-                             "Sylivion Checkout", order_num, now_iso(), cid))
+                             "Sylivion Checkout", c_status, order_num, now_iso(), cid))
                     else:
                         cid = new_id()
                         db.execute("""INSERT INTO customers 
-                            (id, name, owner, city, currency, email, phone, license_key, purchase_date,
+                            (id, name, owner, city, currency, email, phone, gstin, license_key, purchase_date,
                              purchase_amount, support_purchased, support_amount, notes, plan_end_date,
                              sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
                              payment_method, transaction_id, checkout_source, status, order_id, created_at, updated_at)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                            (cid, c_name, c_name, c_city, currency, c_email, c_phone, lic_key, today_str,
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (cid, c_name, c_owner, c_city, currency, c_email, c_phone, c_gstin, lic_key, today_str,
                              amount, 1, 0, f"Purchased via Sylivion Checkout. EMP: {emp_code} ({emp_real_name})",
                              plan_end_date, emp_code, emp_real_name, emp_real_name, "Sylivion Checkout",
-                             plan_name, pay_method, tx_id, "Sylivion Checkout", "active", order_num, now_iso(), now_iso()))
+                             plan_name, pay_method, tx_id, "Sylivion Checkout", c_status, order_num, now_iso(), now_iso()))
 
                     # 3. Record in employee_sales if employee attributed
                     if matched_emp:

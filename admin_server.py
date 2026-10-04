@@ -51,7 +51,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 _db_lock = threading.RLock()
 
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip() or os.environ.get("POSTGRES_URL", "").strip() or "postgresql://postgres:abiXJrwSDcLZzVWvWRTgAMSGIBVOoyoP@yamanote.proxy.rlwy.net:52510/railway"
 
 class IndexableRow(dict):
     def __init__(self, *args, **kwargs):

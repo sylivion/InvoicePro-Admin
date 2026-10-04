@@ -612,478 +612,464 @@
       </div>
     </div>
 
-            <nav class="flex-1 p-2.5 space-y-1 overflow-y-auto mt-1">
+            <nav class="flex-1 p-2 space-y-1 overflow-y-auto mt-1">
       <!-- ══ ADMIN EXCLUSIVE DASHBOARD ══ -->
       <button x-show="currentUser?.role === 'admin'" @click="navigate('dashboard')"
-        :class="view==='dashboard'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-gauge-high w-5 text-center text-sm text-slate-500" :class="view==='dashboard'?'!text-blue-600':''"></i> Admin Dashboard
+        :class="view==='dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-gauge-high w-4 text-center text-sm text-slate-500" :class="view==='dashboard'?'!text-blue-600':''"></i> Admin Dashboard
       </button>
 
       <!-- ══ MANAGER EXCLUSIVE DASHBOARD ══ -->
       <button x-show="currentUser?.role === 'manager' && canAccess('manager_dashboard')" @click="navigate('manager_dashboard')"
-        :class="view==='manager_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-pie w-5 text-center text-sm text-blue-600"></i> Manager Dashboard
+        :class="view==='manager_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-pie w-4 text-center text-sm text-blue-600"></i> Manager Dashboard
       </button>
-
-          
-
 
 <!-- ══ MANAGER APPROVALS DESK (SINGLE ENTRY ONLY, NO LEAVES) ══ -->
       <button x-show="currentUser?.role === 'manager' && canAccess('manager_approvals')" @click="navigate('manager_approvals')"
-        :class="view==='manager_approvals'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-stamp w-5 text-center text-sm text-amber-500"></i> Pending Approvals
+        :class="view==='manager_approvals'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-stamp w-4 text-center text-sm text-amber-500"></i> Pending Approvals
         <span x-show="(expenseRequisitions.filter(e=>e.status==='Pending').length + customerEscalations.filter(c=>c.status==='Open').length) > 0"
-          class="ml-auto text-[11px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="expenseRequisitions.filter(e=>e.status==='Pending').length + customerEscalations.filter(c=>c.status==='Open').length"></span>
       </button>
 
       <!-- ══ HR EXCLUSIVE DASHBOARD ══ -->
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_dashboard')" @click="navigate('hr_dashboard')"
-        :class="view==='hr_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-pie w-5 text-center text-sm text-brand-600"></i> HR Dashboard
+        :class="view==='hr_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-pie w-4 text-center text-sm text-brand-600"></i> HR Dashboard
       </button>
 
       <!-- ════════ SALES TEAM LEADER TABS (ONLY FOR SALES LEADER) ════════ -->
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_leader_dashboard')" @click="navigate('sales_leader_dashboard')"
-        :class="view==='sales_leader_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chess-king w-5 text-center text-sm text-emerald-600"></i> Sales Leader Command
+        :class="view==='sales_leader_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chess-king w-4 text-center text-sm text-emerald-600"></i> Sales Leader Command
       </button>
 
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_team_targets')" @click="navigate('sales_team_targets')"
-        :class="view==='sales_team_targets'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-bullseye w-5 text-center text-sm text-indigo-500"></i> Sales Targets &amp; Quotas
+        :class="view==='sales_team_targets'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-bullseye w-4 text-center text-sm text-indigo-500"></i> Sales Targets &amp; Quotas
       </button>
 
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_team_pipeline')" @click="navigate('sales_team_pipeline')"
-        :class="view==='sales_team_pipeline'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-layer-group w-5 text-center text-sm text-teal-600"></i> Team Pipeline &amp; Sales
+        :class="view==='sales_team_pipeline'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-layer-group w-4 text-center text-sm text-teal-600"></i> Team Pipeline &amp; Sales
       </button>
 
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_activity_log')" @click="navigate('sales_activity_log')"
-        :class="view==='sales_activity_log'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-phone-volume w-5 text-center text-sm text-purple-500"></i> Team Activity &amp; Calls
+        :class="view==='sales_activity_log'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-phone-volume w-4 text-center text-sm text-purple-500"></i> Team Activity &amp; Calls
       </button>
 
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_escalations')" @click="navigate('sales_escalations')"
-        :class="view==='sales_escalations'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-star-half-stroke w-5 text-center text-sm text-amber-500"></i> VIP Deals &amp; Escalations
+        :class="view==='sales_escalations'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-star-half-stroke w-4 text-center text-sm text-amber-500"></i> VIP Deals &amp; Escalations
       </button>
 
       <button x-show="(currentUser?.role === 'sales_leader' || currentUser?.role === 'sales_lead') && canAccess('sales_reports')" @click="navigate('sales_reports')"
-        :class="view==='sales_reports'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-line w-5 text-center text-sm text-blue-500"></i> Sales Reports &amp; Funnel
+        :class="view==='sales_reports'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-line w-4 text-center text-sm text-blue-500"></i> Sales Reports &amp; Funnel
       </button>
-
-
 
       <!-- ════════ SALES TEAM MEMBER TABS (ONLY FOR SALES MEMBER) ════════ -->
       <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_member_dashboard')" @click="navigate('sales_member_dashboard')"
-        :class="view==='sales_member_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-gauge-high w-5 text-center text-sm text-emerald-500"></i> My Sales Dashboard
+        :class="view==='sales_member_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-gauge-high w-4 text-center text-sm text-emerald-500"></i> My Sales Dashboard
       </button>
 
       <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_my_leads')" @click="navigate('sales_my_leads')"
-        :class="view==='sales_my_leads'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-filter w-5 text-center text-sm text-teal-500"></i> My Leads &amp; Pipeline
+        :class="view==='sales_my_leads'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-filter w-4 text-center text-sm text-teal-500"></i> My Leads &amp; Pipeline
         <span x-show="myActiveLeadsCount > 0"
-          class="ml-auto text-[11px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="myActiveLeadsCount"></span>
       </button>
 
-
-
       <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_my_customers')" @click="navigate('sales_my_customers')"
-        :class="view==='sales_my_customers'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-users w-5 text-center text-sm text-cyan-500"></i> My Customers &amp; Renewals
+        :class="view==='sales_my_customers'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-users w-4 text-center text-sm text-cyan-500"></i> My Customers &amp; Renewals
       </button>
 
       <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_activity_log')" @click="navigate('sales_activity_log')"
-        :class="view==='sales_activity_log'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-phone-volume w-5 text-center text-sm text-purple-500"></i> Call &amp; Meeting Logger
+        :class="view==='sales_activity_log'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-phone-volume w-4 text-center text-sm text-purple-500"></i> Call &amp; Meeting Logger
       </button>
 
-      
       <!-- ════════ DEV TEAM LEADER TABS (ONLY FOR DEV LEADER) ════════ -->
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_leader' || currentUser?.role === 'dev_lead') && canAccess('dev_leader_dashboard')" @click="navigate('dev_leader_dashboard')"
-        :class="view==='dev_leader_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-laptop-code w-5 text-center text-sm text-indigo-500"></i> Dev Leader Command
+        :class="view==='dev_leader_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-laptop-code w-4 text-center text-sm text-indigo-500"></i> Dev Leader Command
       </button>
 
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_leader' || currentUser?.role === 'dev_lead') && canAccess('dev_bug_triage')" @click="navigate('dev_bug_triage')"
-        :class="view==='dev_bug_triage'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-bug-slash w-5 text-center text-sm text-rose-500"></i> Support Bug Triage
+        :class="view==='dev_bug_triage'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-bug-slash w-4 text-center text-sm text-rose-500"></i> Support Bug Triage
         <span x-show="devPendingBugTriageCount > 0"
-          class="ml-auto text-[11px] bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="devPendingBugTriageCount"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_leader' || currentUser?.role === 'dev_lead') && canAccess('dev_team_metrics')" @click="navigate('dev_team_metrics')"
-        :class="view==='dev_team_metrics'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-column w-5 text-center text-sm text-cyan-500"></i> Dev Velocity &amp; Team
+        :class="view==='dev_team_metrics'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-column w-4 text-center text-sm text-cyan-500"></i> Dev Velocity &amp; Team
       </button>
 
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_leader' || currentUser?.role === 'dev_lead') && canAccess('dev_docs')" @click="navigate('dev_docs')"
-        :class="view==='dev_docs'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-amber-500"></i> Architecture Specs
+        :class="view==='dev_docs'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-book-bookmark w-4 text-center text-sm text-amber-500"></i> Architecture Specs
       </button>
 
       <!-- ════════ DEV TEAM MEMBER TABS (ONLY FOR DEV MEMBER) ════════ -->
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_member' || currentUser?.role === 'developer') && canAccess('dev_member_dashboard')" @click="navigate('dev_member_dashboard')"
-        :class="view==='dev_member_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-terminal w-5 text-center text-sm text-cyan-500"></i> My Dev Workspace
+        :class="view==='dev_member_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-terminal w-4 text-center text-sm text-cyan-500"></i> My Dev Workspace
       </button>
 
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_member' || currentUser?.role === 'developer') && canAccess('dev_my_tasks')" @click="navigate('dev_my_tasks')"
-        :class="view==='dev_my_tasks'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-list-check w-5 text-center text-sm text-blue-500"></i> My Task Board
+        :class="view==='dev_my_tasks'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-list-check w-4 text-center text-sm text-blue-500"></i> My Task Board
         <span x-show="devMyActiveTasksCount > 0"
-          class="ml-auto text-[11px] bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="devMyActiveTasksCount"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'development' || currentUser?.role === 'dev' || currentUser?.role === 'dev_member' || currentUser?.role === 'developer') && canAccess('dev_docs')" @click="navigate('dev_docs')"
-        :class="view==='dev_docs'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-amber-500"></i> Architecture Specs
+        :class="view==='dev_docs'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-book-bookmark w-4 text-center text-sm text-amber-500"></i> Architecture Specs
       </button>
 
       <!-- ══ SUPPORT DEPARTMENT: LEADER SECTION ══ -->
-      <div x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_leader_dashboard')" class="pt-2 pb-1 px-3">
+      <div x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_leader_dashboard')" class="pt-2 pb-0.5 px-3">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
           <i class="fa-solid fa-headset text-xs"></i> Support Team Leader
         </span>
       </div>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_leader_dashboard')" @click="navigate('support_leader_dashboard')"
-        :class="view==='support_leader_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-line w-5 text-center text-sm text-amber-600"></i> Support Ops Hub
+        :class="view==='support_leader_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-line w-4 text-center text-sm text-amber-600"></i> Support Ops Hub
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_ticket_assignment')" @click="navigate('support_ticket_assignment')"
-        :class="view==='support_ticket_assignment'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-ticket-simple w-5 text-center text-sm text-amber-600"></i> Assign Tickets
-        <span x-show="supportTickets.filter(t=>t.status==='open').length>0" class="ml-auto text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded-full font-bold" x-text="supportTickets.filter(t=>t.status==='open').length"></span>
+        :class="view==='support_ticket_assignment'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-ticket-simple w-4 text-center text-sm text-amber-600"></i> Assign Tickets
+        <span x-show="supportTickets.filter(t=>t.status==='open').length>0" class="ml-auto text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded-full font-bold" x-text="supportTickets.filter(t=>t.status==='open').length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_escalations')" @click="navigate('support_escalations')"
-        :class="view==='support_escalations'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-triangle-exclamation w-5 text-center text-sm text-red-500"></i> Escalations &amp; VIP
-        <span x-show="supportTickets.filter(t=>t.priority==='Critical').length>0" class="ml-auto text-[11px] bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-1.5 py-0.5 rounded-full font-bold" x-text="supportTickets.filter(t=>t.priority==='Critical').length"></span>
+        :class="view==='support_escalations'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-triangle-exclamation w-4 text-center text-sm text-red-500"></i> Escalations &amp; VIP
+        <span x-show="supportTickets.filter(t=>t.priority==='Critical').length>0" class="ml-auto text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-1.5 py-0.5 rounded-full font-bold" x-text="supportTickets.filter(t=>t.priority==='Critical').length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_customer_complaints')" @click="navigate('support_customer_complaints')"
-        :class="view==='support_customer_complaints'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-face-frown-open w-5 text-center text-sm text-rose-500"></i> Customer Feedback &amp; CSAT
+        :class="view==='support_customer_complaints'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-face-frown-open w-4 text-center text-sm text-rose-500"></i> Customer Feedback &amp; CSAT
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_team_performance')" @click="navigate('support_team_performance')"
-        :class="view==='support_team_performance'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-users-gear w-5 text-center text-sm text-amber-600"></i> Team Performance
+        :class="view==='support_team_performance'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-users-gear w-4 text-center text-sm text-amber-600"></i> Team Performance
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_knowledge_base')" @click="navigate('support_knowledge_base')"
-        :class="view==='support_knowledge_base'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-amber-600"></i> Knowledge Base &amp; FAQ
+        :class="view==='support_knowledge_base'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-book-bookmark w-4 text-center text-sm text-amber-600"></i> Knowledge Base &amp; FAQ
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_recurring_problems')" @click="navigate('support_recurring_problems')"
-        :class="view==='support_recurring_problems'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-rotate w-5 text-center text-sm text-amber-600"></i> Recurring Issues
+        :class="view==='support_recurring_problems'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-rotate w-4 text-center text-sm text-amber-600"></i> Recurring Issues
       </button>
 
       <button x-show="(currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support') && canAccess('support_escalate_to_dev')" @click="navigate('support_escalate_to_dev')"
-        :class="view==='support_escalate_to_dev'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-bug-slash w-5 text-center text-sm text-indigo-600"></i> Dev Bug Escalations
-        <span x-show="devEscalations.length>0" class="ml-auto text-[11px] bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 px-1.5 py-0.5 rounded-full font-bold" x-text="devEscalations.length"></span>
+        :class="view==='support_escalate_to_dev'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-bug-slash w-4 text-center text-sm text-indigo-600"></i> Dev Bug Escalations
+        <span x-show="devEscalations.length>0" class="ml-auto text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 px-1.5 py-0.5 rounded-full font-bold" x-text="devEscalations.length"></span>
       </button>
 
       <!-- ── SUPPORT MEMBER SUBSECTION ── -->
-      <div x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_member_dashboard')" class="pt-2 pb-1 px-3">
+      <div x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_member_dashboard')" class="pt-2 pb-0.5 px-3">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
           <i class="fa-solid fa-headset text-xs"></i> Support Member
         </span>
       </div>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_member_dashboard')" @click="navigate('support_member_dashboard')"
-        :class="view==='support_member_dashboard'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-desktop w-5 text-center text-sm text-amber-600"></i> Agent Workbench
+        :class="view==='support_member_dashboard'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-desktop w-4 text-center text-sm text-amber-600"></i> Agent Workbench
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_my_tickets')" @click="navigate('support_my_tickets')"
-        :class="view==='support_my_tickets'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-list-check w-5 text-center text-sm text-amber-600"></i> My Assigned Tickets
+        :class="view==='support_my_tickets'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-list-check w-4 text-center text-sm text-amber-600"></i> My Assigned Tickets
         <span x-show="(supportTickets || []).filter(t => isTicketAssignedToCurrentMember(t) && t.status !== 'resolved').length > 0"
-          class="ml-auto text-[11px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="(supportTickets || []).filter(t => isTicketAssignedToCurrentMember(t) && t.status !== 'resolved').length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_my_enquiries')" @click="navigate('support_my_enquiries')"
-        :class="view==='support_my_enquiries'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-headset w-5 text-center text-sm text-amber-600"></i> My Assigned Enquiries
+        :class="view==='support_my_enquiries'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-headset w-4 text-center text-sm text-amber-600"></i> My Assigned Enquiries
         <span x-show="myPendingEnquiriesList.length > 0"
-          class="ml-auto text-[11px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="myPendingEnquiriesList.length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_escalations')" @click="navigate('support_escalations')"
-        :class="view==='support_escalations'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-triangle-exclamation w-5 text-center text-sm text-red-500"></i> Escalations &amp; VIP
+        :class="view==='support_escalations'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-triangle-exclamation w-4 text-center text-sm text-red-500"></i> Escalations &amp; VIP
         <span x-show="(supportTickets || []).filter(t => (t.priority === 'Critical' || (t.ticketNo||'').includes('VIP')) && !isTicketResolved(t) && isTicketBelongingToSupportMember(t)).length > 0"
-          class="ml-auto text-[11px] bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-1.5 py-0.5 rounded-full font-bold"
           x-text="(supportTickets || []).filter(t => (t.priority === 'Critical' || (t.ticketNo||'').includes('VIP')) && !isTicketResolved(t) && isTicketBelongingToSupportMember(t)).length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_escalate_to_dev')" @click="navigate('support_escalate_to_dev')"
-        :class="view==='support_escalate_to_dev'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-bug-slash w-5 text-center text-sm text-indigo-600"></i> Dev Bug Escalations
+        :class="view==='support_escalate_to_dev'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-bug-slash w-4 text-center text-sm text-indigo-600"></i> Dev Bug Escalations
         <span x-show="(devEscalations || []).filter(e => isDevEscalationBelongingToSupportMember(e)).length > 0"
-          class="ml-auto text-[11px] bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 px-1.5 py-0.5 rounded-full font-bold"
           x-text="(devEscalations || []).filter(e => isDevEscalationBelongingToSupportMember(e)).length"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_calls_chats')" @click="navigate('support_calls_chats')"
-        :class="view==='support_calls_chats'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-phone-volume w-5 text-center text-sm text-amber-600"></i> Calls &amp; Chats Log
+        :class="view==='support_calls_chats'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-phone-volume w-4 text-center text-sm text-amber-600"></i> Calls &amp; Chats Log
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_troubleshooting_desk')" @click="navigate('support_troubleshooting_desk')"
-        :class="view==='support_troubleshooting_desk'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-screwdriver-wrench w-5 text-center text-sm text-amber-600"></i> Troubleshooting Desk
+        :class="view==='support_troubleshooting_desk'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-screwdriver-wrench w-4 text-center text-sm text-amber-600"></i> Troubleshooting Desk
       </button>
 
       <button x-show="(currentUser?.role === 'support_member' || currentUser?.role === 'support_mem') && canAccess('support_knowledge_base')" @click="navigate('support_knowledge_base')"
-        :class="view==='support_knowledge_base'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-amber-600"></i> Knowledge Base &amp; FAQ
+        :class="view==='support_knowledge_base'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-book-bookmark w-4 text-center text-sm text-amber-600"></i> Knowledge Base &amp; FAQ
       </button>
 
       <!-- ══ MANAGER EXCLUSIVE SECTIONS ══ -->
       <button x-show="currentUser?.role === 'manager' && canAccess('manager_reports')" @click="navigate('manager_reports')"
-        :class="view==='manager_reports'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-line w-5 text-center text-sm"></i> Team &amp; Reports
+        :class="view==='manager_reports'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-line w-4 text-center text-sm"></i> Team &amp; Reports
       </button>
 
       <button x-show="currentUser?.role === 'manager' && canAccess('manager_interviews')" @click="navigate('manager_interviews')"
-        :class="view==='manager_interviews'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-calendar-check w-5 text-center text-sm text-indigo-500"></i> Interview Scheduled
+        :class="view==='manager_interviews'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-calendar-check w-4 text-center text-sm text-indigo-500"></i> Interview Scheduled
         <span x-show="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length>0"
-          class="ml-auto text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length"></span>
       </button>
 
       <!-- ══ CORE BUSINESS MODULES (ADMIN / MANAGER / SUPPORT) ══ -->
       <button x-show="(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support' || !currentUser) && canAccess('customers')" @click="navigate('customers')"
-        :class="(view==='customers'||view==='detail')?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-building-user w-5 text-center text-sm text-slate-500" :class="(view==='customers'||view==='detail')?'!text-blue-600':''"></i> Customers
+        :class="(view==='customers'||view==='detail')?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-building-user w-4 text-center text-sm text-slate-500" :class="(view==='customers'||view==='detail')?'!text-blue-600':''"></i> Customers
         <span x-show="stats.total>0"
-          class="ml-auto text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="stats.total"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support' || !currentUser) && canAccess('enquiries')" @click="navigate('enquiries')"
-        :class="view==='enquiries'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-inbox w-5 text-center text-sm text-slate-500" :class="view==='enquiries'?'!text-blue-600':''"></i> Enquiries
+        :class="view==='enquiries'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-inbox w-4 text-center text-sm text-slate-500" :class="view==='enquiries'?'!text-blue-600':''"></i> Enquiries
         <span x-show="stats.openEnquiries>0"
-          class="ml-auto text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="stats.openEnquiries"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'support_leader' || currentUser?.role === 'support_lead' || currentUser?.role === 'support' || !currentUser) && canAccess('expiring')" @click="navigate('expiring')"
-        :class="view==='expiring'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-hourglass-half w-5 text-center text-sm text-slate-500" :class="view==='expiring'?'!text-blue-600':''"></i> Expiring Soon
+        :class="view==='expiring'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-hourglass-half w-4 text-center text-sm text-slate-500" :class="view==='expiring'?'!text-blue-600':''"></i> Expiring Soon
         <span x-show="stats.expiringSoon>0"
-          class="ml-auto text-[11px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="stats.expiringSoon"></span>
       </button>
 
       <button x-show="(currentUser?.role === 'admin' || !currentUser) && canAccess('revenue')" @click="navigate('revenue')"
-        :class="view==='revenue'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-chart-line w-5 text-center text-sm text-slate-500" :class="view==='revenue'?'!text-blue-600':''"></i> Revenue
+        :class="view==='revenue'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-chart-line w-4 text-center text-sm text-slate-500" :class="view==='revenue'?'!text-blue-600':''"></i> Revenue
       </button>
 
       <button x-show="(currentUser?.role === 'admin' || !currentUser) && canAccess('keygen')" @click="navigate('keygen')"
-        :class="view==='keygen'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-key w-5 text-center text-sm text-slate-500" :class="view==='keygen'?'!text-blue-600':''"></i> Key Generator
+        :class="view==='keygen'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-key w-4 text-center text-sm text-slate-500" :class="view==='keygen'?'!text-blue-600':''"></i> Key Generator
       </button>
 
       <button x-show="(currentUser?.role === 'admin' || !currentUser) && canAccess('employees')" @click="navigate('employees')"
-        :class="view==='employees'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-id-card-clip w-5 text-center text-sm text-slate-500" :class="view==='employees'?'!text-blue-600':''"></i> Employees
+        :class="view==='employees'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-id-card-clip w-4 text-center text-sm text-slate-500" :class="view==='employees'?'!text-blue-600':''"></i> Employees
         <span x-show="employees.length>0"
-          class="ml-auto text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="employees.length"></span>
       </button>
 
       <!-- ══ HR PORTAL SECTIONS ══ -->
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_sourcing')" @click="navigate('hr_sourcing')"
-        :class="view==='hr_sourcing'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-user-plus w-5 text-center text-sm text-indigo-600"></i> Talent Sourcing
+        :class="view==='hr_sourcing'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-user-plus w-4 text-center text-sm text-indigo-600"></i> Talent Sourcing
         <span x-show="scopedCandidates.length>0"
-          class="ml-auto text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold"
+          class="ml-auto text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold"
           x-text="scopedCandidates.length"></span>
       </button>
 
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_interviews')" @click="navigate('hr_interviews')"
-        :class="view==='hr_interviews'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-calendar-days w-5 text-center text-sm text-blue-600"></i> HR Interviews
+        :class="view==='hr_interviews'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-calendar-days w-4 text-center text-sm text-blue-600"></i> HR Interviews
       </button>
 
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_hiring')" @click="navigate('hr_hiring')"
-        :class="view==='hr_hiring'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-id-card w-5 text-center text-sm text-emerald-600"></i> Hiring &amp; Onboarding
+        :class="view==='hr_hiring'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-id-card w-4 text-center text-sm text-emerald-600"></i> Hiring &amp; Onboarding
       </button>
 
-
-
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_jobs')" @click="navigate('hr_jobs')"
-        :class="view==='hr_jobs'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-briefcase w-5 text-center text-sm text-amber-600"></i> Job Openings
+        :class="view==='hr_jobs'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-briefcase w-4 text-center text-sm text-amber-600"></i> Job Openings
       </button>
 
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_grievances')" @click="navigate('hr_grievances')"
-        :class="view==='hr_grievances'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-scale-balanced w-5 text-center text-sm text-purple-600"></i> Grievance Desk
+        :class="view==='hr_grievances'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-scale-balanced w-4 text-center text-sm text-purple-600"></i> Grievance Desk
       </button>
 
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_compliance')" @click="navigate('hr_compliance')"
-        :class="view==='hr_compliance'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-shield-halved w-5 text-center text-sm text-rose-600"></i> Compliance &amp; Policy
+        :class="view==='hr_compliance'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-shield-halved w-4 text-center text-sm text-rose-600"></i> Compliance &amp; Policy
       </button>
 
-
-
       <button x-show="currentUser?.role === 'hr' && canAccess('hr_performance')" @click="navigate('hr_performance')"
-        :class="view==='hr_performance'?\'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs\':\'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold\'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-graduation-cap w-5 text-center text-sm text-indigo-600"></i> Training &amp; Goals
+        :class="view==='hr_performance'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-graduation-cap w-4 text-center text-sm text-indigo-600"></i> Training &amp; Goals
       </button>
 
       <!-- ══ GENERAL & ADMIN MODULES ══ -->
       <button x-show="canAccess('payroll')" @click="navigate('payroll')"
-        :class="view==='payroll'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-sm text-slate-500" :class="view==='payroll'?'!text-blue-600':''"></i> Payroll
+        :class="view==='payroll'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-file-invoice-dollar w-4 text-center text-sm text-slate-500" :class="view==='payroll'?'!text-blue-600':''"></i> Payroll
       </button>
 
       <button x-show="canAccess('leaves')" @click="navigate('leaves')"
-        :class="view==='leaves'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-calendar-check w-5 text-center text-sm text-slate-500" :class="view==='leaves'?'!text-blue-600':''"></i> Leave Desk
+        :class="view==='leaves'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-calendar-check w-4 text-center text-sm text-slate-500" :class="view==='leaves'?'!text-blue-600':''"></i> Leave Desk
         <span x-show="pendingLeavesCount > 0"
-          class="ml-auto text-[11px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="pendingLeavesCount"></span>
       </button>
 
       <button x-show="canAccess('staff')" @click="navigate('staff')"
-        :class="view==='staff'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-user-gear w-5 text-center text-sm text-slate-500" :class="view==='staff'?'!text-blue-600':''"></i> User Accounts
+        :class="view==='staff'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-user-gear w-4 text-center text-sm text-slate-500" :class="view==='staff'?'!text-blue-600':''"></i> User Accounts
       </button>
 
       <button x-show="canAccess('reminders')" @click="navigate('reminders')"
-        :class="view==='reminders'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-bell w-5 text-center text-sm text-slate-500" :class="view==='reminders'?'!text-blue-600':''"></i> Reminders
+        :class="view==='reminders'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-bell w-4 text-center text-sm text-slate-500" :class="view==='reminders'?'!text-blue-600':''"></i> Reminders
         <span x-show="remindersCount>0"
-          class="ml-auto text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
+          class="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold"
           x-text="remindersCount"></span>
       </button>
 
       <button x-show="canAccess('teams')" @click="navigate('teams')"
-        :class="view==='teams'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-diagram-project w-5 text-center text-sm text-slate-500" :class="view==='teams'?'!text-blue-600':''"></i> Teams &amp; Leaders
+        :class="view==='teams'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-diagram-project w-4 text-center text-sm text-slate-500" :class="view==='teams'?'!text-blue-600':''"></i> Teams &amp; Leaders
       </button>
 
-
-
       <button x-show="canAccess('auditlog')" @click="navigate('auditlog')"
-        :class="view==='auditlog'?'bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-800 font-bold shadow-2xs':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent font-semibold'"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] sm:text-sm font-semibold transition-colors text-left">
-        <i class="fa-solid fa-list-check w-5 text-center text-sm text-slate-500" :class="view==='auditlog'?'!text-blue-600':''"></i> Activity Log
+        :class="view==='auditlog'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+        <i class="fa-solid fa-list-check w-4 text-center text-sm text-slate-500" :class="view==='auditlog'?'!text-blue-600':''"></i> Activity Log
       </button>
     </nav>
 
-    <div class="p-2.5 border-t border-slate-200 space-y-1 bg-white">
+    <div class="p-2 border-t border-slate-200 space-y-0.5 bg-white">
       <!-- PWA Install Sidebar Button -->
       <button x-show="pwaInstallable" x-cloak @click="installPwaApp()"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] sm:text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors">
-        <i class="fa-solid fa-mobile-screen-button w-4 text-center text-blue-600"></i>
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors">
+        <i class="fa-solid fa-mobile-screen-button w-4 text-center text-blue-600 text-sm"></i>
         <span>Install InvoicePro App</span>
       </button>
 
       <button x-show="isAdmin" @click="openSmtpModal()"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] sm:text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-        <i class="fa-solid fa-envelope-circle-check w-4 text-center text-slate-400"></i>
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+        <i class="fa-solid fa-envelope-circle-check w-4 text-center text-sm text-slate-400"></i>
         <span>Email Settings</span>
-        <span x-show="smtpConfig.host" class="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">ON</span>
-        <span x-show="!smtpConfig.host" class="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">OFF</span>
+        <span x-show="smtpConfig.host" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">ON</span>
+        <span x-show="!smtpConfig.host" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">OFF</span>
       </button>
 
       <button x-show="isAdmin" @click="showServerConfigModal=true"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] sm:text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-        <i class="fa-solid fa-server w-4 text-center text-slate-400"></i>
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+        <i class="fa-solid fa-server w-4 text-center text-sm text-slate-400"></i>
         <span>Server URL Settings</span>
       </button>
 
       <button x-show="isAdmin" @click="exportBackupExcel()"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] sm:text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-        <i class="fa-solid fa-cloud-arrow-down w-4 text-center text-slate-400"></i>
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+        <i class="fa-solid fa-cloud-arrow-down w-4 text-center text-sm text-slate-400"></i>
         <span>Backup Data</span>
       </button>
 
       <label x-show="isAdmin"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] sm:text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer">
-        <i class="fa-solid fa-cloud-arrow-up w-4 text-center text-slate-400"></i>
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer">
+        <i class="fa-solid fa-cloud-arrow-up w-4 text-center text-sm text-slate-400"></i>
         <span>Restore Backup</span>
         <input type="file" accept=".xlsx,.xls,.json" class="hidden" @change="importBackup($event)" />
       </label>
@@ -3691,59 +3677,114 @@
     </main>
 
     <!-- ══ REMINDERS VIEW ══ -->
+        <!-- ══ REMINDERS VIEW ══ -->
     <main class="flex-1 overflow-y-auto p-6" x-show="view==='reminders' && canAccess('reminders')" x-cloak>
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200">Reminders &amp; Tasks</h2>
-          <p class="text-xs text-gray-400 mt-0.5"
-            x-text="upcomingReminders.length + ' pending · ' + overdueReminders.length + ' overdue'"></p>
-        </div>
-      </div>
-
-      <div x-show="upcomingReminders.length===0" class="text-center py-16 text-gray-400">
-        <i class="fa-solid fa-calendar-check text-4xl mb-3 block text-gray-300 dark:text-gray-700"></i>
-        <div class="font-semibold">No pending reminders.</div>
-        <p class="text-xs mt-1">Set reminders from customer records.</p>
-      </div>
-
-      <div class="space-y-2">
-        <template x-for="r in upcomingReminders" :key="r.id">
-          <div
-            class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 flex items-center gap-3 hover:shadow-sm transition-shadow"
-            :class="r.date<today()?'border-l-4 !border-l-red-400':r.date===today()?'border-l-4 !border-l-orange-400':''">
-            <div class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center"
-              :class="r.date<today()?'bg-red-100 dark:bg-red-900':r.date===today()?'bg-orange-100 dark:bg-orange-900':'bg-gray-100 dark:bg-gray-800'">
-              <i class="fa-solid fa-bell text-sm"
-                :class="r.date<today()?'text-red-500':r.date===today()?'text-orange-500':'text-gray-400'"></i>
+      <div class="space-y-6">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/70 border border-amber-200/70 dark:border-amber-800/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shadow-xs flex-shrink-0">
+              <i class="fa-solid fa-bell"></i>
             </div>
-            <div class="flex-1 min-w-0 cursor-pointer" @click="openDetail(r.customerId)">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-semibold text-sm text-gray-800 dark:text-gray-200" x-text="r.customerName"></span>
-                <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
-                  :class="r.type==='follow-up'?'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300':r.type==='renewal'?'bg-brand-100 dark:bg-teal-900 text-brand-600 dark:text-brand-300':'bg-gray-100 dark:bg-gray-800 text-gray-500'"
-                  x-text="r.type"></span>
-                <span x-show="r.date<today()"
-                  class="text-xs px-2 py-0.5 rounded-full font-bold bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400">OVERDUE</span>
-                <span x-show="r.date===today()"
-                  class="text-xs px-2 py-0.5 rounded-full font-bold bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 animate-pulse">TODAY</span>
-              </div>
-              <div x-show="r.note" class="text-xs text-gray-400 mt-0.5 truncate" x-text="r.note"></div>
-            </div>
-            <div class="text-xs text-gray-400 flex-shrink-0" x-text="fmtDate(r.date)"></div>
-            <div class="flex items-center gap-1.5 flex-shrink-0" @click.stop>
-              <button @click="toggleReminder(r.customerId,r.id)"
-                class="p-1.5 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 hover:bg-green-100 transition-colors"
-                title="Mark done">
-                <i class="fa-solid fa-check text-xs"></i>
-              </button>
-              <button @click="deleteReminder(r.customerId,r.id)"
-                class="p-1.5 rounded-lg bg-red-50 dark:bg-red-950 text-red-400 hover:bg-red-100 transition-colors"
-                title="Delete">
-                <i class="fa-solid fa-trash text-xs"></i>
-              </button>
+            <div>
+              <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Reminders &amp; Follow-up Desk</h1>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"
+                x-text="upcomingReminders.length + ' active reminder(s) · ' + overdueReminders.length + ' overdue'"></p>
             </div>
           </div>
-        </template>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button @click="reminderFilter='all'"
+              :class="reminderFilter==='all' ? 'bg-amber-600 text-white shadow-xs font-bold' : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'"
+              class="px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer">
+              All Active (<span x-text="upcomingReminders.length"></span>)
+            </button>
+            <button @click="reminderFilter='overdue'"
+              :class="reminderFilter==='overdue' ? 'bg-red-600 text-white shadow-xs font-bold' : 'border border-slate-200 dark:border-slate-700 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 font-medium'"
+              class="px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer"
+              x-show="overdueReminders.length > 0">
+              Overdue (<span x-text="overdueReminders.length"></span>)
+            </button>
+            <button @click="reminderFilter='today'"
+              :class="reminderFilter==='today' ? 'bg-orange-600 text-white shadow-xs font-bold' : 'border border-slate-200 dark:border-slate-700 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/50 font-medium'"
+              class="px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer">
+              Today (<span x-text="upcomingReminders.filter(r => r.date === today()).length"></span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="displayedReminders.length === 0"
+          class="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs my-5">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">No Pending Reminders</h3>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+            You are all caught up! You can set follow-up reminders and scheduled tasks directly from customer cards.
+          </p>
+          <button @click="navigate('customers')"
+            class="mt-4 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-users text-xs"></i>
+            <span>Browse Customers →</span>
+          </button>
+        </div>
+
+        <!-- Reminders List -->
+        <div x-show="displayedReminders.length > 0" class="space-y-3">
+          <template x-for="r in displayedReminders" :key="r.id || (r.customerId + '_' + r.date)">
+            <div
+              class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 flex items-center gap-4 shadow-xs hover:border-brand-200 dark:hover:border-brand-800 transition-all cursor-pointer"
+              :class="r.date < today() ? 'border-l-4 !border-l-red-500 bg-red-50/20 dark:bg-red-950/20' : (r.date === today() ? 'border-l-4 !border-l-orange-500 bg-orange-50/20 dark:bg-orange-950/20' : '')"
+              @click="openDetail(r.customerId)">
+              
+              <!-- Icon -->
+              <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm shadow-2xs"
+                :class="r.date < today() ? 'bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-300' : (r.date === today() ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-600 dark:text-orange-300 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400')">
+                <i class="fa-solid" :class="r.type === 'follow-up' ? 'fa-phone-volume' : (r.type === 'renewal' ? 'fa-arrows-rotate' : 'fa-bell')"></i>
+              </div>
+
+              <!-- Main Content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-sm sm:text-base text-slate-900 dark:text-white" x-text="r.customerName"></span>
+                  <span class="text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                    :class="r.type === 'follow-up' ? 'bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800' : (r.type === 'renewal' ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700')"
+                    x-text="r.type || 'Follow-up'"></span>
+                  
+                  <span x-show="r.date < today()"
+                    class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-0.5"></i> OVERDUE
+                  </span>
+                  <span x-show="r.date === today()"
+                    class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                    <i class="fa-solid fa-clock mr-0.5"></i> TODAY
+                  </span>
+                </div>
+                <div x-show="r.note" class="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate" x-text="r.note"></div>
+              </div>
+
+              <!-- Date -->
+              <div class="text-xs font-mono font-bold text-slate-600 dark:text-slate-400 flex-shrink-0 px-3 py-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200/60 dark:border-slate-700" x-text="fmtDate(r.date)"></div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-1.5 flex-shrink-0" @click.stop>
+                <button @click="toggleReminder(r.customerId, r.id)"
+                  class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="Mark Completed">
+                  <i class="fa-solid fa-check text-xs"></i>
+                  <span class="hidden sm:inline">Done</span>
+                </button>
+                <button @click="deleteReminder(r.customerId, r.id)"
+                  class="p-2 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition-colors cursor-pointer"
+                  title="Delete Reminder">
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+
       </div>
     </main>
 
@@ -7995,7 +8036,7 @@
 
                     <div class="text-xs text-emerald-800 dark:text-emerald-300 font-semibold flex items-center justify-between pt-1">
                       <span><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> Approved by Dev Leader: <strong x-text="esc.dev_approved_by || 'Dev Leader'"></strong></span>
-                      <span x-show="esc.dev_leader_approval_notes" class="italic" x-text="'\"' + esc.dev_leader_approval_notes + '\"'"></span>
+                      <span x-show="esc.dev_leader_approval_notes" class="italic" x-text="'“' + esc.dev_leader_approval_notes + '”'"></span>
                     </div>
                   </div>
                 </div>
@@ -18079,7 +18120,7 @@
             <!-- QR Display Row (Auto-Generated from UPI ID) -->
             <template x-if="userProfileEditForm.upi_id || userProfileEditForm.upi_qr_image">
               <div class="pt-3 border-t border-emerald-200/70 dark:border-emerald-800/60 flex items-center gap-4 flex-wrap sm:flex-nowrap">
-                <div @click="openQRPreview(userProfileUPIQRDataUrl || userProfileEditForm.upi_qr_image || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + '\'s Payout QR')"
+                <div @click="openQRPreview(userProfileUPIQRDataUrl || userProfileEditForm.upi_qr_image || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + 's Payout QR')"
                   class="p-2 bg-white rounded-2xl shadow-sm border border-emerald-200 dark:border-emerald-900 shrink-0 relative group cursor-pointer hover:shadow-md transition-all">
                   <img :src="userProfileUPIQRDataUrl || userProfileEditForm.upi_qr_image || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout'))" 
                     alt="My UPI QR" class="w-24 h-24 rounded-lg object-contain block mx-auto" />
@@ -18096,7 +18137,7 @@
                   <p class="text-xs text-emerald-700 dark:text-emerald-400">
                     Generated automatically for <strong class="font-mono text-emerald-900 dark:text-emerald-100" x-text="userProfileEditForm.upi_id"></strong>. Admin and Accounts scan this exact QR code to disburse your salary, quotas, and sales incentives directly to your bank account.
                   </p>
-                  <button type="button" @click="openQRPreview(userProfileUPIQRDataUrl || userProfileEditForm.upi_qr_image || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + '\'s Payout QR')"
+                  <button type="button" @click="openQRPreview(userProfileUPIQRDataUrl || userProfileEditForm.upi_qr_image || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + 's Payout QR')"
                     class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline pt-0.5 cursor-pointer">
                     <i class="fa-solid fa-expand text-[10px]"></i> Click image to view full size
                   </button>
@@ -18279,7 +18320,7 @@
                 <!-- Case: Dynamic QR Auto-Generated from UPI ID -->
                 <template x-if="userProfileEditForm.upi_id">
                   <div class="p-3.5 rounded-2xl bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center gap-4 flex-wrap sm:flex-nowrap">
-                    <div @click="openQRPreview(userProfileUPIQRDataUrl || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + '\'s Generated UPI QR')"
+                    <div @click="openQRPreview(userProfileUPIQRDataUrl || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout')), userProfileEditForm.name + 's Generated UPI QR')"
                       class="relative p-2 bg-white rounded-xl border border-gray-200 shadow-xs shrink-0 cursor-pointer group hover:scale-105 transition-all">
                       <img :src="userProfileUPIQRDataUrl || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent('upi://pay?pa=' + encodeURIComponent(userProfileEditForm.upi_id) + '&pn=' + encodeURIComponent(userProfileEditForm.name || currentUser?.name || 'Employee') + '&cu=INR&tn=Salary Payout'))" 
                         alt="Auto Generated QR" class="w-24 h-24 rounded block mx-auto" />
@@ -18997,6 +19038,7 @@
         ],
         // ── Reminders ──
         showReminderModal: false,
+        reminderFilter: 'all', // 'all' | 'overdue' | 'today'
         reminderForm: { date: '', note: '', type: 'follow-up' },
         reminderCustomerId: null,
         // ── Audit / Activity ──
@@ -24924,7 +24966,7 @@
             this.selectedCustomer = { ...this.customers[idx] };
           }
           this.showRenewModal = false;
-          this.notify('Renewal key saved to ' + this.renewKeyCustomerName + '\'s record!');
+          this.notify('Renewal key saved to ' + this.renewKeyCustomerName + 's record!');
         },
 
         // ── Key Generator ─────────────────────────────────────────────────────────────────    // MUST match _ipInfoHash() in InvoicePro.html and KeyGenerator.html exactly.
@@ -26635,10 +26677,17 @@ get remindersCount() {
           return (this.upcomingReminders || []).length;
         },
 
+        get displayedReminders() {
+          const list = this.upcomingReminders || [];
+          if (this.reminderFilter === 'overdue') return list.filter(r => r.date && r.date < this.today());
+          if (this.reminderFilter === 'today') return list.filter(r => r.date === this.today());
+          return list;
+        },
+
         get upcomingReminders() {
           const res = [];
           this.customers.forEach(c => (c.reminders || []).filter(r => !r.done).forEach(r => res.push({ ...r, customerName: c.name, customerId: c.id })));
-          return res.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 30);
+          return res.sort((a, b) => (a.date || '').localeCompare(b.date || '')).slice(0, 50);
         },
         get overdueReminders() {
           const t = this.today();

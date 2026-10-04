@@ -619,7 +619,7 @@
 
   <!-- ╔══════════════ SIDEBAR ══════════════╗ -->
   <aside x-show="currentUser" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-    class="fixed lg:sticky top-0 z-50 lg:z-auto w-56 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen shadow-sm transition-transform duration-200">
+    class="fixed lg:sticky top-0 z-50 lg:z-auto w-72 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen shadow-sm transition-transform duration-200">
     <!-- Logo & Role Header -->
     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex flex-col gap-1 overflow-hidden">
       <div class="flex items-center justify-between">
@@ -7184,44 +7184,58 @@
       <div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2.5">
-              <i class="fa-solid fa-ticket-simple text-amber-600"></i> Ticket Assignment &amp; Workload Balancer
+            <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-ticket text-slate-600 dark:text-slate-400"></i> Ticket Assignment &amp; Workload Balancer
             </h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Distribute incoming customer issues evenly across support engineers and track SLA.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Distribute incoming customer issues evenly across support engineers, track SLA, and review closed tickets.</p>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="openCreateSupportTicketModal()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow flex items-center gap-1.5 cursor-pointer">
+            <button @click="openCreateSupportTicketModal()" class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-plus"></i> New Ticket
             </button>
           </div>
         </div>
 
         <!-- Filter Bar -->
-        <div class="p-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 flex-wrap text-xs">
-          <span class="font-bold text-gray-500">Filter By:</span>
-          <select x-model="supportCategoryFilter" class="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div class="p-3.5 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs flex items-center gap-3 flex-wrap text-xs">
+          <span class="font-semibold text-gray-500">Filter By:</span>
+          <select x-model="supportCategoryFilter" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-slate-800 dark:text-slate-200">
             <option value="all">All Categories</option>
             <option value="GST & Invoicing">GST &amp; Invoicing</option>
             <option value="License & Activation">License &amp; Activation</option>
             <option value="Database & Sync">Database &amp; Sync</option>
             <option value="General Support">General Support</option>
           </select>
-          <select x-model="supportPriorityFilter" class="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <select x-model="supportPriorityFilter" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-slate-800 dark:text-slate-200">
             <option value="all">All Priorities</option>
             <option value="Critical">Critical</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
           </select>
-          <select x-model="supportStatusFilter" class="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <option value="all">All Statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
+          <select x-model="supportStatusFilter" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-slate-800 dark:text-slate-200">
+            <option value="all">All Statuses (Active &amp; Resolved)</option>
+            <option value="open">Open &amp; Unassigned</option>
+            <option value="in_progress">In Progress &amp; Assigned</option>
+            <option value="resolved">Resolved &amp; Closed Only</option>
           </select>
         </div>
 
-        <!-- Ticket Assignment Table -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <!-- ══ SECTION 1: ACTIVE TICKETS QUEUE ══ -->
+        <div x-show="supportStatusFilter === 'all' || supportStatusFilter === 'open' || supportStatusFilter === 'in_progress'" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs overflow-hidden">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-bold">
+                <i class="fa-solid fa-ticket"></i>
+              </span>
+              <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm">Active Tickets Queue &amp; Workload Dispatch</h3>
+                <p class="text-[11px] text-gray-400">Tickets awaiting assignment or active resolution by support engineers</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+              x-text="getActiveSupportTicketsList().length + ' Active'"></span>
+          </div>
+
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
               <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 uppercase font-semibold">
@@ -7237,76 +7251,65 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <template x-for="t in getFilteredSupportTicketsList()" :key="t.id || t.ticketNo || t.ticket_no">
-                  <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40" :class="isTicketResolved(t) ? 'opacity-80 bg-gray-50/30 dark:bg-gray-900/30' : ''">
-                    <td class="py-3.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400" x-text="t.ticketNo || t.ticket_no || t.id || '—'"></td>
+                <template x-for="t in getActiveSupportTicketsList()" :key="t.id || t.ticketNo || t.ticket_no">
+                  <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-semibold text-blue-600 dark:text-blue-400" x-text="t.ticketNo || t.ticket_no || t.id || '—'"></td>
                     <td class="py-3.5 px-4">
-                      <div class="font-bold text-gray-900 dark:text-white" x-text="t.customerName || t.customer_name || t.customer || t.name || 'Customer'"></div>
+                      <div class="font-semibold text-gray-900 dark:text-white" x-text="t.customerName || t.customer_name || t.customer || t.name || 'Customer'"></div>
                       <div class="text-[11px] text-gray-400 font-mono" x-text="t.phone || t.mobile || '—'"></div>
                     </td>
                     <td class="py-3.5 px-4">
-                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 inline-flex items-center gap-1">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 inline-flex items-center gap-1">
                         <i class="fa-solid fa-crown text-[9px] text-amber-500"></i>
                         <span x-text="(getTicketCustomerPlan(t) && getTicketCustomerPlan(t).label) ? getTicketCustomerPlan(t).label : 'Standard Plan'"></span>
                       </span>
                     </td>
                     <td class="py-3.5 px-4 max-w-xs">
-                      <div class="font-bold text-gray-800 dark:text-gray-200 truncate" x-text="t.subject || t.title || t.issue || 'Support Request'"></div>
+                      <div class="font-semibold text-gray-800 dark:text-gray-200 truncate" x-text="t.subject || t.title || t.issue || 'Support Request'"></div>
                       <div class="text-[10px] text-gray-400" x-text="(t.category || t.issue_category || 'General Support') + ' • via ' + (t.channel || t.source || 'Phone')"></div>
                     </td>
                     <td class="py-3.5 px-4">
-                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider"
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
                         :class="String(t.priority).toLowerCase()==='critical' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800' : (String(t.priority).toLowerCase()==='high' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800')"
                         x-text="t.priority || 'Medium'"></span>
                     </td>
                     <td class="py-3.5 px-4">
-                      <div class="flex items-center gap-1.5 font-semibold text-gray-700 dark:text-gray-300">
+                      <div class="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300">
                         <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
-                          <span class="inline-flex items-center gap-1">
-                            <i class="fa-solid fa-user-circle text-amber-500"></i>
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            <i class="fa-solid fa-user-check text-blue-600 text-[10px]"></i>
                             <span x-text="getTicketAssigneeName(t)"></span>
                           </span>
                         </template>
                         <template x-if="getTicketAssigneeName(t) === 'Unassigned'">
-                          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
-                            <i class="fa-solid fa-user-clock text-[9px]"></i> Unassigned
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
+                            <i class="fa-solid fa-clock text-[9px]"></i> Unassigned
                           </span>
                         </template>
                       </div>
                     </td>
                     <td class="py-3.5 px-4">
-                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                        :class="isTicketResolved(t) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800' : (getTicketAssigneeName(t) !== 'Unassigned' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800')"
-                        x-text="isTicketResolved(t) ? 'RESOLVED' : (getTicketAssigneeName(t) !== 'Unassigned' ? 'ASSIGNED' : 'OPEN')"></span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                        :class="getTicketAssigneeName(t) !== 'Unassigned' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800'"
+                        x-text="getTicketAssigneeName(t) !== 'Unassigned' ? 'ASSIGNED' : 'OPEN'"></span>
                     </td>
                     <td class="py-3.5 px-4 text-right space-x-1">
-                      <!-- Case 1: When Ticket is Resolved -->
-                      <template x-if="isTicketResolved(t)">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
-                          <i class="fa-solid fa-circle-check text-emerald-600"></i> Closed
-                        </span>
-                      </template>
-
-                      <!-- Case 2: When Ticket is Assigned to an Engineer (and not resolved) -->
-                      <template x-if="!isTicketResolved(t) && getTicketAssigneeName(t) !== 'Unassigned'">
+                      <!-- Case 1: When Ticket is Assigned to an Engineer -->
+                      <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
                         <div class="inline-flex items-center gap-1.5 justify-end">
-                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold border border-blue-200 dark:border-blue-800 shadow-sm" :title="'Assigned to ' + getTicketAssigneeName(t)">
-                            <i class="fa-solid fa-user-check text-blue-600 dark:text-blue-400 text-[10px]"></i>
-                            <span x-text="getTicketAssigneeName(t)"></span>
-                          </span>
-                          <button disabled class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 font-bold text-[10px] cursor-not-allowed border border-gray-200 dark:border-gray-700/60 flex items-center gap-1 opacity-70" title="Assigned engineer must resolve this ticket">
-                            <i class="fa-solid fa-lock text-[9px]"></i> Resolve
+                          <button @click="openCloseTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] cursor-pointer shadow-xs transition-colors">
+                            <i class="fa-solid fa-check text-[10px]"></i> Resolve
                           </button>
                         </div>
                       </template>
 
-                      <!-- Case 3: When Ticket is Unassigned (and not resolved) -->
-                      <template x-if="!isTicketResolved(t) && getTicketAssigneeName(t) === 'Unassigned'">
-                        <div class="inline-flex items-center gap-1 justify-end">
-                          <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] cursor-pointer shadow-sm">
-                            <span>Assign Engineer</span>
+                      <!-- Case 2: When Ticket is Unassigned -->
+                      <template x-if="getTicketAssigneeName(t) === 'Unassigned'">
+                        <div class="inline-flex items-center gap-1.5 justify-end">
+                          <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] cursor-pointer shadow-xs transition-colors">
+                            <span>Assign</span>
                           </button>
-                          <button @click="openCloseTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer shadow-sm">
+                          <button @click="openCloseTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] cursor-pointer shadow-xs transition-colors">
                             Resolve
                           </button>
                         </div>
@@ -7314,13 +7317,98 @@
                     </td>
                   </tr>
                 </template>
+                <tr x-show="getActiveSupportTicketsList().length === 0">
+                  <td colspan="8" class="text-center py-10 text-gray-400 text-xs">
+                    <i class="fa-solid fa-circle-check text-2xl text-emerald-500 mb-2 block"></i>
+                    All active support tickets are currently triaged and resolved.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
+
+        <!-- ══ SECTION 2: RESOLVED & CLOSED TICKETS CATEGORY ══ -->
+        <div x-show="supportStatusFilter === 'all' || supportStatusFilter === 'resolved'" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs overflow-hidden">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-emerald-50/40 dark:bg-emerald-950/20 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-xs font-bold">
+                <i class="fa-solid fa-check-double"></i>
+              </span>
+              <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm">Resolved &amp; Closed Tickets Archive</h3>
+                <p class="text-[11px] text-gray-400">Historical log of closed customer support requests with resolution details</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              x-text="getResolvedSupportTicketsList().length + ' Resolved'"></span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-gray-50 dark:bg-gray-800/60 text-gray-500 uppercase font-semibold">
+                <tr>
+                  <th class="py-3 px-4">Ticket</th>
+                  <th class="py-3 px-4">Customer &amp; Phone</th>
+                  <th class="py-3 px-4">Software Plan</th>
+                  <th class="py-3 px-4">Subject &amp; Category</th>
+                  <th class="py-3 px-4">Priority</th>
+                  <th class="py-3 px-4">Resolved By / Date</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Resolution</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <template x-for="t in getResolvedSupportTicketsList()" :key="t.id || t.ticketNo || t.ticket_no">
+                  <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 bg-gray-50/20 dark:bg-gray-900/20 transition-colors">
+                    <td class="py-3.5 px-4 font-mono font-semibold text-slate-600 dark:text-slate-400" x-text="t.ticketNo || t.ticket_no || t.id || '—'"></td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-semibold text-gray-900 dark:text-white" x-text="t.customerName || t.customer_name || t.customer || t.name || 'Customer'"></div>
+                      <div class="text-[11px] text-gray-400 font-mono" x-text="t.phone || t.mobile || '—'"></div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 inline-flex items-center gap-1">
+                        <i class="fa-solid fa-crown text-[9px] text-amber-500"></i>
+                        <span x-text="(getTicketCustomerPlan(t) && getTicketCustomerPlan(t).label) ? getTicketCustomerPlan(t).label : 'Standard Plan'"></span>
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 max-w-xs">
+                      <div class="font-semibold text-gray-800 dark:text-gray-200 truncate" x-text="t.subject || t.title || t.issue || 'Support Request'"></div>
+                      <div class="text-[10px] text-gray-400" x-text="(t.category || t.issue_category || 'General Support') + ' • via ' + (t.channel || t.source || 'Phone')"></div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                        x-text="t.priority || 'Medium'"></span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-medium text-gray-900 dark:text-white text-[11px]" x-text="t.resolvedByName || t.resolvedBy || getTicketAssigneeName(t) || 'Support Team'"></div>
+                      <div class="text-[10px] text-gray-400 font-mono" x-text="t.resolvedAt || 'Resolved'"></div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        RESOLVED
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Closed
+                      </span>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="getResolvedSupportTicketsList().length === 0">
+                  <td colspan="8" class="text-center py-10 text-gray-400 text-xs">
+                    <i class="fa-solid fa-inbox text-2xl text-gray-300 dark:text-gray-700 mb-2 block"></i>
+                    No resolved tickets match your selected filters.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </main>
-
     <!-- 3. SUPPORT ESCALATIONS & VIP QUEUE -->
     <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950" x-show="view==='support_escalations' && canAccess('support_escalations')" x-cloak>
       <div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
@@ -30834,6 +30922,23 @@ get remindersCount() {
             const timeB = b.createdTimestamp || this.parseTicketDateTime(b.createdAt || b.created_at || b.date);
             return timeB - timeA;
           });
+        },
+
+        getActiveSupportTicketsList() {
+          const list = this.getFilteredSupportTicketsList() || [];
+          return list.filter(t => !this.isTicketResolved(t));
+        },
+
+        getResolvedSupportTicketsList() {
+          let list = this.supportTickets || [];
+          if (this.supportCategoryFilter && this.supportCategoryFilter !== 'all') {
+            list = list.filter(t => t.category === this.supportCategoryFilter);
+          }
+          if (this.supportPriorityFilter && this.supportPriorityFilter !== 'all') {
+            list = list.filter(t => t.priority === this.supportPriorityFilter);
+          }
+          list = list.filter(t => this.isTicketResolved(t));
+          return this.sortTicketsPlanFirst(list);
         },
 
         getFilteredSupportTicketsList() {

@@ -36,7 +36,7 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from email.header import Header
 from email.utils import formataddr, formatdate, make_msgid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta, date
 from urllib.parse import urlparse, parse_qs, quote
 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -2488,33 +2488,49 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         if not sales_person: sales_person = sold_by_emp_name
 
                     # Check if customer already exists by id, email, or phone
-                    cust_exist = db.execute("SELECT id FROM customers WHERE id=?", (cid,)).fetchone()
+                    cust_exist = None
+                    if cid:
+                        cust_exist = row_to_dict(db.execute("SELECT * FROM customers WHERE id=?", (cid,)).fetchone())
                     if not cust_exist and email:
-                        cust_exist = db.execute("SELECT id FROM customers WHERE LOWER(TRIM(email))=?", (email.lower(),)).fetchone()
+                        cust_exist = row_to_dict(db.execute("SELECT * FROM customers WHERE LOWER(TRIM(email))=?", (email.lower(),)).fetchone())
                     if not cust_exist and phone:
                         clean_p = re.sub(r'\D', '', phone)[-10:]
                         if clean_p:
-                            cust_exist = db.execute("SELECT id FROM customers WHERE phone LIKE ? OR phone=?", (f"%{clean_p}", phone)).fetchone()
+                            cust_exist = row_to_dict(db.execute("SELECT * FROM customers WHERE phone LIKE ? OR phone=?", (f"%{clean_p}", phone)).fetchone())
                     
-                    final_cid = cust_exist["id"] if cust_exist else cid
+                    cust_exist = cust_exist or {}
+                    final_cid = cust_exist.get("id") or cid
 
                     db.execute("""INSERT OR REPLACE INTO customers
-                        (id,name,owner,city,currency,email,phone,license_key,purchase_date,purchase_amount,
+                        (id,name,owner,city,currency,email,phone,gstin,license_key,purchase_date,purchase_amount,
                          support_purchased,support_purchase_date,support_amount,notes,plan_end_date,trial_end_date,
-                         sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,created_at,updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                         sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,
+                         payment_method,transaction_id,checkout_source,status,order_id,created_at,updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                         (final_cid, name,
-                         str(data.get("owner") or ""), str(data.get("city") or ""),
-                         str(data.get("currency") or "INR"),
-                         email, phone,
-                         lic_key, str(data.get("purchaseDate") or now_iso()[:10]),
+                         str(data.get("owner") or cust_exist.get("owner", "")),
+                         str(data.get("city") or cust_exist.get("city", "")),
+                         str(data.get("currency") or cust_exist.get("currency", "INR")),
+                         email or cust_exist.get("email", ""),
+                         phone or cust_exist.get("phone", ""),
+                         str(data.get("gstin") or cust_exist.get("gstin", "")),
+                         lic_key or cust_exist.get("license_key", ""),
+                         str(data.get("purchaseDate") or cust_exist.get("purchase_date", now_iso()[:10])),
                          purchase_amount,
-                         1 if data.get("supportPurchased") else 0,
-                         str(data.get("supportPurchaseDate") or ""), support_amount,
-                         notes_str,
-                         str(data.get("planEndDate") or ""), str(data.get("trialEndDate") or ""),
+                         1 if data.get("supportPurchased") else (1 if cust_exist.get("support_purchased") else 0),
+                         str(data.get("supportPurchaseDate") or cust_exist.get("support_purchase_date", "")),
+                         support_amount,
+                         notes_str or cust_exist.get("notes", ""),
+                         str(data.get("planEndDate") or cust_exist.get("plan_end_date", "")),
+                         str(data.get("trialEndDate") or cust_exist.get("trial_end_date", "")),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
-                         now_iso(), now_iso()))
+                         str(data.get("payment_method") or cust_exist.get("payment_method", "")),
+                         str(data.get("transaction_id") or cust_exist.get("transaction_id", "")),
+                         str(data.get("checkout_source") or cust_exist.get("checkout_source", "Admin")),
+                         str(data.get("status") or cust_exist.get("status", "active")),
+                         str(data.get("order_id") or cust_exist.get("order_id", "")),
+                         cust_exist.get("created_at", now_iso()),
+                         now_iso()))
 
                     # Automatically record employee sale and calculate commission if attributed
                     if matched_emp and purchase_amount > 0:
@@ -2589,10 +2605,11 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     c_name = str(data.get("name", existing.get("name", ""))).strip() or "Customer"
 
                     db.execute("""INSERT OR REPLACE INTO customers
-                        (id,name,owner,city,currency,email,phone,license_key,purchase_date,purchase_amount,
+                        (id,name,owner,city,currency,email,phone,gstin,license_key,purchase_date,purchase_amount,
                          support_purchased,support_purchase_date,support_amount,notes,plan_end_date,trial_end_date,
-                         sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                         sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,
+                         payment_method,transaction_id,checkout_source,status,order_id,created_at,updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                         (final_cid,
                          c_name,
                          data.get("owner",          existing.get("owner", "")),
@@ -2600,7 +2617,8 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                          data.get("currency",       existing.get("currency", "INR")),
                          email or existing.get("email", ""),
                          phone or existing.get("phone", ""),
-                         lic_key,
+                         data.get("gstin",          existing.get("gstin", "")),
+                         lic_key or existing.get("license_key", ""),
                          data.get("purchaseDate",   existing.get("purchase_date", now_iso()[:10])),
                          purchase_amt,
                          1 if data.get("supportPurchased", bool(existing.get("support_purchased"))) else 0,
@@ -2610,6 +2628,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                          data.get("planEndDate",     existing.get("plan_end_date", "")),
                          data.get("trialEndDate",    existing.get("trial_end_date", "")),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
+                         data.get("payment_method", existing.get("payment_method", "")),
+                         data.get("transaction_id", existing.get("transaction_id", "")),
+                         data.get("checkout_source", existing.get("checkout_source", "Admin")),
+                         data.get("status", existing.get("status", "active")),
+                         data.get("order_id", existing.get("order_id", "")),
+                         existing.get("created_at", now_iso()),
                          now_iso()))
 
                     # Automatically record employee sale and calculate commission if attributed

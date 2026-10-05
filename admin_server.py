@@ -383,6 +383,18 @@ def init_db():
                 resume_data             TEXT DEFAULT '',
                 resume_size             TEXT DEFAULT '',
                 resume_text             TEXT DEFAULT '',
+                added_by_id             TEXT DEFAULT '',
+                added_by_name           TEXT DEFAULT '',
+                added_by_email          TEXT DEFAULT '',
+                added_by_username       TEXT DEFAULT '',
+                scheduled_by_id         TEXT DEFAULT '',
+                scheduled_by_name       TEXT DEFAULT '',
+                scheduled_by_email      TEXT DEFAULT '',
+                scheduled_by_username   TEXT DEFAULT '',
+                interview_status        TEXT DEFAULT '',
+                offer_sent_at           TEXT DEFAULT '',
+                offer_accepted_at       TEXT DEFAULT '',
+                offer_declined_at       TEXT DEFAULT '',
                 created_at              TEXT DEFAULT '',
                 updated_at              TEXT DEFAULT ''
             );
@@ -648,6 +660,8 @@ def init_db():
             default_users = [
                 ("usr-admin-001", "Master Administrator", "admin", "admin123", "admin", "admin@invoicepro.local", "9322731612", "", 1, now_str),
                 ("usr-mgr-001", "Operations Manager", "manager", "manager123", "manager", "manager@invoicepro.local", "", "", 1, now_str),
+                ("usr-hr-001", "Sakshi Ajit Chavan", "sakshi", "sakshi123", "hr", "sakshichavan2409@gmail.com", "8459790520", "EMP-SA0520-478", 1, now_str),
+                ("usr-hr-alias", "Sakshi", "hr", "hr123", "hr", "sakshi.hr@invoicepro.in", "8459790520", "EMP-SA0520-478", 1, now_str),
                 ("usr-slead-001", "Sales Team Leader", "sales_lead", "sales123", "sales_leader", "saleslead@invoicepro.local", "", "", 1, now_str),
                 ("usr-sales-001", "Senior Sales Executive", "sales", "sales123", "sales_member", "sales@invoicepro.local", "", "", 1, now_str),
                 ("usr-suplead-001", "Support Team Leader", "support_lead", "support123", "support_leader", "supportlead@invoicepro.local", "", "", 1, now_str),
@@ -662,16 +676,24 @@ def init_db():
             """, default_users)
             db.commit()
 
-            # Ensure support, sales, dev roles are correctly normalized and not mapped to sales
+            # Ensure support, sales, dev, hr roles are correctly normalized
             db.execute("UPDATE staff_users SET role='support_leader', department='Support', designation='Support Team Leader' WHERE username IN ('support_lead', 'support')")
             db.execute("UPDATE staff_users SET role='support_member', department='Support', designation='Technical Support Specialist' WHERE username IN ('support_mem', 'support_priya', 'support_rahul', 'sarah_support')")
             db.execute("UPDATE staff_users SET role='sales_leader', department='Sales', designation='Sales Team Leader' WHERE username IN ('sales_lead')")
             db.execute("UPDATE staff_users SET role='sales_member', department='Sales', designation='Senior Sales Executive' WHERE username IN ('sales', 'sales2')")
             db.execute("UPDATE staff_users SET role='dev_leader', department='Development', designation='Development Team Leader' WHERE username IN ('dev_lead', 'dev')")
             db.execute("UPDATE staff_users SET role='dev_member', department='Development', designation='Senior Frontend Engineer' WHERE username IN ('dev_front', 'dev_back', 'dev_flutter', 'dev_qa')")
-            
-            # Clean up legacy default HR user if present so only manager-created HR employees exist
-            db.execute("DELETE FROM staff_users WHERE id='usr-hr-001' OR (username='hr' AND (name='HR Manager' OR name='Pooja Deshmukh'))")
+            db.execute("UPDATE staff_users SET role='hr', department='Human Resources', designation='HR Manager' WHERE username IN ('sakshi', 'hr', 'hr_sakshi')")
+
+            # Ensure Sakshi HR is always present in staff_users table
+            db.execute("""
+                INSERT OR IGNORE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
+                VALUES ('usr-hr-001', 'Sakshi Ajit Chavan', 'sakshi', 'sakshi123', 'hr', 'Human Resources', 'HR Manager', 'sakshichavan2409@gmail.com', '8459790520', 'EMP-SA0520-478', 1, ?)
+            """, (now_str,))
+            db.execute("""
+                INSERT OR IGNORE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
+                VALUES ('usr-hr-alias', 'Sakshi', 'hr', 'hr123', 'hr', 'Human Resources', 'HR & Talent Specialist', 'sakshi.hr@invoicepro.in', '8459790520', 'EMP-SA0520-478', 1, ?)
+            """, (now_str,))
             db.commit()
         except Exception as seed_err:
             print(f"  [Seed Notice] {seed_err}")
@@ -820,7 +842,19 @@ def init_db():
             "resume_filename": "TEXT DEFAULT ''",
             "resume_data": "TEXT DEFAULT ''",
             "resume_size": "TEXT DEFAULT ''",
-            "resume_text": "TEXT DEFAULT ''"
+            "resume_text": "TEXT DEFAULT ''",
+            "added_by_id": "TEXT DEFAULT ''",
+            "added_by_name": "TEXT DEFAULT ''",
+            "added_by_email": "TEXT DEFAULT ''",
+            "added_by_username": "TEXT DEFAULT ''",
+            "scheduled_by_id": "TEXT DEFAULT ''",
+            "scheduled_by_name": "TEXT DEFAULT ''",
+            "scheduled_by_email": "TEXT DEFAULT ''",
+            "scheduled_by_username": "TEXT DEFAULT ''",
+            "interview_status": "TEXT DEFAULT ''",
+            "offer_sent_at": "TEXT DEFAULT ''",
+            "offer_accepted_at": "TEXT DEFAULT ''",
+            "offer_declined_at": "TEXT DEFAULT ''"
         }
         for col, col_def in cand_cols.items():
             try:
@@ -963,7 +997,17 @@ def load_smtp_config():
     if os.path.exists(SMTP_CONFIG_PATH):
         try:
             with open(SMTP_CONFIG_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                cfg = json.load(f)
+                if cfg and cfg.get("host") and cfg.get("password") and not is_dummy_password(cfg.get("password")):
+                    return cfg
+        except Exception:
+            pass
+    if os.path.exists(HR_SMTP_PROFILE_PATH):
+        try:
+            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                hr_cfg = json.load(f)
+                if hr_cfg and hr_cfg.get("host") and hr_cfg.get("password") and not is_dummy_password(hr_cfg.get("password")):
+                    return hr_cfg
         except Exception:
             pass
     return {}
@@ -1100,6 +1144,10 @@ def do_send_smtp(cfg, to_list, subject, body, attachments=None, cc_list=None, fr
     if is_dummy_password(password):
         stored = load_smtp_config()
         password = stored.get("password", "")
+    
+    password = str(password or "").strip()
+    if host.lower() in ("smtp.gmail.com", "smtp-mail.outlook.com") or len(password) in (19, 16):
+        password = password.replace(" ", "")
     
     from_name  = (from_name_override or cfg.get("from_name", "Sylivion Tech Powered By Workmate4U Pvt. Ltd.")).strip()
     if from_name in ["InvoicePro", "InvoicePro Billing Systems Pvt Ltd", ""]:
@@ -3869,13 +3917,27 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
                 email_sent = False
                 email_err = None
-                if send_email and cand and cand["email"]:
-                    # Method 1: Check if HR provided their own SMTP config
+                to_email = ((cand and cand["email"]) or candidate_email).strip()
+                cand_name = ((cand and cand["name"]) or str(data.get("candidate_name", "Candidate"))).strip()
+                cand_role = ((cand and cand["role_applied"]) or str(data.get("role_applied", "Position"))).strip()
+                cc_raw = str(data.get("cc_email", "info@sylivion.com")).strip()
+                cc_list = [c.strip() for c in cc_raw.split(",") if c.strip()] if cc_raw else ["info@sylivion.com"]
+                if send_email and to_email:
                     cfg = None
-                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password"):
+                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password") and not is_dummy_password(hr_smtp_cfg.get("password")):
                         cfg = hr_smtp_cfg
                         sender_addr = hr_smtp_cfg.get("from_email") or hr_smtp_cfg.get("username")
                         sender_name = hr_smtp_cfg.get("from_name") or from_name
+                    elif os.path.exists(HR_SMTP_PROFILE_PATH):
+                        try:
+                            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                                cfg = json.load(f)
+                            sender_addr = cfg.get("from_email") or cfg.get("username") or from_email
+                            sender_name = cfg.get("from_name") or from_name
+                        except Exception:
+                            cfg = load_smtp_config()
+                            sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
+                            sender_name = from_name
                     else:
                         cfg = load_smtp_config()
                         sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
@@ -3885,12 +3947,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         sender_name = company_name
 
                     if cfg and cfg.get("host"):
-                        subj = f"Interview Invitation — {cand['role_applied'] or 'Position'} at {company_name}"
+                        subj = f"Interview Invitation — {cand_role or 'Position'} at {company_name}"
                         city_suffix = f", {company_city}" if company_city else ""
                         phone_line = f"Phone: {from_phone}\n" if from_phone else ""
                         body = (
-                            f"Dear {cand['name']},\n\n"
-                            f"Thank you for your interest in joining {company_name}. We are pleased to invite you for the interview round for the {cand['role_applied'] or 'Position'} position.\n\n"
+                            f"Dear {cand_name},\n\n"
+                            f"Thank you for your interest in joining {company_name}. We are pleased to invite you for the interview round for the {cand_role or 'Position'} position.\n\n"
                             f"Interview Details:\n"
                             f"• Date & Time: {sched_at}\n"
                             f"• Interviewer: {interviewer}\n"
@@ -3903,9 +3965,9 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             f"{phone_line}"
                         )
                         try:
-                            do_send_smtp(cfg, cand["email"], subj, body, cc_list=None, from_email_override=sender_addr, from_name_override=company_name)
+                            do_send_smtp(cfg, to_email, subj, body, cc_list=cc_list, from_email_override=sender_addr, from_name_override=company_name)
                             email_sent = True
-                            print(f"  [HR Interview Email] Sent to {cand['email']} using {cfg.get('username')} (Sender: {company_name})")
+                            print(f"  [HR Interview Email] Sent to {to_email} (Cc: {', '.join(cc_list)}) using {cfg.get('username')} (Sender: {company_name})")
                         except Exception as em_err:
                             email_err = str(em_err)
                             print(f"  [Schedule Email Err] {em_err}")
@@ -3962,13 +4024,25 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
                 email_sent = False
                 email_err = None
-                if send_email and cand and cand["email"]:
-                    # Method 1: Check if HR provided their own SMTP config
+                to_email = ((cand and cand["email"]) or candidate_email).strip()
+                cand_name = ((cand and cand["name"]) or str(data.get("candidate_name", "Candidate"))).strip()
+                role_name = offered_desig or (cand and cand['role_applied']) or str(data.get("role_applied", "Position"))
+                if send_email and to_email:
                     cfg = None
-                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password"):
+                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password") and not is_dummy_password(hr_smtp_cfg.get("password")):
                         cfg = hr_smtp_cfg
                         sender_addr = hr_smtp_cfg.get("from_email") or hr_smtp_cfg.get("username")
                         sender_name = hr_smtp_cfg.get("from_name") or from_name
+                    elif os.path.exists(HR_SMTP_PROFILE_PATH):
+                        try:
+                            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                                cfg = json.load(f)
+                            sender_addr = cfg.get("from_email") or cfg.get("username") or from_email
+                            sender_name = cfg.get("from_name") or from_name
+                        except Exception:
+                            cfg = load_smtp_config()
+                            sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
+                            sender_name = from_name
                     else:
                         cfg = load_smtp_config()
                         sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
@@ -3978,35 +4052,33 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         sender_name = company_name
 
                     if cfg and cfg.get("host"):
-                        role_name = offered_desig or cand['role_applied'] or 'Role'
                         subj = f"Selection Confirmation |  {company_name} - {role_name}"
                         city_suffix = f", {company_city}" if company_city else ""
                         phone_line = f"Phone: {from_phone}\n" if from_phone else ""
 
-                        accept_subject = quote(f"Selection Confirmation Accepted - {cand['name']} ({role_name}) - {company_name}")
+                        accept_subject = quote(f"Selection Confirmation Accepted - {cand_name} ({role_name}) - {company_name}")
                         accept_body = quote(
                             f"Dear Human Resources,\n\n"
                             f"I am pleased to accept the job offer for the position of {role_name} at {company_name}.\n"
                             f"I confirm that I will join on {joining_date} and carry all required documents.\n\n"
                             f"Candidate Details:\n"
-                            f"• Name: {cand['name']}\n"
-                            f"• Contact: {cand['phone']}\n"
+                            f"• Name: {cand_name}\n"
                             f"• Designation: {role_name}\n\n"
                             f"Regards,\n"
-                            f"{cand['name']}"
+                            f"{cand_name}"
                         )
                         accept_url = f"mailto:{sender_addr}?subject={accept_subject}&body={accept_body}"
 
-                        decline_subject = quote(f"Selection Confirmation Declined - {cand['name']} ({role_name}) - {company_name}")
+                        decline_subject = quote(f"Selection Confirmation Declined - {cand_name} ({role_name}) - {company_name}")
                         decline_body = quote(
                             f"Dear Human Resources,\n\n"
                             f"Thank you for considering me for the position of {role_name} at {company_name}.\n"
                             f"I regret to inform you that I will not be able to accept the offer at this time.\n\n"
                             f"Candidate Details:\n"
-                            f"• Name: {cand['name']}\n"
+                            f"• Name: {cand_name}\n"
                             f"• Designation: {role_name}\n\n"
                             f"Regards,\n"
-                            f"{cand['name']}"
+                            f"{cand_name}"
                         )
                         decline_url = f"mailto:{sender_addr}?subject={decline_subject}&body={decline_body}"
 
@@ -4016,7 +4088,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         ]
 
                         body = (
-                            f"Dear {cand['name']},\n\n"
+                            f"Dear {cand_name},\n\n"
                             f"Following your interview and HR discussions, we are delighted to offer you the position of {role_name} at {company_name}.\n"
                             f"Congratulations on your selection!\n\n"
                             f"Key Details:\n"
@@ -4038,19 +4110,21 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             f"{phone_line}"
                         )
 
+                        cc_raw = str(data.get("cc_email", "info@sylivion.com")).strip()
+                        cc_list = [c.strip() for c in cc_raw.split(",") if c.strip()] if cc_raw else ["info@sylivion.com"]
                         try:
                             do_send_smtp(
                                 cfg,
-                                cand["email"],
+                                to_email,
                                 subj,
                                 body,
-                                cc_list=["info@sylivion.com"],
+                                cc_list=cc_list,
                                 from_email_override=sender_addr,
                                 from_name_override=company_name,
                                 action_buttons=action_buttons
                             )
                             email_sent = True
-                            print(f"  [HR Joining Email with Action Buttons] Sent to {cand['email']} (Sender: {company_name})")
+                            print(f"  [HR Joining Email with Action Buttons] Sent to {to_email} (Cc: {', '.join(cc_list)}) (Sender: {company_name})")
                         except Exception as em_err:
                             email_err = str(em_err)
                             print(f"  [Joining Kit Email Err] {em_err}")

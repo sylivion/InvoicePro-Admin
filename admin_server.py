@@ -955,6 +955,130 @@ def calculate_plan_commission(plan_label="", amount=0, notes=""):
     return 499.0
 
 
+def find_employee_by_identifier(db, raw_ident):
+    """
+    Look up an employee across employees and staff_users tables by:
+    - emp_id (e.g. EMP-101, EMP-VU1612-116, EMP101)
+    - id (UUID)
+    - name
+    - email
+    - mobile
+    - staff_users username
+    """
+    if not raw_ident:
+        return None
+    ident = str(raw_ident).strip()
+    if not ident:
+        return None
+    ident_low = ident.lower()
+    ident_clean = re.sub(r'[^a-zA-Z0-9]', '', ident_low)
+    
+    # 1. Direct query on employees table
+    try:
+        emp = db.execute(
+            "SELECT id, emp_id, name, department, designation, email, mobile FROM employees WHERE LOWER(TRIM(emp_id))=? OR LOWER(TRIM(id))=? OR LOWER(TRIM(name))=? OR LOWER(TRIM(email))=? OR TRIM(mobile)=?",
+            (ident_low, ident_low, ident_low, ident_low, ident)
+        ).fetchone()
+        if emp:
+            return dict(emp)
+    except Exception:
+        pass
+
+    # 2. Normalized alphanumeric match in employees
+    all_emps = []
+    try:
+        all_emps = rows_to_list(db.execute("SELECT id, emp_id, name, department, designation, email, mobile FROM employees").fetchall())
+        if ident_clean:
+            for e in all_emps:
+                e_clean_code = re.sub(r'[^a-zA-Z0-9]', '', str(e.get('emp_id') or '')).lower()
+                e_clean_id = re.sub(r'[^a-zA-Z0-9]', '', str(e.get('id') or '')).lower()
+                e_clean_name = re.sub(r'[^a-zA-Z0-9]', '', str(e.get('name') or '')).lower()
+                if ident_clean in (e_clean_code, e_clean_id, e_clean_name) or (len(ident_clean) >= 3 and (ident_clean == e_clean_code or e_clean_code == ident_clean)):
+                    return e
+    except Exception:
+        all_emps = []
+
+    # 3. Match in staff_users table
+    try:
+        staff = db.execute(
+            "SELECT id, name, username, emp_id, role, email, phone FROM staff_users WHERE LOWER(TRIM(username))=? OR LOWER(TRIM(emp_id))=? OR LOWER(TRIM(name))=? OR LOWER(TRIM(email))=?",
+            (ident_low, ident_low, ident_low, ident_low)
+        ).fetchone()
+        if staff:
+            s_dict = dict(staff)
+            s_emp_code = s_dict.get("emp_id") or f"EMP-{s_dict.get('username','').upper()}"
+            # See if employees table already has this person
+            for e in all_emps:
+                if str(e.get("name","")).lower().strip() == str(s_dict.get("name","")).lower().strip() or str(e.get("emp_id","")).lower().strip() == s_emp_code.lower().strip():
+                    return e
+            # Auto-create employee record so sales and commissions are attributed
+            new_eid = new_id()
+            today_date = datetime.now().strftime("%Y-%m-%d")
+            db.execute("""INSERT INTO employees (id, emp_id, name, mobile, email, designation, department, join_date, notes, created_at, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (new_eid, s_emp_code, s_dict.get("name", s_dict.get("username")), s_dict.get("phone",""), s_dict.get("email",""), s_dict.get("role","Sales").capitalize(), "Sales" if "sales" in str(s_dict.get("role","")).lower() else "Operations", today_date, "Auto-linked from staff user", now_iso(), now_iso()))
+            return {"id": new_eid, "emp_id": s_emp_code, "name": s_dict.get("name", s_dict.get("username")), "department": "Sales", "designation": s_dict.get("role","Sales")}
+    except Exception:
+        pass
+
+    return None
+
+
+def record_employee_sale_db(db, matched_emp, cid, c_name, plan_name, amount, order_num="", source="Online Checkout", custom_note=""):
+    """
+    Record or update an employee sale in employee_sales and compute commission.
+    """
+    if not matched_emp:
+        return 0.0, None
+    emp_db_id = matched_emp["id"]
+    emp_code = matched_emp.get("emp_id") or ""
+    emp_real_name = matched_emp.get("name") or ""
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    cur_month = today_str[:7]
+    commission = calculate_plan_commission(plan_name, amount, f"EMP: {emp_code} ({emp_real_name}) {custom_note}")
+    
+    sale_note = custom_note or f"{source} ({order_num}) - {plan_name}" if order_num else f"{source} - {plan_name}"
+    
+    existing_sale = None
+    try:
+        if order_num:
+            existing_sale = db.execute("SELECT id FROM employee_sales WHERE note LIKE ?", (f"%{order_num}%",)).fetchone()
+        if not existing_sale and cid:
+            existing_sale = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND (customer_id=? OR note LIKE ?)", (emp_db_id, cid, f"%{cid}%")).fetchone()
+        if not existing_sale and c_name:
+            existing_sale = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND LOWER(TRIM(customer_name))=?", (emp_db_id, c_name.lower().strip())).fetchone()
+    except Exception:
+        pass
+
+    if existing_sale:
+        sale_id = existing_sale["id"]
+        try:
+            db.execute("""UPDATE employee_sales SET 
+                customer_id=?, customer_name=?, plan_name=?, amount=?, commission=?, date=?, note=?, status=?, target_month=?
+                WHERE id=?""",
+                (cid, c_name, plan_name, amount, commission, today_str, sale_note, "approved", cur_month, sale_id))
+        except Exception:
+            db.execute("""UPDATE employee_sales SET 
+                customer_name=?, amount=?, commission=?, date=?, note=?
+                WHERE id=?""",
+                (c_name, amount, commission, today_str, sale_note, sale_id))
+    else:
+        sale_id = new_id()
+        try:
+            db.execute("""INSERT INTO employee_sales 
+                (id, employee_id, emp_id, customer_id, customer_name, plan_name, amount, commission, date, note, status, target_month, created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (sale_id, emp_db_id, emp_code, cid, c_name, plan_name, amount, commission,
+                 today_str, sale_note, "approved", cur_month, now_iso()))
+        except Exception:
+            db.execute("""INSERT INTO employee_sales 
+                (id, employee_id, customer_name, date, amount, commission, note, created_at)
+                VALUES (?,?,?,?,?,?,?,?)""",
+                (sale_id, emp_db_id, c_name, today_str, amount, commission, sale_note, now_iso()))
+                 
+    return commission, sale_id
+
+
 # ── SMTP helpers ──────────────────────────────────────────────────────────────
 SMTP_CONFIG_PATH = os.path.join(DATA_DIR, "smtp_config.json")
 
@@ -2163,85 +2287,95 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.commit()
                     db.close()
                 print(f"  [Report IN] [{data.get('category','?')}] {(data.get('message') or '')[:60]}")
-            # ── Sylivion Checkout Integration ────────────────────────────────
-            if path in ("/api/checkout/order", "/api/checkout/webhook"):
-                c_company = (data.get("company") or data.get("customer_name") or data.get("name") or "").strip()
-                c_owner = (data.get("owner") or c_company).strip()
+            # ── Sylivion Checkout & Keygen Integration ───────────────────────
+            if path in ("/api/checkout/order", "/api/checkout/webhook", "/api/checkout", "/api/orders/create", "/api/v1/checkout/order", "/api/license-keys/generate", "/api/customers/keygen"):
+                c_company = (data.get("company") or data.get("customer_name") or data.get("customerName") or data.get("name") or data.get("business_name") or data.get("client_name") or "").strip()
+                c_owner = (data.get("owner") or data.get("owner_name") or data.get("contact_person") or c_company).strip()
                 c_name = c_company if c_company else c_owner
                 if not c_name:
-                    self.send_err("customer_name or company is required", 400)
-                    return
+                    c_name = "InvoicePro Customer"
                 
-                c_email = (data.get("customer_email") or data.get("email") or "").strip()
-                c_phone = (data.get("customer_phone") or data.get("phone") or "").strip()
-                c_city = (data.get("city") or "").strip()
-                c_gstin = (data.get("gstin") or "").strip()
-                plan_name = (data.get("plan_name") or data.get("plan") or "1 Year Plan").strip()
-                amount = float(data.get("amount") or data.get("price") or data.get("total_amount") or 1499.0)
-                currency = (data.get("currency") or "INR").strip()
-                tx_id = (data.get("transaction_id") or data.get("payment_id") or data.get("utr") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
+                c_email = (data.get("customer_email") or data.get("email") or data.get("customerEmail") or "").strip()
+                c_phone = (data.get("customer_phone") or data.get("phone") or data.get("mobile") or data.get("customerPhone") or "").strip()
+                c_city = (data.get("city") or data.get("customer_city") or "").strip()
+                c_gstin = (data.get("gstin") or data.get("gst_number") or data.get("tax_id") or "").strip()
+                plan_name = (data.get("plan_name") or data.get("plan") or data.get("planLabel") or data.get("plan_label") or data.get("package") or "1 Year Plan").strip()
+                try:
+                    amount = float(data.get("amount") or data.get("price") or data.get("total_amount") or data.get("totalAmount") or 1499.0)
+                except Exception:
+                    amount = 1499.0
+                currency = (data.get("currency") or "INR").strip().upper()
+                tx_id = (data.get("transaction_id") or data.get("transactionId") or data.get("payment_id") or data.get("paymentId") or data.get("utr") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
                 is_upi = bool(data.get("is_manual_upi") or "upi" in (data.get("payment_method") or "").lower())
-                pay_method = (data.get("payment_method") or ("Direct UPI QR Code" if is_upi else "Razorpay Gateway")).strip()
-                order_num = (data.get("order_id") or f"ORD-{int(time.time())}-{os.urandom(2).hex().upper()}").strip()
-                raw_emp_id = (data.get("emp_id") or data.get("empId") or data.get("referral_code") or "").strip()
+                pay_method = (data.get("payment_method") or data.get("paymentMethod") or ("Direct UPI QR Code" if is_upi else "Razorpay Gateway")).strip()
+                order_num = (data.get("order_id") or data.get("orderId") or data.get("orderNumber") or f"ORD-{int(time.time())}-{os.urandom(2).hex().upper()}").strip()
+                raw_emp_id = (data.get("emp_id") or data.get("empId") or data.get("employee_id") or data.get("employeeId") or data.get("referral_code") or data.get("referralCode") or data.get("employee_code") or data.get("sales_person") or data.get("salesPerson") or "").strip()
                 c_status = "pending_verification" if is_upi else "active"
                 order_status = "pending_verification" if is_upi else "completed"
                 
                 # License Key Generation
-                lic_key = (data.get("license_key") or "").strip()
+                lic_key = (data.get("license_key") or data.get("licenseKey") or "").strip()
                 if not lic_key and not is_upi:
                     lic_key = f"INV-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}"
                 
                 # Plan duration calculation
                 plan_years = 1
-                if "3" in plan_name or "3y" in plan_name.lower(): plan_years = 3
-                elif "5" in plan_name or "5y" in plan_name.lower(): plan_years = 5
-                elif "lifetime" in plan_name.lower() or "vip" in plan_name.lower() or "life" in plan_name.lower(): plan_years = 99
+                low_p = plan_name.lower()
+                if "3" in low_p or "3y" in low_p: plan_years = 3
+                elif "5" in low_p or "5y" in low_p: plan_years = 5
+                elif any(k in low_p for k in ["lifetime", "vip", "life"]): plan_years = 99
+                elif "1m" in low_p or "1 month" in low_p: plan_years = 0.1
                 
                 today_str = datetime.now().strftime("%Y-%m-%d")
                 try:
-                    exp_year = datetime.now().year + (plan_years if plan_years < 50 else 50)
-                    plan_end_date = datetime.now().replace(year=exp_year).strftime("%Y-%m-%d")
+                    if plan_years == 0.1:
+                        plan_end_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+                    else:
+                        exp_year = datetime.now().year + (int(plan_years) if plan_years < 50 else 50)
+                        plan_end_date = datetime.now().replace(year=exp_year).strftime("%Y-%m-%d")
                 except Exception:
                     plan_end_date = f"{datetime.now().year + 1}-12-31"
 
                 with _db_lock:
                     db = get_db()
                     # 1. Match Employee attribution
-                    matched_emp = None
-                    if raw_emp_id:
-                        matched_emp = db.execute(
-                            "SELECT id, emp_id, name, department, designation FROM employees WHERE LOWER(emp_id)=? OR LOWER(id)=? OR LOWER(name)=?",
-                            (raw_emp_id.lower(), raw_emp_id.lower(), raw_emp_id.lower())
-                        ).fetchone()
-                    
-                    emp_db_id = matched_emp["id"] if matched_emp else ""
+                    matched_emp = find_employee_by_identifier(db, raw_emp_id)
                     emp_code = matched_emp["emp_id"] if matched_emp else raw_emp_id
                     emp_real_name = matched_emp["name"] if matched_emp else ""
-                    
-                    # Commission calculation
-                    commission = calculate_plan_commission(plan_name, amount, f"EMP: {emp_code}") if emp_code else 0.0
+                    sales_rep_name = emp_real_name or (f"EMP: {emp_code}" if emp_code else "Sylivion Checkout")
 
-                    # 2. Check or Create Customer
+                    # 2. Check or Create/Update Customer
                     cust_row = None
-                    if c_email:
-                        cust_row = db.execute("SELECT id FROM customers WHERE LOWER(email)=?", (c_email.lower(),)).fetchone()
+                    if data.get("id"):
+                        cust_row = db.execute("SELECT id, name, email, phone, notes FROM customers WHERE id=?", (data["id"],)).fetchone()
+                    if not cust_row and c_email:
+                        cust_row = db.execute("SELECT id, name, email, phone, notes FROM customers WHERE LOWER(TRIM(email))=?", (c_email.lower(),)).fetchone()
                     if not cust_row and c_phone:
-                        cust_row = db.execute("SELECT id FROM customers WHERE phone=?", (c_phone,)).fetchone()
+                        clean_p = re.sub(r'\D', '', c_phone)[-10:]
+                        if clean_p:
+                            cust_row = db.execute("SELECT id, name, email, phone, notes FROM customers WHERE phone LIKE ? OR phone=?", (f"%{clean_p}", c_phone)).fetchone()
+                    if not cust_row and c_name:
+                        cust_row = db.execute("SELECT id, name, email, phone, notes FROM customers WHERE LOWER(TRIM(name))=?", (c_name.lower(),)).fetchone()
                     
+                    notes_str = f"Purchased via Sylivion Checkout. Plan: {plan_name}" + (f" · EMP: {emp_code} ({emp_real_name})" if emp_code else "")
+
                     if cust_row:
                         cid = cust_row["id"]
+                        old_notes = str(cust_row["notes"] or "")
+                        combined_notes = (old_notes + "\n" + notes_str).strip() if old_notes and notes_str not in old_notes else (old_notes or notes_str)
                         db.execute("""UPDATE customers SET 
-                            name=?, owner=?, city=?, gstin=?, license_key=?, purchase_date=?, purchase_amount=?, 
+                            name=?, owner=?, city=?, currency=?, gstin=?, email=?, phone=?, license_key=?, purchase_date=?, purchase_amount=?, 
                             plan_end_date=?, plan_label=?, sold_by_emp_id=?, sold_by_emp_name=?, 
                             sales_person=?, payment_method=?, transaction_id=?, checkout_source=?, 
-                            status=?, order_id=?, updated_at=?
+                            status=?, order_id=?, notes=?, updated_at=?
                             WHERE id=?""",
-                            (c_name, c_owner, c_city, c_gstin, lic_key, today_str, amount, plan_end_date, plan_name,
-                             emp_code, emp_real_name, emp_real_name, pay_method, tx_id,
-                             "Sylivion Checkout", c_status, order_num, now_iso(), cid))
+                            (c_name, c_owner, c_city, currency, c_gstin,
+                             c_email or cust_row["email"], c_phone or cust_row["phone"],
+                             lic_key, today_str, amount, plan_end_date, plan_name,
+                             emp_code, emp_real_name, sales_rep_name, pay_method, tx_id,
+                             "Sylivion Checkout", c_status, order_num, combined_notes, now_iso(), cid))
                     else:
-                        cid = new_id()
+                        cid = data.get("id") or new_id()
                         db.execute("""INSERT INTO customers 
                             (id, name, owner, city, currency, email, phone, gstin, license_key, purchase_date,
                              purchase_amount, support_purchased, support_amount, notes, plan_end_date,
@@ -2249,46 +2383,39 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                              payment_method, transaction_id, checkout_source, status, order_id, created_at, updated_at)
                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                             (cid, c_name, c_owner, c_city, currency, c_email, c_phone, c_gstin, lic_key, today_str,
-                             amount, 1, 0, f"Purchased via Sylivion Checkout. EMP: {emp_code} ({emp_real_name})",
-                             plan_end_date, emp_code, emp_real_name, emp_real_name, "Sylivion Checkout",
+                             amount, 1, 0, notes_str, plan_end_date, emp_code, emp_real_name, sales_rep_name, "Sylivion Checkout",
                              plan_name, pay_method, tx_id, "Sylivion Checkout", c_status, order_num, now_iso(), now_iso()))
 
                     # 3. Record in employee_sales if employee attributed
-                    if matched_emp:
-                        sale_id = new_id()
-                        cur_month = today_str[:7]
-                        db.execute("""INSERT INTO employee_sales 
-                            (id, employee_id, emp_id, customer_id, customer_name, plan_name, amount, commission, date, note, status, target_month, created_at)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                            (sale_id, emp_db_id, emp_code, cid, c_name, plan_name, amount, commission,
-                             today_str, f"Online Checkout ({order_num}) - {plan_name}", "approved", cur_month, now_iso()))
+                    commission, sale_id = record_employee_sale_db(db, matched_emp, cid, c_name, plan_name, amount, order_num, "Sylivion Checkout")
 
                     # 4. Insert into checkout_orders
                     chk_id = new_id()
-                    db.execute("""INSERT INTO checkout_orders
+                    db.execute("""INSERT OR REPLACE INTO checkout_orders
                         (id, order_id, customer_id, customer_name, customer_email, customer_phone, city,
                          plan_name, plan_duration_years, amount, currency, payment_status, payment_method,
                          transaction_id, emp_id, emp_name, commission_calculated, license_key_generated,
                          checkout_source, raw_payload, created_at, updated_at)
                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                         (chk_id, order_num, cid, c_name, c_email, c_phone, c_city,
-                         plan_name, plan_years, amount, currency, "completed", pay_method,
+                         plan_name, int(plan_years) if plan_years >= 1 else 1, amount, currency, order_status, pay_method,
                          tx_id, emp_code, emp_real_name, commission, lic_key,
                          "Sylivion Checkout", json.dumps(data), now_iso(), now_iso()))
 
                     # 5. Insert license key record
-                    db.execute("""INSERT OR REPLACE INTO license_keys 
-                        (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                        (new_id(), lic_key, cid, c_name, plan_name, plan_years, "active", "checkout", plan_end_date, now_iso()))
+                    if lic_key:
+                        db.execute("""INSERT OR REPLACE INTO license_keys 
+                            (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                            (new_id(), lic_key, cid, c_name, plan_name, int(plan_years) if plan_years >= 1 else 1, "active", f"checkout ({emp_code or 'direct'})", plan_end_date, now_iso()))
 
                     # 6. Audit Log
                     db.execute("""INSERT INTO audit_logs 
                         (id, user_id, user_name, role, action, module, details, timestamp)
                         VALUES (?,?,?,?,?,?,?,?)""",
-                        (new_id(), "checkout-system", "Sylivion Checkout", "system",
+                        (new_id(), emp_code or "checkout-system", emp_real_name or "Sylivion Checkout", "sales" if emp_code else "system",
                          f"Processed checkout order {order_num} for {c_name} (Plan: {plan_name}, EMP: {emp_code or 'None'})",
-                         "Checkout", f"Amount: {currency} {amount}, License: {lic_key}", now_iso()))
+                         "Checkout", f"Amount: {currency} {amount}, License: {lic_key}, Commission: Rs {commission}", now_iso()))
 
                     db.commit()
                     db.close()
@@ -2297,6 +2424,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     "ok": True,
                     "order_id": order_num,
                     "customer_id": cid,
+                    "customer_name": c_name,
                     "license_key": lic_key,
                     "plan_name": plan_name,
                     "plan_end_date": plan_end_date,
@@ -2328,11 +2456,10 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     if email and not is_valid_email(email, required=False):
                         self.send_err("Invalid email address format (e.g. customer@gmail.com).", 400)
                         return
-                    # Safe numeric coercion — data.get() returns None when key exists
-                    # but value is null/None, so we must handle that explicitly
+                    
                     def safe_num(key, default):
                         v = data.get(key)
-                        if v is None or v == "" or v != v:  # None, empty, or NaN
+                        if v is None or v == "" or v != v:
                             return default
                         try: return float(v)
                         except (TypeError, ValueError): return default
@@ -2344,6 +2471,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     added_by         = str(data.get("addedBy") or data.get("added_by") or "").strip()
                     plan_label       = str(data.get("planLabel") or data.get("plan_label") or "").strip()
                     notes_str        = str(data.get("notes") or "")
+                    lic_key          = str(data.get("licenseKey") or data.get("license_key") or "").strip()
 
                     if not sold_by_emp_id:
                         m = re.search(r'EMP:\s*([A-Za-z0-9\-]+)(?:\s*\(([^)]+)\))?', notes_str)
@@ -2353,47 +2481,55 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                                 sold_by_emp_name = m.group(2).strip()
                                 if not sales_person: sales_person = sold_by_emp_name
 
-                    # INSERT OR REPLACE = upsert: updates existing rows, inserts new ones
+                    matched_emp = find_employee_by_identifier(db, sold_by_emp_id or sold_by_emp_name or sales_person)
+                    if matched_emp:
+                        sold_by_emp_id = matched_emp.get("emp_id") or sold_by_emp_id
+                        sold_by_emp_name = matched_emp.get("name") or sold_by_emp_name
+                        if not sales_person: sales_person = sold_by_emp_name
+
+                    # Check if customer already exists by id, email, or phone
+                    cust_exist = db.execute("SELECT id FROM customers WHERE id=?", (cid,)).fetchone()
+                    if not cust_exist and email:
+                        cust_exist = db.execute("SELECT id FROM customers WHERE LOWER(TRIM(email))=?", (email.lower(),)).fetchone()
+                    if not cust_exist and phone:
+                        clean_p = re.sub(r'\D', '', phone)[-10:]
+                        if clean_p:
+                            cust_exist = db.execute("SELECT id FROM customers WHERE phone LIKE ? OR phone=?", (f"%{clean_p}", phone)).fetchone()
+                    
+                    final_cid = cust_exist["id"] if cust_exist else cid
+
                     db.execute("""INSERT OR REPLACE INTO customers
                         (id,name,owner,city,currency,email,phone,license_key,purchase_date,purchase_amount,
                          support_purchased,support_purchase_date,support_amount,notes,plan_end_date,trial_end_date,
                          sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,created_at,updated_at)
                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                        (cid, name,
+                        (final_cid, name,
                          str(data.get("owner") or ""), str(data.get("city") or ""),
                          str(data.get("currency") or "INR"),
-                         str(data.get("email") or ""), str(data.get("phone") or ""),
-                         str(data.get("licenseKey") or ""), str(data.get("purchaseDate") or ""),
+                         email, phone,
+                         lic_key, str(data.get("purchaseDate") or now_iso()[:10]),
                          purchase_amount,
                          1 if data.get("supportPurchased") else 0,
                          str(data.get("supportPurchaseDate") or ""), support_amount,
-                         str(data.get("notes") or ""),
+                         notes_str,
                          str(data.get("planEndDate") or ""), str(data.get("trialEndDate") or ""),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
                          now_iso(), now_iso()))
 
-                    # Automatically record employee sale and credit 10% commission if sold under a salesperson
-                    if sold_by_emp_id or sold_by_emp_name or sales_person:
-                        emp_row = None
-                        if sold_by_emp_id:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE emp_id=? OR id=?", (sold_by_emp_id, sold_by_emp_id)).fetchone()
-                        if not emp_row and sold_by_emp_name:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE name=?", (sold_by_emp_name,)).fetchone()
-                        if not emp_row and sales_person:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE name=? OR emp_id=?", (sales_person, sales_person)).fetchone()
-                        if emp_row and purchase_amount > 0:
-                            emp_db_id = emp_row["id"]
-                            existing_sale = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND (customer_name=? OR note LIKE ?)", 
-                                                       (emp_db_id, name, f"%{cid}%")).fetchone()
-                            if not existing_sale:
-                                sale_id = new_id()
-                                comm = calculate_plan_commission(plan_label, purchase_amount, str(data.get('notes') or ''))
-                                db.execute("INSERT INTO employee_sales (id, employee_id, date, customer_name, amount, commission, note, created_at) VALUES (?,?,?,?,?,?,?,?)",
-                                           (sale_id, emp_db_id, str(data.get("purchaseDate") or now_iso()[:10]), name, purchase_amount, comm, f"Customer: {name} ({cid})", now_iso()))
+                    # Automatically record employee sale and calculate commission if attributed
+                    if matched_emp and purchase_amount > 0:
+                        record_employee_sale_db(db, matched_emp, final_cid, name, plan_label or "Standard", purchase_amount, "", "Admin Entry/Keygen", notes_str)
+
+                    # Insert license key record if present
+                    if lic_key:
+                        db.execute("""INSERT OR REPLACE INTO license_keys 
+                            (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                            (new_id(), lic_key, final_cid, name, plan_label or "Standard", 1, "active", f"admin ({sold_by_emp_id or 'direct'})", str(data.get("planEndDate") or ""), now_iso()))
 
                     db.commit()
                     db.close()
-                self.send_json({"ok": True, "id": cid})
+                self.send_json({"ok": True, "id": final_cid})
                 return
 
             if path == "/api/customers/update":
@@ -2407,14 +2543,30 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     if email and not is_valid_email(email, required=False):
                         self.send_err("Invalid email address format (e.g. customer@gmail.com).", 400)
                         return
-                    # Fetch current row so partial payloads (e.g. only licenseKey) don't wipe other fields
-                    existing = row_to_dict(db.execute("SELECT * FROM customers WHERE id=?", (data["id"],)).fetchone()) or {}
+                    
+                    cid = str(data.get("id") or "").strip()
+                    existing = None
+                    if cid:
+                        existing = row_to_dict(db.execute("SELECT * FROM customers WHERE id=?", (cid,)).fetchone())
+                    if not existing and email:
+                        existing = row_to_dict(db.execute("SELECT * FROM customers WHERE LOWER(TRIM(email))=?", (email.lower(),)).fetchone())
+                    if not existing and phone:
+                        clean_p = re.sub(r'\D', '', phone)[-10:]
+                        if clean_p:
+                            existing = row_to_dict(db.execute("SELECT * FROM customers WHERE phone LIKE ? OR phone=?", (f"%{clean_p}", phone)).fetchone())
+                    if not existing and data.get("name"):
+                        existing = row_to_dict(db.execute("SELECT * FROM customers WHERE LOWER(TRIM(name))=?", (str(data.get("name")).lower().strip(),)).fetchone())
+
+                    existing = existing or {}
+                    final_cid = existing.get("id") or cid or new_id()
+
                     sold_by_emp_id   = str(data.get("soldByEmpId", existing.get("sold_by_emp_id", "")) or "").strip()
                     sold_by_emp_name = str(data.get("soldByEmpName", existing.get("sold_by_emp_name", "")) or "").strip()
                     sales_person     = str(data.get("salesPerson", existing.get("sales_person", "")) or sold_by_emp_name or "").strip()
                     added_by         = str(data.get("addedBy", existing.get("added_by", "")) or "").strip()
                     plan_label       = str(data.get("planLabel", existing.get("plan_label", "")) or "").strip()
                     notes_str        = str(data.get("notes", existing.get("notes", "")) or "")
+                    lic_key          = str(data.get("licenseKey", existing.get("license_key", "")) or "").strip()
 
                     if not sold_by_emp_id:
                         m = re.search(r'EMP:\s*([A-Za-z0-9\-]+)(?:\s*\(([^)]+)\))?', notes_str)
@@ -2423,56 +2575,57 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             if not sold_by_emp_name and m.group(2):
                                 sold_by_emp_name = m.group(2).strip()
                                 if not sales_person: sales_person = sold_by_emp_name
+
+                    matched_emp = find_employee_by_identifier(db, sold_by_emp_id or sold_by_emp_name or sales_person)
+                    if matched_emp:
+                        sold_by_emp_id = matched_emp.get("emp_id") or sold_by_emp_id
+                        sold_by_emp_name = matched_emp.get("name") or sold_by_emp_name
+                        if not sales_person: sales_person = sold_by_emp_name
+
                     purchase_amt     = data.get("purchaseAmount", existing.get("purchase_amount", 1499))
                     try: purchase_amt = float(purchase_amt)
                     except Exception: purchase_amt = 1499.0
 
-                    db.execute("""UPDATE customers SET
-                        name=?,owner=?,city=?,currency=?,email=?,phone=?,license_key=?,purchase_date=?,purchase_amount=?,
-                        support_purchased=?,support_purchase_date=?,support_amount=?,notes=?,plan_end_date=?,trial_end_date=?,
-                        sold_by_emp_id=?,sold_by_emp_name=?,sales_person=?,added_by=?,plan_label=?,updated_at=?
-                        WHERE id=?""",
-                        (data.get("name",           existing.get("name", "")),
+                    c_name = str(data.get("name", existing.get("name", ""))).strip() or "Customer"
+
+                    db.execute("""INSERT OR REPLACE INTO customers
+                        (id,name,owner,city,currency,email,phone,license_key,purchase_date,purchase_amount,
+                         support_purchased,support_purchase_date,support_amount,notes,plan_end_date,trial_end_date,
+                         sold_by_emp_id,sold_by_emp_name,sales_person,added_by,plan_label,updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (final_cid,
+                         c_name,
                          data.get("owner",          existing.get("owner", "")),
                          data.get("city",           existing.get("city", "")),
                          data.get("currency",       existing.get("currency", "INR")),
-                         data.get("email",          existing.get("email", "")),
-                         data.get("phone",          existing.get("phone", "")),
-                         data.get("licenseKey",     existing.get("license_key", "")),
-                         data.get("purchaseDate",   existing.get("purchase_date", "")),
+                         email or existing.get("email", ""),
+                         phone or existing.get("phone", ""),
+                         lic_key,
+                         data.get("purchaseDate",   existing.get("purchase_date", now_iso()[:10])),
                          purchase_amt,
                          1 if data.get("supportPurchased", bool(existing.get("support_purchased"))) else 0,
                          data.get("supportPurchaseDate", existing.get("support_purchase_date", "")),
                          data.get("supportAmount",  existing.get("support_amount", 499)),
-                         data.get("notes",          existing.get("notes", "")),
+                         notes_str,
                          data.get("planEndDate",     existing.get("plan_end_date", "")),
                          data.get("trialEndDate",    existing.get("trial_end_date", "")),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
-                         now_iso(), data["id"]))
+                         now_iso()))
 
-                    # Automatically record employee sale and credit 10% commission if sold under a salesperson
-                    if sold_by_emp_id or sold_by_emp_name or sales_person:
-                        emp_row = None
-                        if sold_by_emp_id:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE emp_id=? OR id=?", (sold_by_emp_id, sold_by_emp_id)).fetchone()
-                        if not emp_row and sold_by_emp_name:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE name=?", (sold_by_emp_name,)).fetchone()
-                        if not emp_row and sales_person:
-                            emp_row = db.execute("SELECT id, name, emp_id FROM employees WHERE name=? OR emp_id=?", (sales_person, sales_person)).fetchone()
-                        if emp_row and purchase_amt > 0:
-                            emp_db_id = emp_row["id"]
-                            c_name = data.get("name", existing.get("name", ""))
-                            existing_sale = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND (customer_name=? OR note LIKE ?)", 
-                                                       (emp_db_id, c_name, f"%{data['id']}%")).fetchone()
-                            if not existing_sale:
-                                sale_id = new_id()
-                                comm = calculate_plan_commission(plan_label, purchase_amt, notes_str)
-                                db.execute("INSERT INTO employee_sales (id, employee_id, date, customer_name, amount, commission, note, created_at) VALUES (?,?,?,?,?,?,?,?)",
-                                           (sale_id, emp_db_id, str(data.get("purchaseDate") or existing.get("purchase_date") or now_iso()[:10]), c_name, purchase_amt, comm, f"Customer: {c_name} ({data['id']})", now_iso()))
+                    # Automatically record employee sale and calculate commission if attributed
+                    if matched_emp and purchase_amt > 0:
+                        record_employee_sale_db(db, matched_emp, final_cid, c_name, plan_label or "Standard", purchase_amt, "", "Admin Update/Keygen", notes_str)
+
+                    # Insert/update license key record if present
+                    if lic_key:
+                        db.execute("""INSERT OR REPLACE INTO license_keys 
+                            (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                            (new_id(), lic_key, final_cid, c_name, plan_label or "Standard", 1, "active", f"admin ({sold_by_emp_id or 'direct'})", str(data.get("planEndDate", existing.get("plan_end_date", ""))), now_iso()))
 
                     db.commit()
                     db.close()
-                self.send_ok()
+                self.send_json({"ok": True, "id": final_cid})
                 return
 
             if path == "/api/customers/delete":
@@ -2914,42 +3067,69 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 with _db_lock:
                     db = get_db()
                     sid = data.get("id") or new_id()
-                    emp_id = data["employeeId"]
-                    cname = (data.get("customerName") or "").strip()
+                    raw_emp_ident = data.get("employeeId") or data.get("employee_id") or data.get("empId") or data.get("emp_id") or ""
+                    matched_emp = find_employee_by_identifier(db, raw_emp_ident)
+                    emp_id = matched_emp["id"] if matched_emp else str(raw_emp_ident)
+                    emp_code = matched_emp["emp_id"] if matched_emp else ""
+                    emp_name = matched_emp["name"] if matched_emp else ""
+                    
+                    cname = (data.get("customerName") or data.get("customer_name") or "").strip()
+                    cid = data.get("customerId") or data.get("customer_id") or ""
                     sale_amount = data.get("amount", 1499)
                     try: sale_amount = float(sale_amount)
                     except Exception: sale_amount = 1499.0
+                    plan_label = data.get("planLabel") or data.get("plan_label") or data.get("plan") or "Standard"
                     comm_val = data.get("commission")
                     if comm_val is None or comm_val == "":
-                        comm_val = calculate_plan_commission(data.get("planLabel", ""), sale_amount, data.get("note", ""))
+                        comm_val = calculate_plan_commission(plan_label, sale_amount, data.get("note", ""))
                     else:
                         try: comm_val = float(comm_val)
-                        except Exception: comm_val = calculate_plan_commission(data.get("planLabel", ""), sale_amount, data.get("note", ""))
+                        except Exception: comm_val = calculate_plan_commission(plan_label, sale_amount, data.get("note", ""))
                     
                     sdate = data.get("date", now_iso()[:10])
-                    snote = data.get("note", "")
+                    snote = data.get("note", "") or f"Keygen/Manual Sale: {cname} ({plan_label})"
+                    cur_month = sdate[:7]
                     
-                    # Deduplicate: if sale with this id or (employeeId, customerName) already exists, update in-place
+                    # Deduplicate: if sale with this id or (employeeId, customerName/customerId) already exists, update in-place
                     existing = None
                     if data.get("id"):
                         existing = db.execute("SELECT id FROM employee_sales WHERE id=?", (data["id"],)).fetchone()
+                    if not existing and cid:
+                        existing = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND (customer_id=? OR note LIKE ?)", (emp_id, cid, f"%{cid}%")).fetchone()
                     if not existing and cname:
                         existing = db.execute("SELECT id FROM employee_sales WHERE employee_id=? AND LOWER(TRIM(customer_name))=?", (emp_id, cname.lower())).fetchone()
                     
                     if existing:
                         db.execute("""UPDATE employee_sales
-                            SET customer_name=?, date=?, amount=?, commission=?, note=?
+                            SET customer_name=?, customer_id=?, plan_name=?, date=?, amount=?, commission=?, note=?, target_month=?
                             WHERE id=?""",
-                            (cname, sdate, sale_amount, comm_val, snote, existing["id"]))
+                            (cname, cid, plan_label, sdate, sale_amount, comm_val, snote, cur_month, existing["id"]))
                         sid = existing["id"]
                     else:
-                        db.execute("""INSERT INTO employee_sales
-                            (id,employee_id,customer_name,date,amount,commission,note,created_at)
-                            VALUES (?,?,?,?,?,?,?,?)""",
-                            (sid, emp_id, cname, sdate, sale_amount, comm_val, snote, now_iso()))
+                        try:
+                            db.execute("""INSERT INTO employee_sales
+                                (id,employee_id,emp_id,customer_id,customer_name,plan_name,date,amount,commission,note,status,target_month,created_at)
+                                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                (sid, emp_id, emp_code, cid, cname, plan_label, sdate, sale_amount, comm_val, snote, "approved", cur_month, now_iso()))
+                        except Exception:
+                            db.execute("""INSERT INTO employee_sales
+                                (id,employee_id,customer_name,date,amount,commission,note,created_at)
+                                VALUES (?,?,?,?,?,?,?,?)""",
+                                (sid, emp_id, cname, sdate, sale_amount, comm_val, snote, now_iso()))
+                    
+                    # Sync customer soldByEmpId/soldByEmpName if customer exists
+                    if cid or cname:
+                        try:
+                            if cid:
+                                db.execute("UPDATE customers SET sold_by_emp_id=?, sold_by_emp_name=?, sales_person=? WHERE id=?", (emp_code, emp_name, emp_name, cid))
+                            elif cname:
+                                db.execute("UPDATE customers SET sold_by_emp_id=?, sold_by_emp_name=?, sales_person=? WHERE LOWER(TRIM(name))=?", (emp_code, emp_name, emp_name, cname.lower()))
+                        except Exception:
+                            pass
+
                     db.commit()
                     db.close()
-                self.send_json({"ok": True, "id": sid})
+                self.send_json({"ok": True, "id": sid, "commission": comm_val})
                 return
 
             if path == "/api/employees/delete-sale":

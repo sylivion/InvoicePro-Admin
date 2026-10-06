@@ -25465,22 +25465,42 @@
           const body = (this.keygenEmailBody || '').trim();
           if (!body) return;
 
-          // Helper function for extracting labeled patterns line-by-line or with regex
-          const get = (re) => {
-            const m = body.match(re);
-            if (!m || !m[1]) return '';
-            let val = m[1].replace(/^[:\-–—=>\s]+/, '').split(/[\r\n]/)[0].trim();
-            return val;
+          const rawLines = body.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const knownLabelsRe = /^(?:Payment|Company|Contact|Owner|Proprietor|Customer|Client|City|Location|Mobile|Phone|WhatsApp|Email|GSTIN|Selected|Base|GST|Total|UPI|UTR|Submission|Next|Action|Sales|Emp|Plan|Currency|Address|Order)[_\s:]/i;
+
+          // Helper to extract value by key patterns whether on same line or next line
+          const findVal = (keyRegexes) => {
+            for (let i = 0; i < rawLines.length; i++) {
+              const line = rawLines[i];
+              for (const re of keyRegexes) {
+                // Case A: Key and value on same line separated by :, =, -, tab, or delimiter
+                const sameLine = line.match(new RegExp('^' + re.source + '\\s*(?:[:\\-–—=>\\t]|\\bis\\b|\\bfor\\b)\\s*(.+)$', 'i'));
+                if (sameLine && sameLine[1] && sameLine[1].trim()) {
+                  return sameLine[1].trim();
+                }
+                // Case B: Key alone on the line (e.g. 'Company_Name' or 'Company_Name\t') with value on line i+1
+                const exactKey = line.match(new RegExp('^' + re.source + '\\s*[:\\-–—=>\\t]*$', 'i'));
+                if (exactKey && i + 1 < rawLines.length) {
+                  const nextLine = rawLines[i + 1].trim();
+                  if (nextLine && !knownLabelsRe.test(nextLine)) {
+                    return nextLine;
+                  }
+                }
+              }
+            }
+            return '';
           };
 
           // 1. Company / Business / Firm / Shop / Store / Client Name
-          let company = get(/(?:Company(?:\s+Name)?|Business(?:\s+Name)?|Firm(?:\s+Name)?|Shop(?:\s+Name)?|Store(?:\s+Name)?|Client(?:\s+Name)?|Account(?:\s+Name)?|Organization(?:\s+Name)?|Enterprise(?:\s+Name)?|Agency(?:\s+Name)?|Establishment)\s*(?:[:\-–—=>]|\bis\b|\bfor\b)\s*(.+)/i);
+          const compKey = [
+            /(?:Company[_\s]*(?:Name)?|Business[_\s]*(?:Name)?|Firm[_\s]*(?:Name)?|Shop[_\s]*(?:Name)?|Store[_\s]*(?:Name)?|Client[_\s]*(?:Name)?|Account[_\s]*(?:Name)?|Organization[_\s]*(?:Name)?|Enterprise[_\s]*(?:Name)?|Agency[_\s]*(?:Name)?|Establishment)/i,
+            /(?:M\/s\.?|Messrs\.?)/i
+          ];
+          let company = findVal(compKey);
           if (!company) {
-            // Check for M/s or Messrs prefix
             const msMatch = body.match(/(?:M\/s\.?|Messrs\.?)\s+([A-Za-z0-9&.\s'-]{3,50})/i);
             if (msMatch) company = msMatch[1].trim();
             else {
-              // Fallback pattern: 'key for XYZ' or 'license for XYZ'
               const cMatch = body.match(/(?:generate\s+(?:a\s+)?(?:license\s+)?key\s+for|license\s+for|order\s+for)\s+([A-Za-z0-9&.\s'-]{3,40}?)(?:[.,\n]|$)/i);
               if (cMatch) company = cMatch[1].trim();
             }
@@ -25491,18 +25511,24 @@
           }
 
           // 2. Owner / Contact Person / Customer / Proprietor Name
-          let owner = get(/(?:Owner(?:\s+Name)?|Contact(?:\s+Person|\s+Name)?|Proprietor(?:\s+Name)?|Customer(?:\s+Name)?|Client\s+Rep(?:resentative)?|Authorized\s+Person|Buyer(?:\s+Name)?|Purchaser|Full\s+Name|^Name)\s*(?:[:\-–—=>]|\bis\b)\s*(.+)/im);
+          const ownerKey = [
+            /(?:Contact[_\s]*(?:Person|Name)?|Owner[_\s]*(?:Name)?|Proprietor[_\s]*(?:Name)?|Customer[_\s]*(?:Name)?|Client[_\s]*Rep(?:resentative)?|Authorized[_\s]*Person|Buyer[_\s]*(?:Name)?|Purchaser|Full[_\s]*Name)/i,
+            /(?:Name)/i
+          ];
+          let owner = findVal(ownerKey);
           if (owner) {
             owner = owner.split(/\s{2,}|\t|[,;]\s*(?:Phone|Email|City|Plan|Mobile|Address)/i)[0].trim();
-            // Remove trailing "in City" if present
             owner = owner.replace(/\s+\bin\b\s+[A-Za-z\s.]+/i, '').trim();
             if (owner) this.keygenForm.owner = owner;
           }
 
           // 3. City / Location / Town / District / Place
-          let city = get(/(?:City(?:\s*[/,]\s*State)?|Location|Place|Town|District|City\s+Name)\s*(?:[:\-–—=>]|\bis\b|\bin\b)\s*(.+)/i);
+          const cityKey = [
+            /(?:City[_\s]*(?:Location|Name|State)?|Location|Place|Town|District)/i
+          ];
+          let city = findVal(cityKey);
           if (!city) {
-            const addr = get(/(?:Address|State)\s*(?:[:\-–—=>]|\bis\b)\s*(.+)/i);
+            const addr = findVal([/(?:Address|State)/i]);
             if (addr) {
               const parts = addr.split(/[,;\-\n]/).map(s => s.trim()).filter(Boolean);
               if (parts.length > 0) city = parts[parts.length - 1];
@@ -25518,7 +25544,7 @@
           }
 
           // 4. Currency
-          let currency = get(/Currency\s*[:\-–—=>]\s*([A-Za-z]{3})/i);
+          let currency = findVal([/Currency/i]);
           if (!currency) {
             if (/\b(?:USD|\$)\b/i.test(body) && !/\b(?:INR|₹|Rs\.?)\b/i.test(body)) currency = 'USD';
             else if (/\b(?:EUR|€)\b/i.test(body)) currency = 'EUR';
@@ -25530,13 +25556,16 @@
           if (currency) this.keygenForm.currency = currency.toUpperCase();
 
           // 5. Phone / WhatsApp / Mobile Number (Normalized to 10 digits)
-          let phone = get(/(?:Phone(?:\s*No\.?|\s*Number)?|Mobile(?:\s*No\.?|\s*Number)?|Contact(?:\s*No\.?|\s*Number)?|WhatsApp(?:\s*No\.?|\s*Number)?|Cell(?:\s*No\.?)?|Tel(?:\s*No\.?)?)\s*(?:[:\-–—=>]|\bis\b)\s*([0-9+\-\s()]{8,})/i);
-          if (!phone) {
+          const phoneKey = [
+            /(?:Mobile[_\s]*(?:WhatsApp|No\.?|Number)?|Phone[_\s]*(?:No\.?|Number)?|Contact[_\s]*(?:No\.?|Number)?|WhatsApp[_\s]*(?:No\.?|Number)?|Cell[_\s]*(?:No\.?)?|Tel[_\s]*(?:No\.?)?)/i
+          ];
+          let rawPhone = findVal(phoneKey);
+          if (!rawPhone) {
             const pMatch = body.match(/(?:\+91[\-\s]?)?([6-9]\d{9})\b/);
-            if (pMatch) phone = pMatch[1];
+            if (pMatch) rawPhone = pMatch[1];
           }
-          if (phone) {
-            const digits = phone.replace(/\D/g, '');
+          if (rawPhone) {
+            const digits = rawPhone.replace(/\D/g, '');
             const cleanPhone = digits.length > 10 ? digits.slice(-10) : digits;
             if (cleanPhone.length === 10) {
               this.keygenForm.phone = cleanPhone;
@@ -25546,17 +25575,21 @@
           }
 
           // 6. Email Address
-          let email = get(/(?:Email|E-mail|Mail|Gmail|Email\s*ID|Email\s*Address)\s*(?:[:\-–—=>]|\bis\b)?\s*([^\s\n<>()]+@[^\s\n<>()]+)/i);
-          if (!email) {
+          const emailKey = [
+            /(?:Email[_\s]*(?:ID|Address)?|E-mail|Mail|Gmail)/i
+          ];
+          let rawEmail = findVal(emailKey);
+          if (!rawEmail) {
             const eMatch = body.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i);
-            if (eMatch) email = eMatch[0];
+            if (eMatch) rawEmail = eMatch[0];
           }
-          if (email) {
-            this.keygenForm.email = email.trim();
+          if (rawEmail) {
+            const eOnly = rawEmail.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i);
+            this.keygenForm.email = (eOnly ? eOnly[0] : rawEmail).trim();
           }
 
           // 7. Sales Person / Executive / Employee ID
-          const empMatch = body.match(/(?:EMP(?:\s*ID)?|Employee\s*ID|Sales\s*Rep(?:resentative)?|Sales\s*Person|Executive|Agent|Sales\s*Lead|Sold\s*By|Closed\s*By)\s*(?:[:\-–—=>]|\bis\b)\s*(EMP-[A-Z0-9\-]+|[A-Za-z0-9\s.'-]{3,30})/i);
+          const empMatch = body.match(/(?:EMP[_\s]*(?:ID)?|Employee[_\s]*ID|Sales[_\s]*Rep(?:resentative)?|Sales[_\s]*Person|Executive|Agent|Sales[_\s]*Lead|Sold[_\s]*By|Closed[_\s]*By)\s*(?:[:\-–—=>\t]|\bis\b)?\s*(EMP-[A-Z0-9\-]+|[A-Za-z0-9\s.'-]{3,30})/i);
           if (empMatch) {
             const rawEmpVal = empMatch[1].trim();
             const directId = rawEmpVal.match(/EMP-[A-Z0-9\-]+/i);
@@ -25572,75 +25605,67 @@
             }
           }
 
-          // 8. Plan Detection (Auto-selects 1Y, 3Y, 5Y, or VIP Lifetime)
-          let planText = get(/(?:Plan|License(?:\s+Plan|\s+Tier|\s+Type)?|Package|Subscription|Duration|Tier|Period|Selected\s+Plan)\s*(?:[:\-–—=>]|\bis\b)?\s*(.+)/i);
-          const searchContext = (planText ? (planText + ' ' + body) : body).toLowerCase();
+          // 8. Plan Detection (Auto-selects 1M, 1Y, 3Y, 5Y, or VIP Lifetime with accurate word boundaries)
+          const planKey = [
+            /(?:Selected[_\s]*Plan|Plan[_\s]*(?:Name|Type|Tier)?|License[_\s]*(?:Plan|Tier|Type)?|Package|Subscription|Duration|Tier|Period)/i
+          ];
+          let rawPlan = findVal(planKey);
+          const explicitPlan = (rawPlan || '').toLowerCase();
+          const searchContext = (rawPlan ? (rawPlan + ' ' + body) : body).toLowerCase();
 
-          // Priority 1: VIP Lifetime Plan (₹18,499)
-          if (
-            searchContext.includes('vip') ||
-            searchContext.includes('lifetime') ||
-            searchContext.includes('life time') ||
-            searchContext.includes('permanent') ||
-            searchContext.includes('18499') ||
-            searchContext.includes('18,499')
-          ) {
-            this.keygenForm.plan = 'vip';
-          }
-          // Priority 2: 5 Year Plan (₹6,499)
-          else if (
-            searchContext.includes('5 year') ||
-            searchContext.includes('5yr') ||
-            searchContext.includes('5-year') ||
-            searchContext.includes('5y') ||
-            searchContext.includes('five year') ||
-            searchContext.includes('60 month') ||
-            searchContext.includes('6499') ||
-            searchContext.includes('6,499')
-          ) {
-            this.keygenForm.plan = '5y';
-          }
-          // Priority 3: 3 Year Plan (₹3,999)
-          else if (
-            searchContext.includes('3 year') ||
-            searchContext.includes('3yr') ||
-            searchContext.includes('3-year') ||
-            searchContext.includes('3y') ||
-            searchContext.includes('three year') ||
-            searchContext.includes('36 month') ||
-            searchContext.includes('3999') ||
-            searchContext.includes('3,999')
-          ) {
-            this.keygenForm.plan = '3y';
-          }
-          // Priority 4: 1 Month Plan (₹149)
-          else if (
-            searchContext.includes('1 month') ||
-            searchContext.includes('1m') ||
-            searchContext.includes('1-month') ||
-            searchContext.includes('one month') ||
-            searchContext.includes('30 day') ||
-            searchContext.includes('30 days') ||
-            searchContext.includes('monthly') ||
-            searchContext.includes('149')
-          ) {
-            this.keygenForm.plan = '1m';
-          }
-          // Priority 5: 1 Year Plan (₹1,499)
-          else if (
-            searchContext.includes('1 year') ||
-            searchContext.includes('1yr') ||
-            searchContext.includes('1-year') ||
-            searchContext.includes('1y') ||
-            searchContext.includes('one year') ||
-            searchContext.includes('yearly') ||
-            searchContext.includes('annual') ||
-            searchContext.includes('12 month') ||
-            searchContext.includes('1499') ||
-            searchContext.includes('1,499') ||
-            searchContext.includes('year')
-          ) {
-            this.keygenForm.plan = '1y';
+          const matchPlan = (text) => {
+            if (
+              /\bvip\b/i.test(text) ||
+              /\blifetime\b/i.test(text) ||
+              /\blife\s*time\b/i.test(text) ||
+              /\bpermanent\b/i.test(text) ||
+              /\b18,?499\b/.test(text)
+            ) {
+              return 'vip';
+            }
+            if (
+              /\b5\s*(?:year|yr|y)\b/i.test(text) ||
+              /\bfive\s*years?\b/i.test(text) ||
+              /\b60\s*months?\b/i.test(text) ||
+              /\b6,?499\b/.test(text)
+            ) {
+              return '5y';
+            }
+            if (
+              /\b3\s*(?:year|yr|y)\b/i.test(text) ||
+              /\bthree\s*years?\b/i.test(text) ||
+              /\b36\s*months?\b/i.test(text) ||
+              /\b3,?999\b/.test(text)
+            ) {
+              return '3y';
+            }
+            if (
+              /\b1\s*(?:month|mo|m)\b/i.test(text) ||
+              /\bone\s*month\b/i.test(text) ||
+              /\bmonthly\b/i.test(text) ||
+              /\b30\s*days?\b/i.test(text) ||
+              /\b149(?:\.00)?\b/.test(text)
+            ) {
+              return '1m';
+            }
+            if (
+              /\b1\s*(?:year|yr|y)\b/i.test(text) ||
+              /\b\(1y\)\b/i.test(text) ||
+              /\bone\s*year\b/i.test(text) ||
+              /\byearly\b/i.test(text) ||
+              /\bannual\b/i.test(text) ||
+              /\b12\s*months?\b/i.test(text) ||
+              /\b1,?499\b/.test(text) ||
+              /\byear\b/i.test(text)
+            ) {
+              return '1y';
+            }
+            return null;
+          };
+
+          const detectedPlan = (explicitPlan && matchPlan(explicitPlan)) || matchPlan(searchContext);
+          if (detectedPlan) {
+            this.keygenForm.plan = detectedPlan;
           }
         },
 

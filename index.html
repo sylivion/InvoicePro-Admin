@@ -17634,10 +17634,22 @@
           <div>
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
               <span>UPI ID / Ref UTR (Sales Proof) *</span>
-              <span class="text-[10px] text-emerald-600 font-semibold"><i class="fa-solid fa-shield-check mr-0.5"></i> Required</span>
+              <span class="text-[10px] font-semibold"
+                :class="!leadForm.upi_id ? 'text-gray-400' : (isValidUpiId(leadForm.upi_id) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')">
+                <i class="fa-solid" :class="!leadForm.upi_id ? 'fa-shield-halved' : (isValidUpiId(leadForm.upi_id) ? 'fa-circle-check' : 'fa-circle-exclamation')"></i>
+                <span x-text="!leadForm.upi_id ? 'Required' : (isValidUpiId(leadForm.upi_id) ? 'Valid Proof' : 'Invalid Format')"></span>
+              </span>
             </label>
             <input type="text" x-model="leadForm.upi_id" required placeholder="e.g. 664507328867 or merchant@okhdfcbank"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              @input="leadForm.upi_id = leadForm.upi_id.trim()"
+              :class="leadForm.upi_id && !isValidUpiId(leadForm.upi_id) ? 'border-rose-400 focus:ring-rose-500' : (leadForm.upi_id && isValidUpiId(leadForm.upi_id) ? 'border-emerald-500 focus:ring-emerald-500' : 'border-gray-200 dark:border-gray-700')"
+              class="w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2" />
+            <p class="text-[10px] text-gray-400 mt-1" x-show="!leadForm.upi_id || isValidUpiId(leadForm.upi_id)">
+              Accepts UPI VPA (e.g. <span class="font-mono text-emerald-600">name@okhdfc</span>) or 12-digit UTR (<span class="font-mono text-emerald-600">664507328867</span>)
+            </p>
+            <p class="text-[10px] text-rose-500 mt-1" x-show="leadForm.upi_id && !isValidUpiId(leadForm.upi_id)" x-cloak>
+              Enter valid UPI ID (<span class="font-mono">user@bank</span>) or 12-digit UTR ref without spaces.
+            </p>
           </div>
         </div>
 
@@ -20283,6 +20295,52 @@
           }
           if (email && !this.isValidEmail(email, emailRequired)) {
             const msg = prefix + 'Please enter a valid email address (e.g. name@gmail.com or user@company.com).';
+            this.notify ? this.notify(msg, 'error') : alert(msg);
+            return false;
+          }
+          return true;
+        },
+
+        isValidUpiId(val) {
+          if (!val || typeof val !== 'string') return false;
+          const trimmed = val.trim();
+          if (trimmed.length < 6 || trimmed.length > 50) return false;
+          if (/\s/.test(trimmed)) return false;
+
+          // 1. UPI VPA format: e.g. 9876543210@paytm, merchant.pay@okhdfcbank, name-123@upi
+          const upiVpaRegex = /^[a-zA-Z0-9.\-_]{2,35}@[a-zA-Z0-9.\-_]{2,25}$/;
+          if (upiVpaRegex.test(trimmed)) return true;
+
+          // 2. 12-digit Numeric UTR / RRN (standard UPI bank reference from GPay/PhonePe/Paytm/BHIM):
+          const utr12Regex = /^[0-9]{12}$/;
+          if (utr12Regex.test(trimmed)) return true;
+
+          // 3. Alphanumeric Bank UTR / IMPS / Reference (8 to 35 alphanumeric characters with digits)
+          const txnRefRegex = /^[A-Za-z0-9\-_/]{8,35}$/;
+          if (txnRefRegex.test(trimmed) && /[0-9]/.test(trimmed)) return true;
+
+          return false;
+        },
+
+        validateUpiPaymentProof(val, opts = {}) {
+          const isRequired = opts.required !== false;
+          const context = opts.context || 'Sales Proof';
+          const prefix = context ? context + ': ' : '';
+
+          if (!val || !val.toString().trim()) {
+            if (!isRequired) return true;
+            const msg = prefix + 'UPI ID or 12-digit UTR transaction reference is required as sales payment proof.';
+            this.notify ? this.notify(msg, 'error') : alert(msg);
+            return false;
+          }
+          const trimmed = val.toString().trim();
+          if (/\s/.test(trimmed)) {
+            const msg = prefix + 'Invalid reference. Please remove any spaces from UPI ID / UTR.';
+            this.notify ? this.notify(msg, 'error') : alert(msg);
+            return false;
+          }
+          if (!this.isValidUpiId(trimmed)) {
+            const msg = prefix + 'Please enter a valid UPI ID (e.g. 9876543210@paytm, merchant@okhdfcbank) or 12-digit UTR number (e.g. 664507328867).';
             this.notify ? this.notify(msg, 'error') : alert(msg);
             return false;
           }
@@ -28578,8 +28636,7 @@ get remindersCount() {
           if (!this.validateContactInfo(this.leadForm.phone, this.leadForm.email, { phoneRequired: true, emailRequired: false, context: 'Sales Lead' })) {
             return;
           }
-          if (!this.leadForm.upi_id || !this.leadForm.upi_id.trim()) {
-            this.notify('Please provide UPI ID / UTR transaction reference as sales proof');
+          if (!this.validateUpiPaymentProof(this.leadForm.upi_id, { required: true, context: 'Record Sale' })) {
             return;
           }
 

@@ -1013,6 +1013,30 @@ def load_smtp_config():
     return {}
 
 
+
+def generate_emp_id(name, mobile=""):
+    name_clean = re.sub(r'[^A-Za-z\s]', '', str(name or "")).strip()
+    words = name_clean.split()
+    if len(words) >= 2:
+        initials = (words[0][0] + words[-1][0]).upper()
+    elif len(words) == 1 and len(words[0]) >= 2:
+        initials = words[0][:2].upper()
+    elif len(words) == 1:
+        initials = (words[0][0] + "X").upper()
+    else:
+        initials = "EM"
+    
+    digits = re.sub(r'\D', '', str(mobile or ""))
+    last4 = digits[-4:] if len(digits) >= 4 else f"{random.randint(1000, 9999)}"
+    seq = f"{random.randint(100, 999)}"
+    return f"EMP-{initials}{last4}-{seq}"
+
+
+def is_valid_emp_id_format(emp_id):
+    if not emp_id or not isinstance(emp_id, str):
+        return False
+    return bool(re.match(r'^EMP-[A-Z]{2}\d{4}-\d{3}$', emp_id.strip()))
+
 def is_dummy_password(pw):
     if not pw:
         return True
@@ -1639,18 +1663,37 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 profile = {}
                 with _db_lock:
                     db = get_db()
+                    staff_row = db.execute("SELECT * FROM staff_users WHERE id=? OR username=? OR emp_id=?", (uid, uid, uid)).fetchone()
                     emp_row = db.execute("SELECT * FROM employees WHERE id=? OR emp_id=?", (uid, uid)).fetchone()
                     if emp_row:
                         try:
                             extra = json.loads(emp_row["extra_data"] or "{}")
-                            profile = extra.get("hr_smtp_config") or {}
+                            p = extra.get("hr_smtp_config") or {}
+                            if p and p.get("from_email") and not str(p.get("from_email")).startswith("hr_"):
+                                profile = p
                         except Exception:
                             pass
+                    
+                    if not profile or not profile.get("from_email"):
+                        user_email = (staff_row and staff_row["email"]) or (emp_row and emp_row["email"]) or ""
+                        user_name = (staff_row and staff_row["name"]) or (emp_row and emp_row["name"]) or "HR Team"
+                        if user_email and not str(user_email).startswith("hr_") and "@" in str(user_email):
+                            profile = {
+                                "from_name": user_name,
+                                "from_email": user_email,
+                                "username": user_email,
+                                "host": "smtp.gmail.com",
+                                "port": 587,
+                                "password": "",
+                                "use_tls": True
+                            }
                     db.close()
                 if (not profile or not profile.get("from_email")) and os.path.exists(HR_SMTP_PROFILE_PATH):
                     try:
                         with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
-                            profile = json.load(f)
+                            file_p = json.load(f)
+                            if file_p and file_p.get("from_email") and not str(file_p.get("from_email")).startswith("hr_"):
+                                profile = file_p
                     except Exception:
                         pass
                 self.send_json({"ok": True, "smtp_profile": profile})
@@ -2877,15 +2920,16 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 with _db_lock:
                     db = get_db()
                     eid = data.get("id") or new_id()
-                    emp_id_val = (data.get("empId") or "").strip()
                     name = str(data.get("name", "")).strip()
                     if not name:
                         self.send_err("Employee name is required", 400)
                         return
-                    if not emp_id_val:
-                        self.send_err("empId is required", 400)
-                        return
                     mobile = str(data.get("mobile", "")).strip()
+                    raw_emp_id = (data.get("empId") or data.get("emp_id") or "").strip()
+                    if not is_valid_emp_id_format(raw_emp_id):
+                        emp_id_val = generate_emp_id(name, mobile)
+                    else:
+                        emp_id_val = raw_emp_id
                     if not mobile or not is_valid_phone(mobile, required=True):
                         self.send_err("Valid 10-digit mobile number is required for employee.", 400)
                         return
@@ -4203,18 +4247,37 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 profile = {}
                 with _db_lock:
                     db = get_db()
+                    staff_row = db.execute("SELECT * FROM staff_users WHERE id=? OR username=? OR emp_id=?", (uid, uid, uid)).fetchone()
                     emp_row = db.execute("SELECT * FROM employees WHERE id=? OR emp_id=?", (uid, uid)).fetchone()
                     if emp_row:
                         try:
                             extra = json.loads(emp_row["extra_data"] or "{}")
-                            profile = extra.get("hr_smtp_config") or {}
+                            p = extra.get("hr_smtp_config") or {}
+                            if p and p.get("from_email") and not str(p.get("from_email")).startswith("hr_"):
+                                profile = p
                         except Exception:
                             pass
+                    
+                    if not profile or not profile.get("from_email"):
+                        user_email = (staff_row and staff_row["email"]) or (emp_row and emp_row["email"]) or ""
+                        user_name = (staff_row and staff_row["name"]) or (emp_row and emp_row["name"]) or "HR Team"
+                        if user_email and not str(user_email).startswith("hr_") and "@" in str(user_email):
+                            profile = {
+                                "from_name": user_name,
+                                "from_email": user_email,
+                                "username": user_email,
+                                "host": "smtp.gmail.com",
+                                "port": 587,
+                                "password": "",
+                                "use_tls": True
+                            }
                     db.close()
                 if (not profile or not profile.get("from_email")) and os.path.exists(HR_SMTP_PROFILE_PATH):
                     try:
                         with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
-                            profile = json.load(f)
+                            file_p = json.load(f)
+                            if file_p and file_p.get("from_email") and not str(file_p.get("from_email")).startswith("hr_"):
+                                profile = file_p
                     except Exception:
                         pass
                 self.send_json({"ok": True, "smtp_profile": profile})
@@ -4238,8 +4301,14 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     cand_dict = dict(cand)
                     emp_obj = data.get("employee") if isinstance(data.get("employee"), dict) else {}
                     
-                    # Check if already onboarded or custom empId provided
-                    new_emp_id = str(data.get("empId") or data.get("emp_id") or emp_obj.get("empId") or cand_dict.get("empId") or cand_dict.get("id", "").replace("can-", "EMP-") or ("EMP-" + str(uuid.uuid4())[:6].upper())).strip()
+                    # Check if already onboarded or custom empId provided (enforce proper predefined format)
+                    cand_phone = str(cand_dict.get("phone", "")).strip()
+                    cand_name = str(cand_dict.get("name", "")).strip()
+                    raw_emp_id = str(data.get("empId") or data.get("emp_id") or emp_obj.get("empId") or cand_dict.get("empId") or "").strip()
+                    if not is_valid_emp_id_format(raw_emp_id):
+                        new_emp_id = generate_emp_id(cand_name, cand_phone)
+                    else:
+                        new_emp_id = raw_emp_id
                     
                     # Extract designation, department and role
                     desig = str(

@@ -3905,9 +3905,9 @@
             </button>
             <button @click="openHREmailSettingsModal()"
               class="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/30 transition-all flex items-center gap-1.5"
-              :class="hrSmtpConfig && hrSmtpConfig.username ? 'bg-emerald-500/25 border-emerald-300/60 text-emerald-100' : ''">
+              :class="((hrSmtpConfig && hrSmtpConfig.from_email && !hrSmtpConfig.from_email.startsWith('hr_')) || (currentUser && currentUser.email && !currentUser.email.startsWith('hr_'))) ? 'bg-emerald-500/25 border-emerald-300/60 text-emerald-100' : ''">
               <i class="fa-solid fa-envelope-circle-check"></i>
-              <span x-text="hrSmtpConfig && hrSmtpConfig.username ? ('HR Mail: ' + hrSmtpConfig.username) : 'My HR Email Setup'"></span>
+              <span x-text="getDisplayHREmail()"></span>
             </button>
           </div>
         </div>
@@ -16991,25 +16991,28 @@
   </div>
 
   <!-- ══ CREATE / ADD TEAM MODAL ══ -->
-  <div x-show="showAddTeamModal" x-cloak
-    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5 my-8">
-      <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+  <div x-show="showAddTeamModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showAddTeamModal = false"></div>
+    <div class="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 z-10">
+      
+      <!-- Fixed Header -->
+      <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex-shrink-0 bg-white dark:bg-gray-900">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg flex-shrink-0">
             <i class="fa-solid fa-people-group"></i>
           </div>
           <div>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Create New Team</h3>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white">Create New Team</h3>
             <p class="text-xs text-gray-500">Add a custom team, assign section-wise employees and appoint a Team Leader</p>
           </div>
         </div>
-        <button @click="showAddTeamModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 text-lg cursor-pointer">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" @click="showAddTeamModal = false" class="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <form @submit.prevent="submitAddTeam()" class="space-y-4">
+      <!-- Scrollable Form Body -->
+      <form id="addTeamForm" @submit.prevent="submitAddTeam()" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
         <!-- Parent Department -->
         <div>
           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Parent Department *</label>
@@ -17025,7 +17028,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Team / Squad Name *</label>
-            <input type="text" x-model="teamForm.name" required placeholder="e.g. Inside Sales &amp; SDR Squad"
+            <input type="text" x-model="teamForm.name" required placeholder="e.g. Inside Sales & SDR Squad"
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
           <div>
@@ -17095,7 +17098,7 @@
           </div>
 
           <!-- Section-Wise Staff Checklist -->
-          <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+          <div class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
             <template x-for="sec in getDepartmentGroupedEmployees()" :key="'sec-add-members-'+sec.department">
               <div class="border border-gray-200/80 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs">
                 <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between">
@@ -17136,41 +17139,45 @@
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
         </div>
-
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <button type="button" @click="showAddTeamModal = false"
-            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer">
-            Cancel
-          </button>
-          <button type="submit"
-            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-plus"></i> Create Team
-          </button>
-        </div>
       </form>
+
+      <!-- Fixed Footer -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex-shrink-0">
+        <button type="button" @click="showAddTeamModal = false"
+          class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit" form="addTeamForm"
+          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-plus"></i> Create Team
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- EDIT TEAM MODAL -->
-  <div x-show="showEditTeamModal" x-cloak
-    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5 my-8">
-      <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">
+  <!-- ══ EDIT TEAM MODAL ══ -->
+  <div x-show="showEditTeamModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showEditTeamModal = false"></div>
+    <div class="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 z-10">
+      
+      <!-- Fixed Header -->
+      <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex-shrink-0 bg-white dark:bg-gray-900">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg flex-shrink-0">
             <i class="fa-solid fa-pen-to-square"></i>
           </div>
           <div>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Edit Team Details</h3>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white">Edit Team Details</h3>
             <p class="text-xs text-gray-500">Update team name, change team leader, and manage section-wise team members</p>
           </div>
         </div>
-        <button @click="showEditTeamModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 text-lg cursor-pointer">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" @click="showEditTeamModal = false" class="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <form @submit.prevent="submitEditTeam()" class="space-y-4">
+      <!-- Scrollable Form Body -->
+      <form id="editTeamForm" @submit.prevent="submitEditTeam()" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
         <!-- Parent Department -->
         <div>
           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Parent Department *</label>
@@ -17186,7 +17193,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Team / Squad Name *</label>
-            <input type="text" x-model="teamForm.name" required placeholder="e.g. Inside Sales &amp; SDR Squad"
+            <input type="text" x-model="teamForm.name" required placeholder="e.g. Inside Sales & SDR Squad"
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
           <div>
@@ -17256,7 +17263,7 @@
           </div>
 
           <!-- Section-Wise Staff Checklist -->
-          <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+          <div class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
             <template x-for="sec in getDepartmentGroupedEmployees()" :key="'sec-edit-members-'+sec.department">
               <div class="border border-gray-200/80 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs">
                 <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between">
@@ -17297,18 +17304,19 @@
               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
         </div>
-
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <button type="button" @click="showEditTeamModal = false"
-            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer">
-            Cancel
-          </button>
-          <button type="submit"
-            class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-floppy-disk"></i> Save Team Changes
-          </button>
-        </div>
       </form>
+
+      <!-- Fixed Footer -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex-shrink-0">
+        <button type="button" @click="showEditTeamModal = false"
+          class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit" form="editTeamForm"
+          class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-floppy-disk"></i> Save Team Changes
+        </button>
+      </div>
     </div>
   </div>
 
@@ -19376,6 +19384,14 @@
               const parsedEmps = JSON.parse(rawEmps);
               let empChanged = false;
               (parsedEmps || []).forEach(e => {
+                if (!this._isValidEmpId(e.empId || e.emp_id)) {
+                  const fixedId = this._generateEmpId(e.name, e.mobile || e.phone, e.joinDate || e.joining_date);
+                  e.empId = fixedId;
+                  e.emp_id = fixedId;
+                  empChanged = true;
+                }
+              });
+              (parsedEmps || []).forEach(e => {
                 if (e.sales && Array.isArray(e.sales)) {
                   const origLen = e.sales.length;
                   e.sales = e.sales.filter(s => {
@@ -19941,10 +19957,14 @@
           } catch (_) { }
           const upiId = (e.upiId || e.upi_id || extra.upiId || extra.upi_id || '').trim();
           const upiQrImage = (e.upi_qr_image || e.upiQrImage || extra.upi_qr_image || extra.upiQrImage || '').trim();
+          let rawEmpId = (e.emp_id || e.empId || '').trim();
+          if (!this._isValidEmpId(rawEmpId)) {
+            rawEmpId = this._generateEmpId(e.name, e.mobile || e.phone, e.join_date || e.joinDate);
+          }
           return {
             // Spread extra_data first so the explicit field mappings below take priority
             ...extra,
-            id: e.id, empId: e.emp_id || e.empId || '',
+            id: e.id, empId: rawEmpId, emp_id: rawEmpId,
             name: e.name || '', mobile: e.mobile || '', email: e.email || '',
             designation: e.designation || '', department: e.department || '',
             joinDate: e.join_date || e.joinDate || '', notes: e.notes || '',
@@ -22397,11 +22417,25 @@
         // Generate a unique permanent EMP ID based on employee info + timestamp
         // Format: EMP-[initials][mobile-last4]-[seq3]  e.g. EMP-JD1234-567
         _generateEmpId(name, mobile, joinDate) {
-          const initials = (name || '').trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2).padEnd(2, 'X');
-          const last4 = (mobile || '').replace(/\D/g, '').slice(-4).padStart(4, '0');
-          // Timestamp-based suffix guarantees uniqueness even if employee list is stale
+          const nameClean = (name || '').replace(/[^A-Za-z\s]/g, '').trim();
+          const words = nameClean.split(/\s+/).filter(Boolean);
+          let initials = 'EM';
+          if (words.length >= 2) {
+            initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+          } else if (words.length === 1 && words[0].length >= 2) {
+            initials = words[0].slice(0, 2).toUpperCase();
+          } else if (words.length === 1) {
+            initials = (words[0][0] + 'X').toUpperCase();
+          }
+          const digits = (mobile || '').replace(/\D/g, '');
+          const last4 = digits.length >= 4 ? digits.slice(-4) : (Math.floor(1000 + Math.random() * 9000)).toString();
           const seq = ((Date.now() % 900) + 100).toString(); // 3-digit number 100-999
           return 'EMP-' + initials + last4 + '-' + seq;
+        },
+
+        _isValidEmpId(empId) {
+          if (!empId || typeof empId !== 'string') return false;
+          return /^EMP-[A-Z]{2}\d{4}-\d{3}$/.test(empId.trim());
         },
 
         // Employee commission helpers
@@ -33301,13 +33335,44 @@ get remindersCount() {
           return `${dateStr} ${String(h12).padStart(2, '0')}:00 ${ampm}`;
         },
 
+        getDisplayHREmail() {
+          const cfgEmail = (this.hrSmtpConfig?.from_email || this.hrSmtpConfig?.username || '').trim();
+          if (cfgEmail && !cfgEmail.startsWith('hr_') && cfgEmail.includes('@')) {
+            return 'HR Mail: ' + cfgEmail;
+          }
+          const userEmail = (this.currentUser?.email || '').trim();
+          if (userEmail && !userEmail.startsWith('hr_') && userEmail.includes('@')) {
+            return 'HR Mail: ' + userEmail;
+          }
+          const empMatch = (this.employees || []).find(e => e.id === this.currentUser?.id || e.emp_id === this.currentUser?.emp_id || (e.name && this.currentUser?.name && e.name.toLowerCase() === this.currentUser.name.toLowerCase()));
+          if (empMatch && empMatch.email && !empMatch.email.startsWith('hr_') && empMatch.email.includes('@')) {
+            return 'HR Mail: ' + empMatch.email;
+          }
+          return 'My HR Email Setup';
+        },
+
         openHREmailSettingsModal() {
           this.loadHREmailSettings();
+          let userEmail = (this.currentUser?.email || '').trim();
+          const userName = (this.currentUser?.name || 'HR Team').trim();
+          if (!userEmail || userEmail.startsWith('hr_')) {
+            const empMatch = (this.employees || []).find(e => e.id === this.currentUser?.id || e.emp_id === this.currentUser?.emp_id || (e.name && this.currentUser?.name && e.name.toLowerCase() === this.currentUser.name.toLowerCase()));
+            if (empMatch && empMatch.email && !empMatch.email.startsWith('hr_')) {
+              userEmail = empMatch.email;
+              if (this.currentUser && !this.currentUser.email) this.currentUser.email = userEmail;
+            }
+          }
           if (!this.hrSmtpConfig) {
-            this.hrSmtpConfig = { from_name: 'Sylivion Tech Powered By Workmate4U Pvt. Ltd.', from_email: '', host: 'smtp.gmail.com', port: 587, username: '', password: '', use_tls: true };
+            this.hrSmtpConfig = { from_name: userName, from_email: userEmail, host: 'smtp.gmail.com', port: 587, username: userEmail, password: '', use_tls: true };
           }
           if (!this.hrSmtpConfig.from_name) {
-            this.hrSmtpConfig.from_name = 'Sylivion Tech Powered By Workmate4U Pvt. Ltd.';
+            this.hrSmtpConfig.from_name = userName;
+          }
+          if (!this.hrSmtpConfig.from_email || this.hrSmtpConfig.from_email.startsWith('hr_')) {
+            if (userEmail && !userEmail.startsWith('hr_')) {
+              this.hrSmtpConfig.from_email = userEmail;
+              this.hrSmtpConfig.username = userEmail;
+            }
           }
           this.hrEmailTestStatus = null;
           this.showHREmailSettingsModal = true;
@@ -33371,7 +33436,9 @@ get remindersCount() {
           this.notify(' HR outgoing email credentials saved for your account!');
 
           try {
-            await (window.originalFetch || window.fetch)('/api/hr/save-smtp-profile', {
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            await (window.originalFetch || window.fetch)(`${baseUrl}/api/hr/save-smtp-profile`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: uid, smtp_profile: this.hrSmtpConfig })
@@ -33381,35 +33448,59 @@ get remindersCount() {
 
         async loadHREmailSettings() {
           const uid = this.currentUser?.id || this.currentUser?.emp_id || this.currentUser?.username || 'default_hr';
+          let userEmail = (this.currentUser?.email || '').trim();
+          let userName = (this.currentUser?.name || 'HR Team').trim();
+
+          if (!userEmail || userEmail.startsWith('hr_')) {
+            const empMatch = (this.employees || []).find(e => e.id === this.currentUser?.id || e.emp_id === this.currentUser?.emp_id || (e.name && this.currentUser?.name && e.name.toLowerCase() === this.currentUser.name.toLowerCase()));
+            if (empMatch && empMatch.email && !empMatch.email.startsWith('hr_')) {
+              userEmail = empMatch.email;
+              if (this.currentUser && !this.currentUser.email) this.currentUser.email = userEmail;
+            }
+          }
+
+          // 1. Check local storage for this specific user
           const saved = localStorage.getItem('ip_adm_hr_smtp_' + uid);
           if (saved) {
             try {
               const parsed = JSON.parse(saved);
               if (parsed && (parsed.from_email || parsed.username)) {
-                this.hrSmtpConfig = Object.assign({}, parsed);
-                return;
+                const em = (parsed.from_email || parsed.username || '').trim();
+                if (!em.startsWith('hr_') && em.includes('@')) {
+                  this.hrSmtpConfig = Object.assign({}, parsed);
+                  if (!this.hrSmtpConfig.from_email) this.hrSmtpConfig.from_email = em;
+                  if (!this.hrSmtpConfig.username) this.hrSmtpConfig.username = em;
+                  return;
+                }
               }
             } catch (e) {}
           }
+
+          // 2. Fetch profile from backend
           try {
-            const res = await (window.originalFetch || window.fetch)(`/api/hr/get-smtp-profile?user_id=${encodeURIComponent(uid)}`);
+            const srv = localStorage.getItem('ip_adm_server_url') || '';
+            const baseUrl = srv ? srv.replace(/\/+$/, '') : ((typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') ? 'http://localhost:8766' : '');
+            const res = await (window.originalFetch || window.fetch)(`${baseUrl}/api/hr/get-smtp-profile?user_id=${encodeURIComponent(uid)}`);
             const data = await res.json();
             if (data && data.smtp_profile && (data.smtp_profile.from_email || data.smtp_profile.username)) {
-              this.hrSmtpConfig = Object.assign({}, data.smtp_profile);
-              localStorage.setItem('ip_adm_hr_smtp_' + uid, JSON.stringify(this.hrSmtpConfig));
-              return;
+              const em = (data.smtp_profile.from_email || data.smtp_profile.username || '').trim();
+              if (!em.startsWith('hr_') && em.includes('@')) {
+                this.hrSmtpConfig = Object.assign({}, data.smtp_profile);
+                if (!this.hrSmtpConfig.from_email) this.hrSmtpConfig.from_email = em;
+                if (!this.hrSmtpConfig.username) this.hrSmtpConfig.username = em;
+                localStorage.setItem('ip_adm_hr_smtp_' + uid, JSON.stringify(this.hrSmtpConfig));
+                return;
+              }
             }
           } catch (e) {}
 
-          // Default clean config for the specific logged-in HR user
-          const userEmail = (this.currentUser?.email || '').trim();
-          const userName = (this.currentUser?.name || 'HR Team').trim();
+          // 3. Fallback to clean configured user email
           this.hrSmtpConfig = { 
             from_name: userName, 
-            from_email: userEmail, 
-            host: userEmail.endsWith('@gmail.com') ? 'smtp.gmail.com' : 'smtp.gmail.com', 
+            from_email: userEmail || '', 
+            host: (userEmail && userEmail.endsWith('@gmail.com')) ? 'smtp.gmail.com' : 'smtp.gmail.com', 
             port: 587, 
-            username: userEmail, 
+            username: userEmail || '', 
             password: '', 
             use_tls: true 
           };

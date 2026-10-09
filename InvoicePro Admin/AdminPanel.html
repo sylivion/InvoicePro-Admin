@@ -17618,17 +17618,27 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Software Plan of Interest</label>
-          <select x-model="leadForm.plan_interested"
-            @change="if(leadForm.plan_interested.includes('VIP')||leadForm.plan_interested.includes('Lifetime')){leadForm.deal_value='₹18,499';}else if(leadForm.plan_interested.includes('5')){leadForm.deal_value='₹6,499';}else if(leadForm.plan_interested.includes('3')){leadForm.deal_value='₹3,999';}else if(leadForm.plan_interested.includes('1 Month')||leadForm.plan_interested.includes('1m')||leadForm.plan_interested.includes('149')){leadForm.deal_value='₹149';}else{leadForm.deal_value='₹1,499';}"
-            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-            <option value="1 Month Plan">1 Month Plan - ₹149</option>
-            <option value="1 Year Plan">1 Year Plan - ₹1,499</option>
-            <option value="3 Year Plan">3 Year Plan - ₹3,999</option>
-            <option value="5 Year Plan">5 Year Plan - ₹6,499</option>
-            <option value="VIP Lifetime Plan">VIP Lifetime Plan - ₹18,499</option>
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Software Plan of Interest *</label>
+            <select x-model="leadForm.plan_interested"
+              @change="if(leadForm.plan_interested.includes('VIP')||leadForm.plan_interested.includes('Lifetime')){leadForm.deal_value='₹18,499';}else if(leadForm.plan_interested.includes('5')){leadForm.deal_value='₹6,499';}else if(leadForm.plan_interested.includes('3')){leadForm.deal_value='₹3,999';}else if(leadForm.plan_interested.includes('1 Month')||leadForm.plan_interested.includes('1m')||leadForm.plan_interested.includes('149')){leadForm.deal_value='₹149';}else{leadForm.deal_value='₹1,499';}"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="1 Month Plan">1 Month Plan - ₹149</option>
+              <option value="1 Year Plan">1 Year Plan - ₹1,499</option>
+              <option value="3 Year Plan">3 Year Plan - ₹3,999</option>
+              <option value="5 Year Plan">5 Year Plan - ₹6,499</option>
+              <option value="VIP Lifetime Plan">VIP Lifetime Plan - ₹18,499</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+              <span>UPI ID / Ref UTR (Sales Proof) *</span>
+              <span class="text-[10px] text-emerald-600 font-semibold"><i class="fa-solid fa-shield-check mr-0.5"></i> Required</span>
+            </label>
+            <input type="text" x-model="leadForm.upi_id" required placeholder="e.g. 664507328867 or merchant@okhdfcbank"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
         </div>
 
         <div>
@@ -19109,7 +19119,7 @@
         leadAssignForm: { leadId: '', rep_username: '', priority: 'High', notes: '' },
 
         showCreateLeadModal: false,
-        leadForm: { customer_name: '', company: '', phone: '', email: '', city: '', requirement: '', plan_interested: '1 Year Plan', deal_value: '₹1,499', assigned_to: '' },
+        leadForm: { customer_name: '', company: '', phone: '', email: '', city: '', upi_id: '', requirement: '', plan_interested: '1 Year Plan', deal_value: '₹1,499', assigned_to: '' },
 
         showLogActivityModal: false,
         activityForm: { lead_id: '', lead_name: '', type: 'Call', summary: '', outcome: 'Interested', next_action: '', next_action_date: '' },
@@ -28536,6 +28546,7 @@ get remindersCount() {
         openCreateLeadModal() {
           this.leadForm = {
             customer_name: '', company: '', phone: '', email: '', city: '',
+            upi_id: '',
             requirement: '', plan_interested: '1 Year Plan', deal_value: '₹1,499',
             assigned_to: (this.currentUser && this.currentUser.role === 'sales_member') ? this.currentUser.username : ''
           };
@@ -28547,6 +28558,10 @@ get remindersCount() {
             return;
           }
           if (!this.validateContactInfo(this.leadForm.phone, this.leadForm.email, { phoneRequired: true, emailRequired: false, context: 'Sales Lead' })) {
+            return;
+          }
+          if (!this.leadForm.upi_id || !this.leadForm.upi_id.trim()) {
+            this.notify('Please provide UPI ID / UTR transaction reference as sales proof');
             return;
           }
 
@@ -28582,6 +28597,7 @@ get remindersCount() {
           const custPhone = this.leadForm.phone.trim();
           const custEmail = this.leadForm.email ? this.leadForm.email.trim() : '';
           const custCity = this.leadForm.city ? this.leadForm.city.trim() : 'Pune';
+          const custUpiId = this.leadForm.upi_id.trim();
           const repUser = this.leadForm.assigned_to || (this.currentUser ? this.currentUser.username : 'sales');
           const cleanPhone = custPhone.replace(/[^0-9]/g, '').slice(-10);
 
@@ -28604,6 +28620,12 @@ get remindersCount() {
             customer.expiry_date = expDate;
             customer.planEndDate = expDate;
             customer.salesRep = repUser;
+            customer.upi_id = custUpiId;
+            customer.upi_ref = custUpiId;
+            customer.paymentMethod = 'UPI Direct';
+            if (!customer.notes || !customer.notes.includes(custUpiId)) {
+              customer.notes = (customer.notes ? customer.notes + ' · ' : '') + 'Sales Proof (UPI): ' + custUpiId;
+            }
           } else {
             const custId = 'CUST-' + Math.floor(1000 + Math.random() * 9000);
             customer = {
@@ -28629,12 +28651,27 @@ get remindersCount() {
               salesRep: repUser,
               soldByEmpId: this.currentUser?.emp_id || '',
               soldByEmpName: this.currentUser?.name || '',
+              upi_id: custUpiId,
+              upi_ref: custUpiId,
+              paymentMethod: 'UPI Direct',
               device_count: 1,
               max_devices: 3,
-              notes: this.leadForm.requirement ? this.leadForm.requirement.trim() : 'Sale recorded via Sales Workspace',
+              notes: (this.leadForm.requirement ? this.leadForm.requirement.trim() + ' · ' : '') + 'Sales Proof (UPI): ' + custUpiId,
               enquiries: [],
               invoices: [],
-              transactions: [],
+              transactions: [
+                {
+                  id: 'tx-' + Date.now(),
+                  date: this.today ? this.today() : new Date().toISOString().slice(0, 10),
+                  amount: amount,
+                  plan: planLabel,
+                  method: 'UPI Direct',
+                  upi_id: custUpiId,
+                  reference: custUpiId,
+                  status: 'Completed',
+                  recordedBy: repUser
+                }
+              ],
               licenses: []
             };
             this.customers.unshift(customer);
@@ -28657,6 +28694,8 @@ get remindersCount() {
             phone: custPhone,
             email: custEmail,
             city: custCity,
+            upi_id: custUpiId,
+            upi_ref: custUpiId,
             requirement: this.leadForm.requirement ? this.leadForm.requirement.trim() : ('Purchased ' + rawPlan),
             plan_interested: rawPlan,
             deal_value: '₹' + amount.toLocaleString('en-IN'),
@@ -28664,7 +28703,7 @@ get remindersCount() {
             assigned_to: repUser,
             assigned_by: this.currentUser ? this.currentUser.username : 'admin',
             priority: 'High',
-            notes: 'Sale recorded and directly added as customer',
+            notes: 'Sale recorded with UPI Proof: ' + custUpiId + (this.leadForm.requirement ? ' · ' + this.leadForm.requirement.trim() : ''),
             created_at: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
             next_followup: ''
           };
@@ -28682,7 +28721,7 @@ get remindersCount() {
 
           this._saveSalesData();
           this.showCreateLeadModal = false;
-          this.logActivity('system', `Recorded sale for ${newLead.company} (₹${amount.toLocaleString('en-IN')}) by ${repUser}`);
+          this.logActivity('system', `Recorded sale for ${newLead.company} (₹${amount.toLocaleString('en-IN')}, UPI: ${custUpiId}) by ${repUser}`);
           this.notify(`Sale recorded successfully! Customer account "${compName}" created.`);
         },
 

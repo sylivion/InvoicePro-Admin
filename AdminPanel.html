@@ -11637,7 +11637,7 @@
                     <i class="fa-solid fa-envelope-open-text mr-1"></i> Paste Purchase Email — auto-fills fields below
                   </label>
                   <button type="button" x-show="keygenEmailBody && keygenEmailBody.trim()"
-                    @click="keygenEmailBody = ''; parseKeygenEmail()"
+                    @click="keygenEmailBody = ''; parseKeygenEmail('')"
                     class="text-[11px] font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 px-1.5 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors flex items-center gap-1">
                     <i class="fa-solid fa-eraser"></i> Clear
                   </button>
@@ -11645,7 +11645,7 @@
                 <textarea x-model="keygenEmailBody"
                   rows="6"
                   @input="parseKeygenEmail()"
-                  @paste="$nextTick(() => parseKeygenEmail())"
+                  @paste="const pasted = ($event.clipboardData || window.clipboardData)?.getData('text'); if (pasted) { keygenEmailBody = pasted; parseKeygenEmail(pasted); } setTimeout(() => parseKeygenEmail(), 50);"
                   placeholder="Paste the customer's purchase request email here…"
                   class="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs sm:text-sm font-mono text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-y min-h-[140px] focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
                 <div x-show="keygenEmailBody && keygenEmailBody.trim()"
@@ -25495,8 +25495,8 @@
           }
         },
 
-        parseKeygenEmail() {
-          const body = (this.keygenEmailBody || '').trim();
+        parseKeygenEmail(explicitText) {
+          const body = (typeof explicitText === 'string' ? explicitText : (this.keygenEmailBody || '')).trim();
           if (!body) return;
 
           const rawLines = body.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -25639,7 +25639,7 @@
             }
           }
 
-          // 8. Plan Detection (Auto-selects 1M, 1Y, 3Y, 5Y, or VIP Lifetime with accurate word boundaries)
+          // 8. Plan Detection (Auto-selects 1M, 1Y, 3Y, 5Y, or VIP Lifetime with accurate detection and amount fallbacks)
           const planKey = [
             /(?:Selected[_\s]*Plan|Plan[_\s]*(?:Name|Type|Tier)?|License[_\s]*(?:Plan|Tier|Type)?|Package|Subscription|Duration|Tier|Period)/i
           ];
@@ -25648,6 +25648,8 @@
           const searchContext = (rawPlan ? (rawPlan + ' ' + body) : body).toLowerCase();
 
           const matchPlan = (text) => {
+            if (!text) return null;
+            // VIP / Lifetime
             if (
               /\bvip\b/i.test(text) ||
               /\blifetime\b/i.test(text) ||
@@ -25657,37 +25659,56 @@
             ) {
               return 'vip';
             }
+            // 5 Year / Ultimate
             if (
-              /\b5\s*(?:year|yr|y)\b/i.test(text) ||
+              /\b5\s*(?:year|years|yr|yrs|y)\b/i.test(text) ||
+              /\b5-year\b/i.test(text) ||
+              /\b5-yr\b/i.test(text) ||
               /\bfive\s*years?\b/i.test(text) ||
               /\b60\s*months?\b/i.test(text) ||
+              /\bultimate\s*plan\b/i.test(text) ||
+              /\b\(5y\)\b/i.test(text) ||
               /\b6,?499\b/.test(text)
             ) {
               return '5y';
             }
+            // 3 Year / Enterprise
             if (
-              /\b3\s*(?:year|yr|y)\b/i.test(text) ||
+              /\b3\s*(?:year|years|yr|yrs|y)\b/i.test(text) ||
+              /\b3-year\b/i.test(text) ||
+              /\b3-yr\b/i.test(text) ||
               /\bthree\s*years?\b/i.test(text) ||
               /\b36\s*months?\b/i.test(text) ||
+              /\benterprise\s*plan\b/i.test(text) ||
+              /\b\(3y\)\b/i.test(text) ||
               /\b3,?999\b/.test(text)
             ) {
               return '3y';
             }
+            // 1 Month / Starter
             if (
-              /\b1\s*(?:month|mo|m)\b/i.test(text) ||
+              /\b1\s*(?:month|months|mo|mos|m)\b/i.test(text) ||
+              /\b1-month\b/i.test(text) ||
+              /\b1-mo\b/i.test(text) ||
               /\bone\s*month\b/i.test(text) ||
               /\bmonthly\b/i.test(text) ||
+              /\bstarter\s*plan\b/i.test(text) ||
+              /\b\(1m\)\b/i.test(text) ||
               /\b30\s*days?\b/i.test(text) ||
               /\b149(?:\.00)?\b/.test(text)
             ) {
               return '1m';
             }
+            // 1 Year / Pro
             if (
-              /\b1\s*(?:year|yr|y)\b/i.test(text) ||
+              /\b1\s*(?:year|years|yr|yrs|y)\b/i.test(text) ||
+              /\b1-year\b/i.test(text) ||
+              /\b1-yr\b/i.test(text) ||
               /\b\(1y\)\b/i.test(text) ||
               /\bone\s*year\b/i.test(text) ||
               /\byearly\b/i.test(text) ||
               /\bannual\b/i.test(text) ||
+              /\bpro\s*plan\b/i.test(text) ||
               /\b12\s*months?\b/i.test(text) ||
               /\b1,?499\b/.test(text) ||
               /\byear\b/i.test(text)

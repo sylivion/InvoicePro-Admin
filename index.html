@@ -4271,6 +4271,7 @@
                   <th class="py-3 px-3">Contact Details</th>
                   <th class="py-3 px-3">Plan Interested</th>
                   <th class="py-3 px-3">Deal Value</th>
+                  <th class="py-3 px-3">License Key</th>
                   <th class="py-3 px-3">Assigned Rep</th>
                   <th class="py-3 px-3">Status</th>
                   <th class="py-3 px-3 text-right">Actions</th>
@@ -4291,6 +4292,17 @@
                       <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300" x-text="lead.plan_interested"></span>
                     </td>
                     <td class="py-3 px-3 font-bold text-gray-900 dark:text-white" x-text="lead.deal_value"></td>
+                    <td class="py-3 px-3">
+                      <template x-if="getLeadLicenseKey(lead)">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 w-fit">
+                          <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
+                          <span x-text="getLeadLicenseKey(lead)"></span>
+                        </span>
+                      </template>
+                      <template x-if="!getLeadLicenseKey(lead)">
+                        <span class="text-gray-400 text-[10px] font-mono">—</span>
+                      </template>
+                    </td>
                     <td class="py-3 px-3">
                       <template x-if="lead.assigned_to">
                         <span class="px-2 py-1 rounded-lg text-[11px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300 flex items-center gap-1 w-fit">
@@ -4766,6 +4778,7 @@
                   <th class="py-3.5 px-3">Contact Details</th>
                   <th class="py-3.5 px-3">Plan</th>
                   <th class="py-3.5 px-3">Deal Value</th>
+                  <th class="py-3.5 px-3">License Key</th>
                   <th class="py-3.5 px-3">Date Added</th>
                 </tr>
               </thead>
@@ -4798,6 +4811,17 @@
                         x-text="lead.plan_interested || '1 Year Plan'"></span>
                     </td>
                     <td class="py-3.5 px-3 font-bold text-gray-900 dark:text-white" x-text="lead.deal_value || '₹1,499'"></td>
+                    <td class="py-3.5 px-3">
+                      <template x-if="getLeadLicenseKey(lead)">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 w-fit">
+                          <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
+                          <span x-text="getLeadLicenseKey(lead)"></span>
+                        </span>
+                      </template>
+                      <template x-if="!getLeadLicenseKey(lead)">
+                        <span class="text-gray-400 text-[10px] font-mono">—</span>
+                      </template>
+                    </td>
                     <td class="py-3.5 px-3 text-gray-500 font-medium" x-text="lead.created_at || 'Recently'"></td>
                   </tr>
                 </template>
@@ -5385,6 +5409,7 @@
                   <th class="py-3 px-3">Customer &amp; Company</th>
                   <th class="py-3 px-3">Requirement &amp; Plan</th>
                   <th class="py-3 px-3">Deal Value</th>
+                  <th class="py-3 px-3">License Key</th>
                   <th class="py-3 px-3">Date Added</th>
                   <th class="py-3 px-3">Quick Connect</th>
                 </tr>
@@ -5416,18 +5441,20 @@
                     </td>
                     <td class="py-3.5 px-3 font-semibold text-gray-900 dark:text-white text-sm" x-text="lead.deal_value"></td>
                     <td class="py-3.5 px-3">
-                      <!-- Customer Registration Date & License Tag -->
-                      <div class="space-y-1">
-                        <div class="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5 font-mono">
-                          <i class="fa-regular fa-calendar-check text-emerald-500 text-xs"></i>
-                          <span x-text="lead.created_at || '—'"></span>
-                        </div>
-                        <template x-if="getLeadLicenseKey(lead)">
-                          <div class="text-[10px] font-mono text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1" title="Active License Key">
-                            <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
-                            <span x-text="getLeadLicenseKey(lead)"></span>
-                          </div>
-                        </template>
+                      <template x-if="getLeadLicenseKey(lead)">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 w-fit">
+                          <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
+                          <span x-text="getLeadLicenseKey(lead)"></span>
+                        </span>
+                      </template>
+                      <template x-if="!getLeadLicenseKey(lead)">
+                        <span class="text-gray-400 text-[10px] font-mono">—</span>
+                      </template>
+                    </td>
+                    <td class="py-3.5 px-3">
+                      <div class="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5 font-mono">
+                        <i class="fa-regular fa-calendar-check text-emerald-500 text-xs"></i>
+                        <span x-text="lead.created_at || '—'"></span>
                       </div>
                     </td>
                     <td class="py-3.5 px-3">
@@ -17592,6 +17619,53 @@
       </div>
 
       <form @submit.prevent="submitCreateLead()" class="space-y-4">
+        <!-- Customer Selection Dropdown (Existing vs New) -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-users text-emerald-600"></i> Customer Record Type / Select Existing
+            </span>
+            <template x-if="leadForm.selected_customer_id">
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                <i class="fa-solid fa-link"></i> Existing Account Linked
+              </span>
+            </template>
+          </label>
+          <select x-model="leadForm.selected_customer_id" @change="onSelectExistingCustomerSale($event.target.value)"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="">➕ -- Record Sale for New Customer --</option>
+            <template x-for="c in getAvailableCustomersForSale()" :key="c.id">
+              <option :value="c.id" :disabled="isCustomerLockedForCurrentRep(c)"
+                x-text="getCustomerDropdownLabel(c)"></option>
+            </template>
+          </select>
+          <p class="text-[10px] text-gray-400 mt-1" x-show="!leadForm.selected_customer_id">
+            Select an existing customer to record a renewal/new plan, or leave as "New Customer" to register a fresh account.
+          </p>
+
+          <!-- Linked Customer Info Card -->
+          <template x-if="leadForm.selected_customer_id && getSelectedCustomerObject()">
+            <div class="mt-2 p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-key text-[10px]"></i>
+                  </span>
+                  <span class="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                    License Key: <span class="font-mono text-emerald-700 dark:text-emerald-400" x-text="getSelectedCustomerObject().licenseKey || getSelectedCustomerObject().license_key || (getSelectedCustomerObject().licenses && getSelectedCustomerObject().licenses[0] ? (typeof getSelectedCustomerObject().licenses[0] === 'string' ? getSelectedCustomerObject().licenses[0] : (getSelectedCustomerObject().licenses[0].key || getSelectedCustomerObject().licenses[0].license_key)) : 'Active License')"></span>
+                  </span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300"
+                  x-text="'Current Plan: ' + (getSelectedCustomerObject().planLabel || getSelectedCustomerObject().plan || 'Active')"></span>
+              </div>
+              <div class="text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center gap-3">
+                <span><i class="fa-solid fa-id-card text-emerald-600 text-[10px]"></i> <strong x-text="getSelectedCustomerObject().id"></strong></span>
+                <span x-show="getSelectedCustomerObject().salesRep"><i class="fa-solid fa-user-check text-emerald-600 text-[10px]"></i> Assigned Rep: <strong x-text="getSelectedCustomerObject().salesRep"></strong></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Company / Business Name *</label>
@@ -28590,7 +28664,129 @@ get remindersCount() {
           } catch (_) {}
         },
 
-        // ── Lead Management Methods ──
+        // ── Lead Management & Sales Recording Methods ──
+        isCustomerLockedForCurrentRep(cust) {
+          if (!cust) return false;
+          if (!this.currentUser) return false;
+          const role = this.currentUser.role;
+          if (role === 'admin' || role === 'super_admin') return false;
+
+          const currentUsername = (this.currentUser.username || '').trim().toLowerCase();
+          const currentName = (this.currentUser.name || '').trim().toLowerCase();
+          const currentEmpId = (this.currentUser.emp_id || '').trim().toLowerCase();
+
+          const custRep = (cust.salesRep || '').trim().toLowerCase();
+          const custCreatedBy = (cust.createdBy || '').trim().toLowerCase();
+          const custPerson = (cust.salesPerson || '').trim().toLowerCase();
+          const custEmpId = (cust.soldByEmpId || '').trim().toLowerCase();
+          const custEmpName = (cust.soldByEmpName || '').trim().toLowerCase();
+
+          // Check if customer was never recorded under any sales executive
+          const hasOwner = [custRep, custCreatedBy, custPerson, custEmpId, custEmpName].some(v => v && v !== 'admin' && v !== 'system' && v !== 'unassigned');
+          if (!hasOwner) return false;
+
+          // Check if current user is the owner
+          if (custRep && (custRep === currentUsername || custRep === currentName)) return false;
+          if (custCreatedBy && (custCreatedBy === currentUsername || custCreatedBy === currentName)) return false;
+          if (custPerson && (custPerson === currentUsername || custPerson === currentName)) return false;
+          if (custEmpId && currentEmpId && custEmpId === currentEmpId) return false;
+          if (custEmpName && (custEmpName === currentName || custEmpName === currentUsername)) return false;
+
+          return true;
+        },
+
+        getCustomerDropdownLabel(cust) {
+          if (!cust) return '';
+          const name = cust.company || cust.name || 'Customer';
+          const phone = cust.phone ? ` (${cust.phone})` : '';
+          const owner = cust.salesRep || cust.soldByEmpName || cust.createdBy || '';
+          const isLocked = this.isCustomerLockedForCurrentRep(cust);
+          if (isLocked) {
+            return `🔒 ${name}${phone} — [Owned by @${owner}] (Locked)`;
+          }
+          if (owner && owner !== 'admin' && owner !== 'system') {
+            return `${name}${phone} — [Assigned to you: @${owner}]`;
+          }
+          return `${name}${phone} — [Unassigned Account]`;
+        },
+
+        getAvailableCustomersForSale() {
+          if (!Array.isArray(this.customers)) return [];
+          return this.customers.slice().sort((a, b) => (a.company || a.name || '').localeCompare(b.company || b.name || ''));
+        },
+
+        getSelectedCustomerObject() {
+          if (!this.leadForm || !this.leadForm.selected_customer_id || !Array.isArray(this.customers)) return null;
+          return this.customers.find(c => c.id === this.leadForm.selected_customer_id) || null;
+        },
+
+        onSelectExistingCustomerSale(custId) {
+          if (!custId) {
+            this.leadForm.selected_customer_id = '';
+            return;
+          }
+          const cust = (this.customers || []).find(c => c.id === custId);
+          if (!cust) return;
+
+          if (this.isCustomerLockedForCurrentRep(cust)) {
+            const owner = cust.salesRep || cust.soldByEmpName || cust.createdBy || 'another sales executive';
+            this.notify(`Customer "${cust.company || cust.name}" is already assigned to @${owner}. You cannot record sales for another representative's customer.`, 'error');
+            this.leadForm.selected_customer_id = '';
+            return;
+          }
+
+          this.leadForm.selected_customer_id = cust.id;
+          this.leadForm.company = cust.company || cust.name || '';
+          this.leadForm.customer_name = cust.name || cust.owner || '';
+          this.leadForm.phone = cust.phone || '';
+          this.leadForm.email = cust.email || '';
+          this.leadForm.city = cust.city || '';
+          if (cust.planLabel || cust.plan) {
+            const p = cust.planLabel || cust.plan;
+            if (p.includes('VIP') || p.includes('Lifetime')) {
+              this.leadForm.plan_interested = 'VIP Lifetime Plan';
+              this.leadForm.deal_value = '₹18,499';
+            } else if (p.includes('5')) {
+              this.leadForm.plan_interested = '5 Year Plan';
+              this.leadForm.deal_value = '₹6,499';
+            } else if (p.includes('3')) {
+              this.leadForm.plan_interested = '3 Year Plan';
+              this.leadForm.deal_value = '₹3,999';
+            } else if (p.includes('1 Month') || p.includes('1m') || p.includes('149')) {
+              this.leadForm.plan_interested = '1 Month Plan';
+              this.leadForm.deal_value = '₹149';
+            } else {
+              this.leadForm.plan_interested = '1 Year Plan';
+              this.leadForm.deal_value = '₹1,499';
+            }
+          }
+        },
+
+        getLeadLicenseKey(lead) {
+          if (!lead) return '';
+          if (lead.license_key) return lead.license_key;
+          if (lead.licenseKey) return lead.licenseKey;
+          if (Array.isArray(this.customers)) {
+            const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const cust = this.customers.find(c => {
+              if (lead.customerId && c.id === lead.customerId) return true;
+              const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              if (cleanPhone && cPhone && cleanPhone === cPhone) return true;
+              if (lead.email && c.email && lead.email.trim().toLowerCase() === c.email.trim().toLowerCase()) return true;
+              return false;
+            });
+            if (cust) {
+              if (cust.licenseKey) return cust.licenseKey;
+              if (cust.license_key) return cust.license_key;
+              if (Array.isArray(cust.licenses) && cust.licenses.length > 0) {
+                const l0 = cust.licenses[0];
+                return typeof l0 === 'string' ? l0 : (l0.key || l0.license_key || '');
+              }
+            }
+          }
+          return '';
+        },
+
         openAssignLeadModal(lead) {
           this.selectedLeadForAssign = lead;
           this.leadAssignForm = {
@@ -28620,6 +28816,7 @@ get remindersCount() {
         },
         openCreateLeadModal() {
           this.leadForm = {
+            selected_customer_id: '',
             customer_name: '', company: '', phone: '', email: '', city: '',
             upi_id: '',
             requirement: '', plan_interested: '1 Year Plan', deal_value: '₹1,499',
@@ -28677,11 +28874,25 @@ get remindersCount() {
 
           if (!Array.isArray(this.customers)) this.customers = [];
 
-          let customer = this.customers.find(c => {
-            const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
-            return (cleanPhone && cPhone && cleanPhone === cPhone) ||
-                   (custEmail && c.email && custEmail.toLowerCase() === c.email.trim().toLowerCase());
-          });
+          let customer = null;
+          if (this.leadForm.selected_customer_id) {
+            customer = this.customers.find(c => c.id === this.leadForm.selected_customer_id);
+          }
+          if (!customer) {
+            customer = this.customers.find(c => {
+              const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              return (cleanPhone && cPhone && cleanPhone === cPhone) ||
+                     (custEmail && c.email && custEmail.toLowerCase() === c.email.trim().toLowerCase());
+            });
+          }
+
+          // EXCLUSIVITY & OWNERSHIP LOCK VALIDATION:
+          if (customer && this.isCustomerLockedForCurrentRep(customer)) {
+            const owner = customer.salesRep || customer.soldByEmpName || customer.createdBy || 'another sales executive';
+            const msg = `Access Denied: Customer "${customer.company || customer.name}" is already registered under sales executive @${owner}. Another sales representative cannot record or claim this customer.`;
+            this.notify ? this.notify(msg, 'error') : alert(msg);
+            return;
+          }
 
           if (customer) {
             customer.name = custName;
@@ -28693,13 +28904,30 @@ get remindersCount() {
             customer.status = 'active';
             customer.expiry_date = expDate;
             customer.planEndDate = expDate;
-            customer.salesRep = repUser;
+            if (!customer.salesRep || customer.salesRep === 'unassigned') {
+              customer.salesRep = repUser;
+              customer.createdBy = repUser;
+              customer.soldByEmpId = this.currentUser?.emp_id || '';
+              customer.soldByEmpName = this.currentUser?.name || '';
+            }
             customer.upi_id = custUpiId;
             customer.upi_ref = custUpiId;
             customer.paymentMethod = 'UPI Direct';
             if (!customer.notes || !customer.notes.includes(custUpiId)) {
               customer.notes = (customer.notes ? customer.notes + ' · ' : '') + 'Sales Proof (UPI): ' + custUpiId;
             }
+            if (!Array.isArray(customer.transactions)) customer.transactions = [];
+            customer.transactions.unshift({
+              id: 'tx-' + Date.now(),
+              date: this.today ? this.today() : new Date().toISOString().slice(0, 10),
+              amount: amount,
+              plan: planLabel,
+              method: 'UPI Direct',
+              upi_id: custUpiId,
+              reference: custUpiId,
+              status: 'Completed',
+              recordedBy: repUser
+            });
           } else {
             const custId = 'CUST-' + Math.floor(1000 + Math.random() * 9000);
             customer = {
@@ -28760,6 +28988,8 @@ get remindersCount() {
             this._recordKeygenEmpSaleDirect(matchedSalesEmp, customer.name, customer);
           }
 
+          const resolvedLicense = customer.licenseKey || customer.license_key || (customer.licenses && customer.licenses[0] ? (typeof customer.licenses[0] === 'string' ? customer.licenses[0] : (customer.licenses[0].key || customer.licenses[0].license_key)) : '');
+
           const newLead = {
             id: 'lead-' + Date.now(),
             customerId: customer.id,
@@ -28770,6 +29000,8 @@ get remindersCount() {
             city: custCity,
             upi_id: custUpiId,
             upi_ref: custUpiId,
+            license_key: resolvedLicense,
+            licenseKey: resolvedLicense,
             requirement: this.leadForm.requirement ? this.leadForm.requirement.trim() : ('Purchased ' + rawPlan),
             plan_interested: rawPlan,
             deal_value: '₹' + amount.toLocaleString('en-IN'),
@@ -28796,7 +29028,7 @@ get remindersCount() {
           this._saveSalesData();
           this.showCreateLeadModal = false;
           this.logActivity('system', `Recorded sale for ${newLead.company} (₹${amount.toLocaleString('en-IN')}, UPI: ${custUpiId}) by ${repUser}`);
-          this.notify(`Sale recorded successfully! Customer account "${compName}" created.`);
+          this.notify(`Sale recorded successfully! Customer account "${compName}" updated.`);
         },
 
         getLeadCustomer(lead) {

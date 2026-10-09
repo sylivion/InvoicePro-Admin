@@ -4278,7 +4278,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <template x-for="lead in salesLeads.slice(0, 6)" :key="lead.id">
+                <template x-for="lead in deduplicateLeadsList(salesLeads).slice(0, 6)" :key="lead.id">
                   <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
                     <td class="py-3 px-3">
                       <div class="font-bold text-gray-900 dark:text-white" x-text="lead.company"></div>
@@ -5415,7 +5415,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <template x-for="lead in salesLeads.filter(l => (l.assigned_to === (currentUser ? currentUser.username : 'sales') || !l.assigned_to || currentUser?.role === 'admin'))" :key="lead.id">
+                <template x-for="lead in getMyAssignedLeads()" :key="lead.id">
                   <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
                     <td class="py-3.5 px-3">
                       <div class="flex items-start gap-2.5">
@@ -26886,8 +26886,26 @@
           return list;
         },
 
+        deduplicateLeadsList(list) {
+          if (!Array.isArray(list) || list.length === 0) return [];
+          const seen = new Set();
+          const result = [];
+          for (const l of list) {
+            if (!l) continue;
+            const cId = String(l.customerId || '').trim();
+            const cleanPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const comp = String(l.company || l.customer_name || l.id || '').trim().toLowerCase();
+            const key = cId ? `id:${cId}` : (cleanPhone ? `phone:${cleanPhone}` : `name:${comp}`);
+            if (!seen.has(key)) {
+              seen.add(key);
+              result.push(l);
+            }
+          }
+          return result;
+        },
+
         get filteredTeamSalesLeads() {
-          let list = this.salesLeads || [];
+          let list = this.deduplicateLeadsList(this.salesLeads || []);
           if (this.salesTeamPipelineRepFilter && this.salesTeamPipelineRepFilter !== 'all') {
             list = list.filter(l => (l.assigned_to || '').toLowerCase() === this.salesTeamPipelineRepFilter.toLowerCase());
           }
@@ -28692,10 +28710,17 @@ get remindersCount() {
               this._saveSalesData();
             }
           } catch (_) {}
+
+          if (Array.isArray(this.salesLeads) && typeof this.deduplicateLeadsList === 'function') {
+            this.salesLeads = this.deduplicateLeadsList(this.salesLeads);
+          }
         },
 
         _saveSalesData() {
           try {
+            if (Array.isArray(this.salesLeads) && typeof this.deduplicateLeadsList === 'function') {
+              this.salesLeads = this.deduplicateLeadsList(this.salesLeads);
+            }
             localStorage.setItem('ip_adm_sales_leads', JSON.stringify(this.salesLeads));
             localStorage.setItem('ip_adm_sales_targets', JSON.stringify(this.salesRepTargets));
             localStorage.setItem('ip_adm_sales_activities', JSON.stringify(this.salesActivities));
@@ -28715,6 +28740,22 @@ get remindersCount() {
               })
             }).catch(() => {});
           } catch (_) {}
+        },
+
+        getMyAssignedLeads() {
+          if (!Array.isArray(this.salesLeads)) return [];
+          const myUser = (this.currentUser ? this.currentUser.username : 'sales').toLowerCase();
+          const myName = (this.currentUser ? this.currentUser.name : '').toLowerCase();
+          const myEmpId = (this.currentUser ? (this.currentUser.emp_id || this.currentUser.empId) : '').toLowerCase();
+          const isAdmin = this.currentUser?.role === 'admin' || this.currentUser?.role === 'super_admin';
+
+          const filtered = this.salesLeads.filter(l => {
+            if (isAdmin) return true;
+            const assigned = (l.assigned_to || '').toLowerCase();
+            return assigned === myUser || (myName && assigned === myName) || (myEmpId && assigned === myEmpId) || !assigned || assigned === 'unassigned';
+          });
+
+          return typeof this.deduplicateLeadsList === 'function' ? this.deduplicateLeadsList(filtered) : filtered;
         },
 
         // ── Lead Management & Sales Recording Methods ──
@@ -29109,34 +29150,87 @@ get remindersCount() {
 
           const resolvedLicense = customer.licenseKey || customer.license_key || (customer.licenses && customer.licenses[0] ? (typeof customer.licenses[0] === 'string' ? customer.licenses[0] : (customer.licenses[0].key || customer.licenses[0].license_key)) : '');
 
-          const newLead = {
-            id: 'lead-' + Date.now(),
-            customerId: customer.id,
-            customer_name: custName,
-            company: compName,
-            phone: custPhone,
-            email: custEmail,
-            city: custCity,
-            upi_id: custUpiId,
-            upi_ref: custUpiId,
-            license_key: resolvedLicense,
-            licenseKey: resolvedLicense,
-            requirement: this.leadForm.requirement ? this.leadForm.requirement.trim() : ('Purchased ' + rawPlan),
-            plan_interested: rawPlan,
-            deal_value: '₹' + amount.toLocaleString('en-IN'),
-            status: 'Won',
-            assigned_to: repUser,
-            assigned_by: this.currentUser ? this.currentUser.username : 'admin',
-            priority: 'High',
-            notes: 'Sale recorded with UPI Proof: ' + custUpiId + (this.leadForm.requirement ? ' · ' + this.leadForm.requirement.trim() : ''),
-            customer_added_at: exactCustomerAddedDate,
-            created_at: this.getCustomerAddedDate(customer),
-            sale_recorded_at: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-            next_followup: ''
-          };
-
           if (!Array.isArray(this.salesLeads)) this.salesLeads = [];
-          this.salesLeads.unshift(newLead);
+
+          const custCleanPhone = (custPhone || '').replace(/[^0-9]/g, '').slice(-10);
+          const custCompLower = compName.toLowerCase();
+          const custNameLower = custName.toLowerCase();
+
+          // Check if an existing deal/lead already exists for this customer in the pipeline
+          const existingIndex = this.salesLeads.findIndex(l => {
+            if (customer.id && l.customerId && String(l.customerId).trim() === String(customer.id).trim()) return true;
+            const lPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            if (custCleanPhone && lPhone && custCleanPhone === lPhone) return true;
+            const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+            if (lComp && (lComp === custCompLower || lComp === custNameLower)) return true;
+            return false;
+          });
+
+          if (existingIndex !== -1) {
+            // Update existing deal record in place without duplicating
+            const existingLead = this.salesLeads[existingIndex];
+            existingLead.customerId = customer.id;
+            existingLead.customer_name = custName;
+            existingLead.company = compName;
+            existingLead.phone = custPhone;
+            existingLead.email = custEmail;
+            existingLead.city = custCity;
+            existingLead.upi_id = custUpiId;
+            existingLead.upi_ref = custUpiId;
+            existingLead.license_key = resolvedLicense;
+            existingLead.licenseKey = resolvedLicense;
+            existingLead.requirement = this.leadForm.requirement ? this.leadForm.requirement.trim() : ('Purchased ' + rawPlan);
+            existingLead.plan_interested = rawPlan;
+            existingLead.deal_value = '₹' + amount.toLocaleString('en-IN');
+            existingLead.status = 'Won';
+            existingLead.assigned_to = repUser;
+            existingLead.notes = 'Sale recorded with UPI Proof: ' + custUpiId + (this.leadForm.requirement ? ' · ' + this.leadForm.requirement.trim() : '');
+            existingLead.customer_added_at = exactCustomerAddedDate;
+            existingLead.created_at = this.getCustomerAddedDate(customer);
+            existingLead.sale_recorded_at = new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+            // Purge any other duplicate rows for this customer
+            this.salesLeads = this.salesLeads.filter((l, idx) => {
+              if (idx === existingIndex) return true;
+              if (customer.id && l.customerId && String(l.customerId).trim() === String(customer.id).trim()) return false;
+              const lPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              if (custCleanPhone && lPhone && custCleanPhone === lPhone) return false;
+              const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+              if (lComp && (lComp === custCompLower || lComp === custNameLower)) return false;
+              return true;
+            });
+          } else {
+            const newLead = {
+              id: 'lead-' + Date.now(),
+              customerId: customer.id,
+              customer_name: custName,
+              company: compName,
+              phone: custPhone,
+              email: custEmail,
+              city: custCity,
+              upi_id: custUpiId,
+              upi_ref: custUpiId,
+              license_key: resolvedLicense,
+              licenseKey: resolvedLicense,
+              requirement: this.leadForm.requirement ? this.leadForm.requirement.trim() : ('Purchased ' + rawPlan),
+              plan_interested: rawPlan,
+              deal_value: '₹' + amount.toLocaleString('en-IN'),
+              status: 'Won',
+              assigned_to: repUser,
+              assigned_by: this.currentUser ? this.currentUser.username : 'admin',
+              priority: 'High',
+              notes: 'Sale recorded with UPI Proof: ' + custUpiId + (this.leadForm.requirement ? ' · ' + this.leadForm.requirement.trim() : ''),
+              customer_added_at: exactCustomerAddedDate,
+              created_at: this.getCustomerAddedDate(customer),
+              sale_recorded_at: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+              next_followup: ''
+            };
+            this.salesLeads.unshift(newLead);
+          }
+
+          if (typeof this.deduplicateLeadsList === 'function') {
+            this.salesLeads = this.deduplicateLeadsList(this.salesLeads);
+          }
 
           // Update rep target achieved
           const tgt = (this.salesRepTargets || []).find(t => t.rep_username === repUser);

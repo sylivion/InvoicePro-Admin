@@ -26323,9 +26323,22 @@
         },
         get myActiveLeadsCount() {
           if (!this.currentUser) return 0;
-          const u = this.currentUser.username;
-          const n = this.currentUser.name;
-          return (this.salesLeads || []).filter(l => (l.assigned_to === u || l.assigned_to === n) && l.status !== 'Won' && l.status !== 'Lost').length;
+          const u = (this.currentUser.username || '').trim().toLowerCase();
+          const n = (this.currentUser.name || '').trim().toLowerCase();
+          const uEmpId = (this.currentUser.emp_id || this.currentUser.empId || '').trim().toLowerCase();
+          return (this.salesLeads || []).filter(l => {
+            const a = (l.assigned_to || '').trim().toLowerCase();
+            const isAssigned = (a === u || a === n || (uEmpId && a === uEmpId) || (!a && this.currentUser.role === 'sales_member'));
+            if (!isAssigned) return false;
+            if (l.status === 'Won' || l.status === 'Lost') return false;
+            if (l.license_key || l.licenseKey) return false;
+            if (typeof this.getLeadLicenseKey === 'function' && this.getLeadLicenseKey(l)) return false;
+            if (typeof this.getLeadCustomer === 'function') {
+              const c = this.getLeadCustomer(l);
+              if (c && (c.licenseKey || c.license_key || c.status === 'active')) return false;
+            }
+            return true;
+          }).length;
         },
         get myWonDealsCount() {
           if (!this.currentUser) return 0;
@@ -28441,7 +28454,12 @@ get remindersCount() {
             const savedLeads = localStorage.getItem('ip_adm_sales_leads');
             if (savedLeads) {
               const parsed = JSON.parse(savedLeads);
-              this.salesLeads = Array.isArray(parsed) ? parsed.filter(l => !dummyLeadIds.has(l.id)) : [];
+              this.salesLeads = Array.isArray(parsed) ? parsed.filter(l => !dummyLeadIds.has(l.id)).map(l => {
+                if (l.status !== 'Won' && (l.license_key || l.licenseKey || (typeof this.getLeadLicenseKey === 'function' && this.getLeadLicenseKey(l)))) {
+                  l.status = 'Won';
+                }
+                return l;
+              }) : [];
             } else {
               this.salesLeads = [];
             }

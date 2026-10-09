@@ -4282,7 +4282,7 @@
                   <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
                     <td class="py-3 px-3">
                       <div class="font-bold text-gray-900 dark:text-white" x-text="lead.company"></div>
-                      <div class="text-[11px] text-gray-400" x-text="lead.city + ' • ' + lead.created_at"></div>
+                      <div class="text-[11px] text-gray-400" x-text="(lead.city || 'India') + ' • Added: ' + getCustomerAddedDate(lead)"></div>
                     </td>
                     <td class="py-3 px-3">
                       <div class="font-semibold text-gray-900 dark:text-gray-200" x-text="lead.customer_name"></div>
@@ -4822,7 +4822,7 @@
                         <span class="text-gray-400 text-[10px] font-mono">—</span>
                       </template>
                     </td>
-                    <td class="py-3.5 px-3 text-gray-500 font-medium" x-text="lead.created_at || 'Recently'"></td>
+                    <td class="py-3.5 px-3 text-gray-500 font-medium" x-text="getCustomerAddedDate(lead)"></td>
                   </tr>
                 </template>
               </tbody>
@@ -5454,7 +5454,7 @@
                     <td class="py-3.5 px-3">
                       <div class="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5 font-mono">
                         <i class="fa-regular fa-calendar-check text-emerald-500 text-xs"></i>
-                        <span x-text="lead.created_at || '—'"></span>
+                        <span x-text="getCustomerAddedDate(lead)"></span>
                       </div>
                     </td>
                     <td class="py-3.5 px-3">
@@ -21743,17 +21743,39 @@
             // Auto-store decoded plan end date from key (no manual input needed)
             planEndDate: this.form.licenseKey ? (this.getKeyExpiry(this.form.licenseKey) || '') : '',
           };
-          if (!this.editingId) {
-            const existingByName = this.customers.find(c => (c.name || '').trim().toLowerCase() === (this.form.name || '').trim().toLowerCase());
-            if (existingByName) {
-              this.editingId = existingByName.id;
+          let isDuplicateMatch = false;
+          if (!this.editingId && Array.isArray(this.customers)) {
+            const cleanPhone = (this.form.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const cleanEmail = (this.form.email || '').trim().toLowerCase();
+            const cleanName = (this.form.name || '').trim().toLowerCase();
+            const existing = this.customers.find(c => {
+              const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              const cEmail = (c.email || '').trim().toLowerCase();
+              const cName = (c.name || '').trim().toLowerCase();
+              if (cleanPhone && cPhone && cleanPhone === cPhone) return true;
+              if (cleanEmail && cEmail && cleanEmail === cEmail) return true;
+              if (cleanName && cName && cleanName === cName) return true;
+              return false;
+            });
+            if (existing) {
+              this.editingId = existing.id;
+              isDuplicateMatch = true;
             }
           }
           if (this.editingId) {
             const idx = this.customers.findIndex(c => c.id === this.editingId);
             if (idx >= 0) {
               const old = this.customers[idx];
-              this.customers[idx] = { ...old, ...payload, id: old.id, createdAt: old.createdAt, enquiries: old.enquiries || [], updatedAt: new Date().toISOString() };
+              const originalCreated = old.createdAt || old.registeredAt || old.created_at || new Date().toISOString();
+              this.customers[idx] = {
+                ...old,
+                ...payload,
+                id: old.id,
+                createdAt: originalCreated,
+                registeredAt: old.registeredAt || originalCreated.split('T')[0] || this.today(),
+                enquiries: old.enquiries || [],
+                updatedAt: new Date().toISOString()
+              };
               if (this.selectedCustomer?.id === this.editingId) this.selectedCustomer = { ...this.customers[idx] };
             }
             if (this.serverOnline) {
@@ -21761,7 +21783,15 @@
             }
           } else {
             const newId = this.uid();
-            const newCustomer = { id: newId, ...payload, enquiries: [], createdAt: new Date().toISOString() };
+            const nowIso = new Date().toISOString();
+            const newCustomer = {
+              id: newId,
+              ...payload,
+              enquiries: [],
+              registeredAt: payload.purchaseDate || this.today(),
+              createdAt: nowIso,
+              created_at: this.today()
+            };
             this.customers.push(newCustomer);
             if (this.serverOnline) {
               try {
@@ -21785,7 +21815,11 @@
           this.save();
           this.showAddModal = false;
           this._logAction('customer', this.editingId, `Updated customer details for "${payload.name}"`);
-          this.notify('Customer updated!');
+          if (isDuplicateMatch) {
+            this.notify(`Customer already exists (${this.editingId}). Updated existing profile without duplicating.`);
+          } else {
+            this.notify('Customer updated!');
+          }
           this.editingId = null;
         },
 
@@ -28284,18 +28318,32 @@ get remindersCount() {
                 heads.forEach((h, j) => { row[h] = cols[j] || ''; });
                 const name = row['name'] || row['company'] || row['business name'] || row['company name'] || '';
                 if (!name) { skip++; continue; }
-                if (this.customers.some(c => (c.name || '').toLowerCase() === name.toLowerCase())) { skip++; continue; }
+                const rowPhone = (row['phone'] || row['mobile'] || '').replace(/[^0-9]/g, '').slice(-10);
+                const rowEmail = (row['email'] || '').trim().toLowerCase();
+                const rowName = name.trim().toLowerCase();
+                const alreadyExists = this.customers.some(c => {
+                  const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+                  const cEmail = (c.email || '').trim().toLowerCase();
+                  const cName = (c.name || '').trim().toLowerCase();
+                  if (rowPhone && cPhone && rowPhone === cPhone) return true;
+                  if (rowEmail && cEmail && rowEmail === cEmail) return true;
+                  if (rowName && cName && rowName === cName) return true;
+                  return false;
+                });
+                if (alreadyExists) { skip++; continue; }
                 this.customers.push({
                   id: this.uid(), name,
                   owner: row['owner'] || row['contact'] || row['owner name'] || '',
                   email: row['email'] || '', phone: row['phone'] || row['mobile'] || '',
                   city: row['city'] || '', currency: row['currency'] || 'INR',
                   licenseKey: row['license key'] || row['license'] || row['key'] || '',
-                  purchaseDate: row['purchase date'] || row['date'] || '',
+                  purchaseDate: row['purchase date'] || row['date'] || this.today(),
+                  registeredAt: row['purchase date'] || row['date'] || this.today(),
                   purchaseAmount: parseFloat(row['amount'] || row['purchase amount'] || '0') || 0,
                   notes: row['notes'] || '',
                   tags: [], reminders: [], enquiries: [],
                   createdAt: new Date().toISOString(),
+                  created_at: this.today()
                 });
                 added++;
               }
@@ -28765,6 +28813,27 @@ get remindersCount() {
           return '';
         },
 
+        getCustomerAddedDate(item) {
+          if (!item) return '—';
+          let c = item;
+          if (item.customerId && Array.isArray(this.customers)) {
+            const linked = this.customers.find(x => x.id === item.customerId);
+            if (linked) c = linked;
+          }
+          const raw = c.createdAt || c.registeredAt || c.created_at || c.purchaseDate || item.customer_added_at || item.created_at;
+          if (!raw) return '—';
+          try {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) {
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const year = d.getFullYear();
+              return `${day}/${month}/${year}`;
+            }
+          } catch (_) {}
+          return String(raw).split('T')[0] || raw;
+        },
+
         openAssignLeadModal(lead) {
           this.selectedLeadForAssign = lead;
           this.leadAssignForm = {
@@ -28863,6 +28932,7 @@ get remindersCount() {
           const custCity = (customer.city || 'Pune').trim();
           const custUpiId = this.leadForm.upi_id.trim();
           const repUser = this.leadForm.assigned_to || (this.currentUser ? this.currentUser.username : 'sales');
+          const exactCustomerAddedDate = customer.createdAt || customer.registeredAt || customer.purchaseDate || new Date().toISOString();
 
           customer.plan = planLabel;
           customer.planLabel = planLabel;
@@ -28926,7 +28996,9 @@ get remindersCount() {
             assigned_by: this.currentUser ? this.currentUser.username : 'admin',
             priority: 'High',
             notes: 'Sale recorded with UPI Proof: ' + custUpiId + (this.leadForm.requirement ? ' · ' + this.leadForm.requirement.trim() : ''),
-            created_at: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+            customer_added_at: exactCustomerAddedDate,
+            created_at: this.getCustomerAddedDate(customer),
+            sale_recorded_at: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
             next_followup: ''
           };
 

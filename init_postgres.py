@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS customers (
     currency             TEXT DEFAULT 'INR',
     email                TEXT DEFAULT '',
     phone                TEXT DEFAULT '',
+    gstin                TEXT DEFAULT '',
     license_key          TEXT DEFAULT '',
     purchase_date        TEXT DEFAULT '',
     purchase_amount      REAL DEFAULT 1499,

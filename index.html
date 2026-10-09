@@ -17662,8 +17662,8 @@
                     License: <span class="font-mono text-emerald-700 dark:text-emerald-400 font-semibold" x-text="getSelectedCustomerObject().licenseKey || getSelectedCustomerObject().license_key || (getSelectedCustomerObject().licenses && getSelectedCustomerObject().licenses[0] ? (typeof getSelectedCustomerObject().licenses[0] === 'string' ? getSelectedCustomerObject().licenses[0] : (getSelectedCustomerObject().licenses[0].key || getSelectedCustomerObject().licenses[0].license_key)) : 'Active License')"></span>
                   </span>
                 </div>
-                <div x-show="getSelectedCustomerObject().salesRep" class="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                  <i class="fa-solid fa-user-check text-emerald-600 text-[10px]"></i> Rep: <strong x-text="getSelectedCustomerObject().salesRep"></strong>
+                <div x-show="getCustomerEffectiveRep(getSelectedCustomerObject()).isAssigned" class="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                  <i class="fa-solid fa-user-check text-emerald-600 text-[10px]"></i> Rep: <strong x-text="getCustomerEffectiveRep(getSelectedCustomerObject()).repName"></strong>
                 </div>
               </div>
             </div>
@@ -20889,17 +20889,44 @@
           if (myEmp && Array.isArray(myEmp.sales)) {
             const hasSale = myEmp.sales.some(s => {
               const sName = String(s.customerName || s.customer_name || '').trim().toLowerCase();
+              const sComp = String(s.company || s.businessName || s.business_name || '').trim().toLowerCase();
               const sId = String(s.customerId || s.customer_id || '').trim().toLowerCase();
               const sNote = String(s.note || s.notes || '').toLowerCase();
-              return (cId && sId === cId) || (cName && sName === cName) || (cId && sNote.includes(cId));
+              const sPhone = (s.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              const cPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              return (cId && sId === cId) || 
+                     (cName && sName === cName) || 
+                     (cName && sComp === cName) ||
+                     (cPhone && sPhone && cPhone === sPhone) ||
+                     (cId && sNote.includes(cId));
             });
             if (hasSale) return true;
           }
 
-          // 4. Match in notes explicit attribution (e.g. "EMP: EMP-XXX", "sold by username")
+          // 4. Match in salesLeads pipeline assignment
+          if (Array.isArray(this.salesLeads)) {
+            const cleanCustPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const custCompany = (c.company || c.name || '').trim().toLowerCase();
+            const custOwnerName = (c.name || c.owner || '').trim().toLowerCase();
+            const hasLead = this.salesLeads.some(l => {
+              const leadAssigned = String(l.assigned_to || '').trim().toLowerCase();
+              const isRepMatch = leadAssigned && (leadAssigned === uUser || leadAssigned === uName || (myEmpName && leadAssigned === myEmpName) || (myEmpId && leadAssigned === myEmpId));
+              if (!isRepMatch) return false;
+              if (l.customerId && cId && String(l.customerId).trim().toLowerCase() === cId) return true;
+              const cleanLPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              if (cleanCustPhone && cleanLPhone && cleanCustPhone === cleanLPhone) return true;
+              const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+              if (custCompany && lComp && (custCompany === lComp || custOwnerName === lComp)) return true;
+              return false;
+            });
+            if (hasLead) return true;
+          }
+
+          // 5. Match in notes explicit attribution (e.g. "EMP: EMP-XXX", "sold by username")
           if (uEmpId && (notes.includes(uEmpId) || notes.includes(`emp: ${uEmpId}`))) return true;
           if (myEmpId && (notes.includes(myEmpId) || notes.includes(`emp: ${myEmpId}`))) return true;
-          if (uUser && (notes.includes(`sold by ${uUser}`) || notes.includes(`sales: ${uUser}`) || notes.includes(`rep: ${uUser}`))) return true;
+          if (uUser && (notes.includes(`sold by ${uUser}`) || notes.includes(`sales: ${uUser}`) || notes.includes(`rep: ${uUser}`) || notes.includes(uUser))) return true;
+          if (uName && notes.includes(uName)) return true;
 
           return false;
         },
@@ -28691,32 +28718,130 @@ get remindersCount() {
         },
 
         // ── Lead Management & Sales Recording Methods ──
+        getCustomerEffectiveRep(c) {
+          if (!c) return { isAssigned: false, repUser: '', repName: '', isCurrentRep: false };
+
+          // 1. Check if belonging to current user first
+          if (this.currentUser && typeof this.isCustomerBelongingToRep === 'function' && this.isCustomerBelongingToRep(c, this.currentUser)) {
+            return {
+              isAssigned: true,
+              repUser: this.currentUser.username || '',
+              repName: this.currentUser.name || this.currentUser.username || 'You',
+              isCurrentRep: true
+            };
+          }
+
+          // 2. Check explicitly stored sales representative properties on customer
+          const rawRep = c.salesRep || c.sales_rep || c.assignedTo || c.assigned_to || c.soldByEmpName || c.salesPerson || c.sales_person || c.createdBy || c.addedBy || '';
+          const rawRepLow = String(rawRep).trim().toLowerCase();
+          if (rawRep && !['admin', 'system', 'unassigned', ''].includes(rawRepLow)) {
+            let foundName = rawRep;
+            if (Array.isArray(this.staffUsers)) {
+              const st = this.staffUsers.find(s => (s.username && s.username.toLowerCase() === rawRepLow) || (s.name && s.name.toLowerCase() === rawRepLow));
+              if (st) foundName = st.name || st.username;
+            }
+            if (foundName === rawRep && Array.isArray(this.employees)) {
+              const emp = this.employees.find(e => (e.empId && e.empId.toLowerCase() === rawRepLow) || (e.name && e.name.toLowerCase() === rawRepLow) || (e.staffUsername && e.staffUsername.toLowerCase() === rawRepLow));
+              if (emp) foundName = emp.name || emp.staffUsername || rawRep;
+            }
+            const isCurrent = this.currentUser && (
+              rawRepLow === (this.currentUser.username || '').toLowerCase() ||
+              rawRepLow === (this.currentUser.name || '').toLowerCase() ||
+              rawRepLow === (this.currentUser.emp_id || '').toLowerCase()
+            );
+            return {
+              isAssigned: true,
+              repUser: rawRep,
+              repName: foundName,
+              isCurrentRep: isCurrent
+            };
+          }
+
+          // 3. Search across all sales staff users
+          if (Array.isArray(this.staffUsers)) {
+            for (const s of this.staffUsers) {
+              if (typeof this.isCustomerBelongingToRep === 'function' && this.isCustomerBelongingToRep(c, s)) {
+                const isCurrent = this.currentUser && (s.username === this.currentUser.username || s.id === this.currentUser.id);
+                return {
+                  isAssigned: true,
+                  repUser: s.username,
+                  repName: s.name || s.username,
+                  isCurrentRep: isCurrent
+                };
+              }
+            }
+          }
+
+          // 4. Search across employees
+          if (Array.isArray(this.employees)) {
+            for (const emp of this.employees) {
+              const mockUser = {
+                username: emp.staffUsername || emp.empId || emp.name,
+                name: emp.name,
+                emp_id: emp.empId,
+                id: emp.id
+              };
+              if (typeof this.isCustomerBelongingToRep === 'function' && this.isCustomerBelongingToRep(c, mockUser)) {
+                const isCurrent = this.currentUser && (
+                  (this.currentUser.emp_id && this.currentUser.emp_id === emp.empId) ||
+                  (this.currentUser.username && (this.currentUser.username === emp.staffUsername || this.currentUser.username === emp.empId)) ||
+                  (this.currentUser.name && this.currentUser.name === emp.name)
+                );
+                return {
+                  isAssigned: true,
+                  repUser: emp.staffUsername || emp.name,
+                  repName: emp.name,
+                  isCurrentRep: isCurrent
+                };
+              }
+            }
+          }
+
+          // 5. Search in salesLeads
+          if (Array.isArray(this.salesLeads)) {
+            const cleanCustPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const custCompany = (c.company || c.name || '').trim().toLowerCase();
+            const lead = this.salesLeads.find(l => {
+              if (!l.assigned_to || ['admin', 'system', 'unassigned'].includes(String(l.assigned_to).toLowerCase())) return false;
+              if (l.customerId && c.id && String(l.customerId).trim().toLowerCase() === String(c.id).trim().toLowerCase()) return true;
+              const cleanLPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              if (cleanCustPhone && cleanLPhone && cleanCustPhone === cleanLPhone) return true;
+              const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+              if (custCompany && lComp && custCompany === lComp) return true;
+              return false;
+            });
+            if (lead) {
+              const repUserStr = lead.assigned_to;
+              let foundName = repUserStr;
+              if (Array.isArray(this.staffUsers)) {
+                const st = this.staffUsers.find(s => s.username === repUserStr || s.name === repUserStr);
+                if (st) foundName = st.name || st.username;
+              }
+              const isCurrent = this.currentUser && (
+                repUserStr.toLowerCase() === (this.currentUser.username || '').toLowerCase() ||
+                repUserStr.toLowerCase() === (this.currentUser.name || '').toLowerCase()
+              );
+              return {
+                isAssigned: true,
+                repUser: repUserStr,
+                repName: foundName,
+                isCurrentRep: isCurrent
+              };
+            }
+          }
+
+          return { isAssigned: false, repUser: '', repName: '', isCurrentRep: false };
+        },
+
         isCustomerLockedForCurrentRep(cust) {
           if (!cust) return false;
           if (!this.currentUser) return false;
-          const role = this.currentUser.role;
-          if (role === 'admin' || role === 'super_admin') return false;
+          const role = (this.currentUser.role || '').toLowerCase();
+          if (['admin', 'super_admin'].includes(role)) return false;
 
-          const currentUsername = (this.currentUser.username || '').trim().toLowerCase();
-          const currentName = (this.currentUser.name || '').trim().toLowerCase();
-          const currentEmpId = (this.currentUser.emp_id || '').trim().toLowerCase();
-
-          const custRep = (cust.salesRep || '').trim().toLowerCase();
-          const custCreatedBy = (cust.createdBy || '').trim().toLowerCase();
-          const custPerson = (cust.salesPerson || '').trim().toLowerCase();
-          const custEmpId = (cust.soldByEmpId || '').trim().toLowerCase();
-          const custEmpName = (cust.soldByEmpName || '').trim().toLowerCase();
-
-          // Check if customer was never recorded under any sales executive
-          const hasOwner = [custRep, custCreatedBy, custPerson, custEmpId, custEmpName].some(v => v && v !== 'admin' && v !== 'system' && v !== 'unassigned');
-          if (!hasOwner) return false;
-
-          // Check if current user is the owner
-          if (custRep && (custRep === currentUsername || custRep === currentName)) return false;
-          if (custCreatedBy && (custCreatedBy === currentUsername || custCreatedBy === currentName)) return false;
-          if (custPerson && (custPerson === currentUsername || custPerson === currentName)) return false;
-          if (custEmpId && currentEmpId && custEmpId === currentEmpId) return false;
-          if (custEmpName && (custEmpName === currentName || custEmpName === currentUsername)) return false;
+          const repInfo = this.getCustomerEffectiveRep(cust);
+          if (!repInfo.isAssigned) return false;
+          if (repInfo.isCurrentRep) return false;
 
           return true;
         },
@@ -28725,13 +28850,19 @@ get remindersCount() {
           if (!cust) return '';
           const name = cust.company || cust.name || 'Customer';
           const phone = cust.phone ? ` (${cust.phone})` : '';
-          const owner = cust.salesRep || cust.soldByEmpName || cust.createdBy || '';
-          const isLocked = this.isCustomerLockedForCurrentRep(cust);
-          if (isLocked) {
-            return `🔒 ${name}${phone} — [Owned by @${owner}] (Locked)`;
-          }
-          if (owner && owner !== 'admin' && owner !== 'system') {
-            return `${name}${phone} — [Assigned to you: @${owner}]`;
+          const repInfo = this.getCustomerEffectiveRep(cust);
+
+          if (repInfo.isAssigned) {
+            if (repInfo.isCurrentRep) {
+              return `${name}${phone} — [Assigned to you: @${repInfo.repName}]`;
+            } else {
+              const isLocked = this.isCustomerLockedForCurrentRep(cust);
+              if (isLocked) {
+                return `🔒 ${name}${phone} — [Owned by @${repInfo.repName}] (Locked)`;
+              } else {
+                return `${name}${phone} — [Assigned to: @${repInfo.repName}]`;
+              }
+            }
           }
           return `${name}${phone} — [Unassigned Account]`;
         },
@@ -28755,7 +28886,8 @@ get remindersCount() {
           if (!cust) return;
 
           if (this.isCustomerLockedForCurrentRep(cust)) {
-            const owner = cust.salesRep || cust.soldByEmpName || cust.createdBy || 'another sales executive';
+            const repInfo = this.getCustomerEffectiveRep(cust);
+            const owner = repInfo.repName || 'another sales executive';
             this.notify(`Customer "${cust.company || cust.name}" is already assigned to @${owner}. You cannot record sales for another representative's customer.`, 'error');
             this.leadForm.selected_customer_id = '';
             return;
@@ -28888,7 +29020,8 @@ get remindersCount() {
 
           // EXCLUSIVITY & OWNERSHIP LOCK VALIDATION:
           if (this.isCustomerLockedForCurrentRep(customer)) {
-            const owner = customer.salesRep || customer.soldByEmpName || customer.createdBy || 'another sales executive';
+            const repInfo = this.getCustomerEffectiveRep(customer);
+            const owner = repInfo.repName || 'another sales executive';
             const msg = `Access Denied: Customer "${customer.company || customer.name}" is already registered under sales executive @${owner}. Another sales representative cannot record or claim this customer.`;
             this.notify ? this.notify(msg, 'error') : alert(msg);
             return;

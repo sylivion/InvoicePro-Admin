@@ -12067,39 +12067,39 @@
 
         <!-- Leaves Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-200/90 dark:border-gray-800 shadow-xs flex items-center justify-between">
-            <div>
-              <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500" x-text="canApproveLeaves ? 'Total Applications' : 'My Total Requests'"></span>
-              <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-1 font-mono tracking-tight" x-text="userLeaveRequests.length"></div>
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between">
+            <div class="flex flex-col justify-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400" x-text="canApproveLeaves ? 'Total Applications' : 'My Total Requests'"></span>
+              <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-1.5 font-mono" x-text="userLeaveRequests.length"></div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm flex-shrink-0">
               <i class="fa-solid fa-folder-open"></i>
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-amber-200/70 dark:border-amber-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-amber-50/30 dark:from-gray-900 dark:to-amber-950/10">
-            <div>
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm flex items-center justify-between bg-gradient-to-br from-white via-white to-amber-50/40 dark:from-gray-900 dark:to-amber-950/20">
+            <div class="flex flex-col justify-center">
               <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pending Review</span>
-              <div class="text-2xl font-extrabold text-amber-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='pending').length"></div>
+              <div class="text-2xl font-extrabold text-amber-600 mt-1.5 font-mono" x-text="userLeaveRequests.filter(l=>l.status==='pending').length"></div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm border border-amber-200/50 dark:border-amber-900/50">
+            <div class="w-10 h-10 rounded-xl bg-amber-100/70 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm flex-shrink-0 border border-amber-200 dark:border-amber-900">
               <i class="fa-solid fa-clock"></i>
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-emerald-200/70 dark:border-emerald-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/10">
-            <div>
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm flex items-center justify-between bg-gradient-to-br from-white via-white to-emerald-50/40 dark:from-gray-900 dark:to-emerald-950/20">
+            <div class="flex flex-col justify-center">
               <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Approved</span>
-              <div class="text-2xl font-extrabold text-emerald-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='approved').length"></div>
+              <div class="text-2xl font-extrabold text-emerald-600 mt-1.5 font-mono" x-text="userLeaveRequests.filter(l=>l.status==='approved').length"></div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm border border-emerald-200/50 dark:border-emerald-900/50">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100/70 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm flex-shrink-0 border border-emerald-200 dark:border-emerald-900">
               <i class="fa-solid fa-circle-check"></i>
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-rose-200/70 dark:border-rose-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-rose-50/30 dark:from-gray-900 dark:to-rose-950/10">
-            <div>
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-sm flex items-center justify-between bg-gradient-to-br from-white via-white to-rose-50/40 dark:from-gray-900 dark:to-rose-950/20">
+            <div class="flex flex-col justify-center">
               <span class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Rejected</span>
-              <div class="text-2xl font-extrabold text-rose-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='rejected').length"></div>
+              <div class="text-2xl font-extrabold text-rose-600 mt-1.5 font-mono" x-text="userLeaveRequests.filter(l=>l.status==='rejected').length"></div>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm border border-rose-200/50 dark:border-rose-900/50">
+            <div class="w-10 h-10 rounded-xl bg-rose-100/70 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm flex-shrink-0 border border-rose-200 dark:border-rose-900">
               <i class="fa-solid fa-circle-xmark"></i>
             </div>
           </div>

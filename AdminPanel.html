@@ -5692,7 +5692,7 @@
             <select x-model="salesActivityRepFilter"
               class="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold">
               <option value="all">All Sales Executives</option>
-              <template x-for="rep in salesTeamScorecardList" :key="rep.username">
+              <template x-for="rep in (activityRepsList && activityRepsList.length > 0 ? activityRepsList : salesTeamScorecardList)" :key="rep.username || rep.id">
                 <option :value="rep.username" x-text="rep.name + ' (@' + rep.username + ')'"></option>
               </template>
             </select>
@@ -27402,23 +27402,138 @@
           return list;
         },
 
+        get activityRepsList() {
+          const map = new Map();
+
+          // 1. Collect all reps who logged any activity
+          (this.salesActivities || []).forEach(a => {
+            const rawU = String(a.rep_username || a.logged_by || '').trim();
+            const cleanU = rawU.replace(/^@/, '').trim();
+            const name = String(a.rep_name || cleanU || 'Sales Rep').trim();
+            if (cleanU) {
+              const k = cleanU.toLowerCase();
+              if (!map.has(k)) {
+                map.set(k, { username: cleanU, name: name });
+              }
+            }
+          });
+
+          // 2. Collect from salesTeamTargetsRoster
+          (this.salesTeamTargetsRoster || []).forEach(r => {
+            const cleanU = String(r.username || '').replace(/^@/, '').trim();
+            if (cleanU) {
+              const k = cleanU.toLowerCase();
+              if (!map.has(k)) {
+                map.set(k, { username: cleanU, name: r.name || cleanU });
+              }
+            }
+          });
+
+          // 3. Collect from staffUsers
+          (this.staffUsers || []).forEach(s => {
+            const role = (s.role || '').toLowerCase();
+            const dept = (s.department || '').toLowerCase();
+            if (role.includes('sales') || dept.includes('sales')) {
+              const cleanU = String(s.username || '').replace(/^@/, '').trim();
+              if (cleanU) {
+                const k = cleanU.toLowerCase();
+                if (!map.has(k)) {
+                  map.set(k, { username: cleanU, name: s.name || cleanU });
+                }
+              }
+            }
+          });
+
+          // 4. Collect from employees
+          (this.employees || []).forEach(e => {
+            const role = (e.role || '').toLowerCase();
+            const dept = (e.department || '').toLowerCase();
+            const desig = (e.designation || '').toLowerCase();
+            if (role.includes('sales') || dept.includes('sales') || desig.includes('sales')) {
+              const cleanU = String(e.staffUsername || e.username || e.empId || '').replace(/^@/, '').trim();
+              if (cleanU) {
+                const k = cleanU.toLowerCase();
+                if (!map.has(k)) {
+                  map.set(k, { username: cleanU, name: e.name || cleanU });
+                }
+              }
+            }
+          });
+
+          return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+        },
+
         get filteredSalesActivities() {
-          let list = this.salesActivities || [];
+          let list = Array.isArray(this.salesActivities) ? [...this.salesActivities] : [];
+
+          // 1. Filter by Sales Rep
           if (this.salesActivityRepFilter && this.salesActivityRepFilter !== 'all') {
-            list = list.filter(a => (a.rep_username || '').toLowerCase() === this.salesActivityRepFilter.toLowerCase());
+            const selectedRep = String(this.salesActivityRepFilter).toLowerCase().trim().replace(/^@/, '');
+            
+            // Find rep object to get aliases
+            const repObj = (this.activityRepsList || []).find(r => 
+              r.username.toLowerCase() === selectedRep || 
+              (r.name && r.name.toLowerCase() === selectedRep)
+            ) || (this.salesTeamTargetsRoster || []).find(r =>
+              (r.username && r.username.toLowerCase() === selectedRep) ||
+              (r.name && r.name.toLowerCase() === selectedRep) ||
+              (r.empId && r.empId.toLowerCase() === selectedRep)
+            );
+
+            const repAliases = new Set([selectedRep]);
+            if (repObj) {
+              if (repObj.username) repAliases.add(repObj.username.toLowerCase().replace(/^@/, '').trim());
+              if (repObj.name) repAliases.add(repObj.name.toLowerCase().trim());
+              if (repObj.empId) repAliases.add(repObj.empId.toLowerCase().trim());
+              if (repObj.aliases) repObj.aliases.forEach(a => repAliases.add(String(a).toLowerCase().replace(/^@/, '').trim()));
+            }
+
+            list = list.filter(a => {
+              const u = String(a.rep_username || a.logged_by || '').toLowerCase().replace(/^@/, '').trim();
+              const n = String(a.rep_name || '').toLowerCase().trim();
+              return (u && (u === selectedRep || repAliases.has(u))) ||
+                     (n && (n === selectedRep || repAliases.has(n)));
+            });
           }
+
+          // 2. Filter by Activity Type
           if (this.salesActivityTypeFilter && this.salesActivityTypeFilter !== 'all') {
-            list = list.filter(a => (a.type || '').toLowerCase() === this.salesActivityTypeFilter.toLowerCase());
+            const tf = String(this.salesActivityTypeFilter).toLowerCase().trim();
+            list = list.filter(a => {
+              const t = String(a.type || '').toLowerCase().trim();
+              if (tf === 'call') return t.includes('call') || t.includes('phone');
+              if (tf === 'demo') return t.includes('demo');
+              if (tf === 'whatsapp') return t.includes('whatsapp') || t.includes('chat') || t.includes('msg');
+              if (tf === 'meeting') return t.includes('meet');
+              if (tf === 'payment') return t.includes('pay');
+              return t === tf || t.includes(tf);
+            });
           }
+
+          // 3. Filter by Search Query
           if (this.salesActivitySearch && this.salesActivitySearch.trim()) {
             const q = this.salesActivitySearch.toLowerCase().trim();
-            list = list.filter(a =>
-              (a.lead_name || '').toLowerCase().includes(q) ||
-              (a.summary || '').toLowerCase().includes(q) ||
-              (a.outcome || '').toLowerCase().includes(q) ||
-              (a.rep_username || '').toLowerCase().includes(q)
-            );
+            list = list.filter(a => {
+              const leadName = String(a.lead_name || a.customer_name || a.company || '').toLowerCase();
+              const summary = String(a.summary || '').toLowerCase();
+              const outcome = String(a.outcome || '').toLowerCase();
+              const nextAct = String(a.next_action || '').toLowerCase();
+              const repUser = String(a.rep_username || a.logged_by || '').toLowerCase().replace(/^@/, '');
+              const repName = String(a.rep_name || '').toLowerCase();
+              const type = String(a.type || '').toLowerCase();
+              const timestamp = String(a.timestamp || '').toLowerCase();
+
+              return leadName.includes(q) ||
+                     summary.includes(q) ||
+                     outcome.includes(q) ||
+                     nextAct.includes(q) ||
+                     repUser.includes(q) ||
+                     repName.includes(q) ||
+                     type.includes(q) ||
+                     timestamp.includes(q);
+            });
           }
+
           return list;
         },
         
@@ -29180,7 +29295,8 @@ get remindersCount() {
               if (Array.isArray(res.leads) && res.leads.length > 0) this.salesLeads = res.leads;
               if (Array.isArray(res.targets) && res.targets.length > 0) this.salesRepTargets = res.targets;
               if (Array.isArray(res.escalations) && res.escalations.length > 0) this.salesEscalations = res.escalations;
-            } else if (this.salesLeads.length > 0 || this.salesRepTargets.length > 0) {
+              if (Array.isArray(res.activities) && res.activities.length > 0) this.salesActivities = res.activities;
+            } else if (this.salesLeads.length > 0 || this.salesRepTargets.length > 0 || (this.salesActivities && this.salesActivities.length > 0)) {
               this._saveSalesData();
             }
           } catch (_) {}
@@ -29210,7 +29326,8 @@ get remindersCount() {
               body: JSON.stringify({
                 leads: this.salesLeads,
                 targets: this.salesRepTargets,
-                escalations: this.salesEscalations
+                escalations: this.salesEscalations,
+                activities: this.salesActivities
               })
             }).catch(() => {});
           } catch (_) {}

@@ -12222,13 +12222,13 @@
                               <i class="fa-solid fa-xmark text-xs"></i> Reject
                             </button>
                           </div>
-                          <div class="flex items-center justify-end gap-2 whitespace-nowrap" x-show="leave.status!=='pending'">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap"
+                          <div class="flex flex-col items-end gap-0.5" x-show="leave.status!=='pending'">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold"
                               :class="leave.status==='approved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                               <i class="fa-solid text-xs" :class="leave.status==='approved' ? 'fa-check-double' : 'fa-ban'"></i>
                               <span x-text="leave.status==='approved' ? 'Approved' : 'Rejected'"></span>
                             </span>
-                            <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5 whitespace-nowrap">
+                            <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5">
                               <i class="fa-solid fa-user-shield text-[10px] text-slate-400 dark:text-slate-500"></i>
                               <span x-text="'by ' + leave.reviewed_by"></span>
                             </span>
@@ -12238,22 +12238,22 @@
 
                       <!-- Non-Approver View or Manager viewing Manager Leave (Requires Admin Approval) -->
                       <template x-if="!canApproveLeave(leave)">
-                        <div class="flex items-center justify-end gap-2 whitespace-nowrap">
-                          <span x-show="leave.status==='approved'" class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1.5 whitespace-nowrap">
+                        <div class="flex flex-col items-end gap-0.5">
+                          <span x-show="leave.status==='approved'" class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-check text-xs"></i> Approved
                           </span>
-                          <span x-show="leave.status==='rejected'" class="text-rose-600 dark:text-rose-400 font-semibold text-xs inline-flex items-center gap-1.5 whitespace-nowrap">
+                          <span x-show="leave.status==='rejected'" class="text-rose-600 dark:text-rose-400 font-semibold text-xs inline-flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-xmark text-xs"></i> Rejected
                           </span>
-                          <div x-show="leave.status==='pending'" class="inline-flex items-center justify-end whitespace-nowrap">
-                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                          <div x-show="leave.status==='pending'" class="inline-flex items-center justify-end">
+                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-sm">
                               <i class="fa-solid fa-crown text-[10px]"></i> Awaiting Admin Approval
                             </span>
-                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 inline-flex items-center gap-1.5 shadow-sm">
                               <i class="fa-solid fa-clock text-[10px]"></i> Awaiting Review
                             </span>
                           </div>
-                          <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5 whitespace-nowrap">
+                          <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5 mt-0.5">
                             <i class="fa-solid fa-user-shield text-[10px] text-slate-400 dark:text-slate-500"></i>
                             <span x-text="'by ' + leave.reviewed_by"></span>
                           </span>

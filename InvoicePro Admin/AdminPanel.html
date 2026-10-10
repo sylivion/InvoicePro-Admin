@@ -5475,6 +5475,20 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tr x-show="getMyAssignedLeads().length === 0">
+                  <td colspan="6" class="text-center py-16 px-4">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center mx-auto mb-3 text-teal-600 dark:text-teal-400 text-2xl">
+                      <i class="fa-solid fa-filter"></i>
+                    </div>
+                    <div class="font-bold text-gray-800 dark:text-gray-200 text-sm mb-1">No active leads in pipeline</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">
+                      You currently have no open prospects in progress. Record a new sale or contact your sales leader for assignments.
+                    </p>
+                    <button @click="openCreateLeadModal()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer">
+                      <i class="fa-solid fa-cart-plus"></i> Record New Sale
+                    </button>
+                  </td>
+                </tr>
                 <template x-for="lead in getMyAssignedLeads()" :key="lead.id">
                   <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
                     <td class="py-3.5 px-3">
@@ -26886,23 +26900,7 @@
           }));
         },
         get myActiveLeadsCount() {
-          if (!this.currentUser) return 0;
-          const u = (this.currentUser.username || '').trim().toLowerCase();
-          const n = (this.currentUser.name || '').trim().toLowerCase();
-          const uEmpId = (this.currentUser.emp_id || this.currentUser.empId || '').trim().toLowerCase();
-          return (this.salesLeads || []).filter(l => {
-            const a = (l.assigned_to || '').trim().toLowerCase();
-            const isAssigned = (a === u || a === n || (uEmpId && a === uEmpId) || (!a && this.currentUser.role === 'sales_member'));
-            if (!isAssigned) return false;
-            if (l.status === 'Won' || l.status === 'Lost') return false;
-            if (l.license_key || l.licenseKey) return false;
-            if (typeof this.getLeadLicenseKey === 'function' && this.getLeadLicenseKey(l)) return false;
-            if (typeof this.getLeadCustomer === 'function') {
-              const c = this.getLeadCustomer(l);
-              if (c && (c.licenseKey || c.license_key || c.status === 'active')) return false;
-            }
-            return true;
-          }).length;
+          return (this.getMyAssignedLeads() || []).length;
         },
         get myWonDealsCount() {
           if (!this.currentUser) return 0;
@@ -27282,10 +27280,11 @@
 
         deduplicateLeadsList(list) {
           if (!Array.isArray(list) || list.length === 0) return [];
+          const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
           const seen = new Set();
           const result = [];
           for (const l of list) {
-            if (!l) continue;
+            if (!l || dummyLeadIds.has(l.id) || l.company === '45rtetdsfdsg') continue;
             const cId = String(l.customerId || '').trim();
             const cleanPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
             const comp = String(l.company || l.customer_name || l.id || '').trim().toLowerCase();
@@ -29221,7 +29220,7 @@ get remindersCount() {
 
         // ── SALES DEPARTMENT ARCHITECTURE (LEADER & MEMBER) ──
         async _loadSalesData() {
-          const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503']);
+          const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
           const dummyActIds = new Set(['act-101', 'act-102', 'act-103']);
           const dummyEscIds = new Set(['esc-1']);
 
@@ -29230,7 +29229,7 @@ get remindersCount() {
             const savedLeads = localStorage.getItem('ip_adm_sales_leads');
             if (savedLeads) {
               const parsed = JSON.parse(savedLeads);
-              this.salesLeads = Array.isArray(parsed) ? parsed.filter(l => !dummyLeadIds.has(l.id)).map(l => {
+              this.salesLeads = Array.isArray(parsed) ? parsed.filter(l => l && !dummyLeadIds.has(l.id) && l.company !== '45rtetdsfdsg').map(l => {
                 if (l.status !== 'Won' && (l.license_key || l.licenseKey || (typeof this.getLeadLicenseKey === 'function' && this.getLeadLicenseKey(l)))) {
                   l.status = 'Won';
                 }
@@ -29277,7 +29276,9 @@ get remindersCount() {
             const fetchFn = window.originalFetch || window.fetch;
             const res = await fetchFn(baseUrl + '/api/sales/data').then(r => r.json()).catch(() => null);
             if (res && res.ok) {
-              if (Array.isArray(res.leads) && res.leads.length > 0) this.salesLeads = res.leads;
+              if (Array.isArray(res.leads)) {
+                this.salesLeads = res.leads.filter(l => l && !dummyLeadIds.has(l.id) && l.company !== '45rtetdsfdsg');
+              }
               if (Array.isArray(res.targets) && res.targets.length > 0) this.salesRepTargets = res.targets;
               if (Array.isArray(res.escalations) && res.escalations.length > 0) this.salesEscalations = res.escalations;
             } else if (this.salesLeads.length > 0 || this.salesRepTargets.length > 0) {
@@ -29318,12 +29319,14 @@ get remindersCount() {
 
         getMyAssignedLeads() {
           if (!Array.isArray(this.salesLeads)) return [];
+          const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
           const myUser = (this.currentUser ? this.currentUser.username : 'sales').toLowerCase();
           const myName = (this.currentUser ? this.currentUser.name : '').toLowerCase();
           const myEmpId = (this.currentUser ? (this.currentUser.emp_id || this.currentUser.empId) : '').toLowerCase();
           const isAdmin = this.currentUser?.role === 'admin' || this.currentUser?.role === 'super_admin';
 
           const filtered = this.salesLeads.filter(l => {
+            if (!l || dummyLeadIds.has(l.id) || l.company === '45rtetdsfdsg') return false;
             if (isAdmin) return true;
             const assigned = (l.assigned_to || '').toLowerCase();
             return assigned === myUser || (myName && assigned === myName) || (myEmpId && assigned === myEmpId) || !assigned || assigned === 'unassigned';

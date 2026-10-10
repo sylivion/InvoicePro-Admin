@@ -12131,40 +12131,40 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse whitespace-nowrap">
               <thead class="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 uppercase tracking-wider font-semibold text-xs border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th class="py-4 px-5" x-show="canApproveLeaves">Employee</th>
-                  <th class="py-4 px-5">Leave Type</th>
-                  <th class="py-4 px-5">Date Range</th>
-                  <th class="py-4 px-5">Days</th>
-                  <th class="py-4 px-5">Reason</th>
-                  <th class="py-4 px-5">Status</th>
-                  <th class="py-4 px-5 text-right" x-text="canApproveLeaves ? 'Approval Actions' : 'Review Details'"></th>
+                <tr class="whitespace-nowrap">
+                  <th class="py-4 px-5 whitespace-nowrap" x-show="canApproveLeaves">Employee</th>
+                  <th class="py-4 px-5 whitespace-nowrap">Leave Type</th>
+                  <th class="py-4 px-5 whitespace-nowrap">Date Range</th>
+                  <th class="py-4 px-5 whitespace-nowrap">Days</th>
+                  <th class="py-4 px-5 whitespace-nowrap">Reason</th>
+                  <th class="py-4 px-5 whitespace-nowrap">Status</th>
+                  <th class="py-4 px-5 text-right whitespace-nowrap" x-text="canApproveLeaves ? 'Approval Actions' : 'Review Details'"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
                 <template x-for="leave in filteredLeaves" :key="leave.id">
-                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors whitespace-nowrap">
                     <!-- Employee column for Admin / Manager -->
-                    <td class="py-4 px-5" x-show="canApproveLeaves">
+                    <td class="py-4 px-5 whitespace-nowrap" x-show="canApproveLeaves">
                       <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xs shadow-sm ring-2 ring-indigo-100 dark:ring-indigo-950 flex-shrink-0 tracking-wide"
                              x-text="(leave.employee_name || 'U').slice(0, 2).toUpperCase()"></div>
                         <div class="min-w-0">
-                          <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-sm font-semibold text-slate-900 dark:text-white tracking-tight" x-text="leave.employee_name"></span>
-                            <span x-show="leave.role==='manager'" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wider border border-blue-200/60 dark:border-blue-800">Manager</span>
+                          <div class="flex items-center gap-2 flex-nowrap">
+                            <span class="text-sm font-semibold text-slate-900 dark:text-white tracking-tight whitespace-nowrap" x-text="leave.employee_name"></span>
+                            <span x-show="leave.role==='manager'" class="px-2 py-0.5 rounded-md text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wider border border-blue-200/60 dark:border-blue-800 whitespace-nowrap">Manager</span>
                           </div>
-                          <div class="text-xs text-slate-400 dark:text-slate-500 font-mono font-medium tracking-wide flex items-center gap-1.5 mt-0.5 uppercase">
+                          <div class="text-xs text-slate-400 dark:text-slate-500 font-mono font-medium tracking-wide flex items-center gap-1.5 mt-0.5 uppercase whitespace-nowrap">
                             <i class="fa-solid fa-id-badge text-[10px] text-slate-300 dark:text-slate-600"></i>
                             <span x-text="leave.employee_id || leave.role || 'Staff'"></span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td class="py-4 px-5">
-                      <span class="px-3 py-1 rounded-lg font-semibold text-xs uppercase tracking-wide inline-flex items-center gap-1.5 border shadow-sm"
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <span class="px-3 py-1 rounded-lg font-semibold text-xs uppercase tracking-wide inline-flex items-center gap-1.5 border shadow-sm whitespace-nowrap"
                         :class="{
                           'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50': (leave.leave_type||'').toLowerCase().includes('sick'),
                           'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50': (leave.leave_type||'').toLowerCase().includes('casual'),
@@ -12181,54 +12181,54 @@
                         <span x-text="leave.leave_type"></span>
                       </span>
                     </td>
-                    <td class="py-4 px-5">
-                      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-slate-200">
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                         <i class="fa-regular fa-calendar-days text-indigo-500 text-xs"></i>
                         <span x-text="fmtDate(leave.from_date)"></span>
                         <i class="fa-solid fa-arrow-right-long text-slate-300 dark:text-slate-600 text-xs mx-0.5"></i>
                         <span x-text="fmtDate(leave.to_date)"></span>
                       </div>
                     </td>
-                    <td class="py-4 px-5">
-                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold font-mono text-sm border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold font-mono text-sm border border-slate-200 dark:border-slate-700 shadow-sm whitespace-nowrap">
                         <span x-text="leave.days"></span>
                         <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Days</span>
                       </span>
                     </td>
-                    <td class="py-4 px-5 max-w-xs">
-                      <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 font-normal italic flex items-start gap-2 shadow-sm" :title="leave.reason">
-                        <i class="fa-solid fa-quote-left text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex-shrink-0"></i>
-                        <span class="line-clamp-2" x-text="leave.reason || 'No description provided'"></span>
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 font-normal italic inline-flex items-center gap-2 shadow-sm whitespace-nowrap max-w-sm" :title="leave.reason">
+                        <i class="fa-solid fa-quote-left text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0"></i>
+                        <span class="truncate max-w-[260px]" x-text="leave.reason || 'No description provided'"></span>
                       </div>
                     </td>
-                    <td class="py-4 px-5">
-                      <span class="px-3 py-1.5 rounded-full font-semibold text-xs uppercase tracking-wide inline-flex items-center gap-1.5 border shadow-sm"
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <span class="px-3 py-1.5 rounded-full font-semibold text-xs uppercase tracking-wide inline-flex items-center gap-1.5 border shadow-sm whitespace-nowrap"
                         :class="leave.status==='approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800' : leave.status==='rejected' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800'">
                         <i class="fa-solid text-[10px]" :class="leave.status==='approved' ? 'fa-circle-check text-emerald-600' : leave.status==='rejected' ? 'fa-circle-xmark text-rose-600' : 'fa-hourglass-half text-amber-600'"></i>
                         <span x-text="leave.status"></span>
                       </span>
                     </td>
-                    <td class="py-4 px-5 text-right">
+                    <td class="py-4 px-5 text-right whitespace-nowrap">
                       <!-- Can Approve This Leave (Admin for all, Manager for staff only) -->
                       <template x-if="canApproveLeave(leave)">
-                        <div>
-                          <div class="flex items-center justify-end gap-2" x-show="leave.status==='pending'">
+                        <div class="whitespace-nowrap">
+                          <div class="flex items-center justify-end gap-2 whitespace-nowrap" x-show="leave.status==='pending'">
                             <button @click="updateLeaveStatus(leave.id, 'approved')"
-                              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95 whitespace-nowrap">
                               <i class="fa-solid fa-check text-xs"></i> Approve
                             </button>
                             <button @click="updateLeaveStatus(leave.id, 'rejected')"
-                              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95 whitespace-nowrap">
                               <i class="fa-solid fa-xmark text-xs"></i> Reject
                             </button>
                           </div>
-                          <div class="flex flex-col items-end gap-1" x-show="leave.status!=='pending'">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-bold"
+                          <div class="flex items-center justify-end gap-2 whitespace-nowrap" x-show="leave.status!=='pending'">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap"
                               :class="leave.status==='approved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                               <i class="fa-solid text-xs" :class="leave.status==='approved' ? 'fa-check-double' : 'fa-ban'"></i>
                               <span x-text="leave.status==='approved' ? 'Approved' : 'Rejected'"></span>
                             </span>
-                            <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                            <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5 whitespace-nowrap">
                               <i class="fa-solid fa-user-shield text-[10px] text-slate-400 dark:text-slate-500"></i>
                               <span x-text="'by ' + leave.reviewed_by"></span>
                             </span>
@@ -12238,24 +12238,24 @@
 
                       <!-- Non-Approver View or Manager viewing Manager Leave (Requires Admin Approval) -->
                       <template x-if="!canApproveLeave(leave)">
-                        <div class="flex flex-col items-end gap-1">
-                          <span x-show="leave.status==='approved'" class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs flex items-center gap-1.5">
+                        <div class="flex items-center justify-end gap-2 whitespace-nowrap">
+                          <span x-show="leave.status==='approved'" class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-circle-check text-xs"></i> Approved
                           </span>
-                          <span x-show="leave.status==='rejected'" class="text-rose-600 dark:text-rose-400 font-semibold text-xs flex items-center gap-1.5">
+                          <span x-show="leave.status==='rejected'" class="text-rose-600 dark:text-rose-400 font-semibold text-xs inline-flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-circle-xmark text-xs"></i> Rejected
                           </span>
-                          <div x-show="leave.status==='pending'" class="flex items-center justify-end">
-                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-sm">
+                          <div x-show="leave.status==='pending'" class="inline-flex items-center justify-end whitespace-nowrap">
+                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                               <i class="fa-solid fa-crown text-[10px]"></i> Awaiting Admin Approval
                             </span>
-                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 inline-flex items-center gap-1.5 shadow-sm">
+                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                               <i class="fa-solid fa-clock text-[10px]"></i> Awaiting Review
                             </span>
                           </div>
-                          <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                          <span x-show="leave.reviewed_by" class="text-xs text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-user-shield text-[10px] text-slate-400 dark:text-slate-500"></i>
-                            <span x-text="'Reviewed by ' + leave.reviewed_by"></span>
+                            <span x-text="'by ' + leave.reviewed_by"></span>
                           </span>
                         </div>
                       </template>

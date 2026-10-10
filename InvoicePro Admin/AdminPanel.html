@@ -12066,130 +12066,209 @@
         </div>
 
         <!-- Leaves Stats -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <span class="text-xs font-semibold text-gray-500" x-text="canApproveLeaves ? 'Total Applications' : 'My Total Requests'"></span>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="userLeaveRequests.length"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-200/90 dark:border-gray-800 shadow-xs flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500" x-text="canApproveLeaves ? 'Total Applications' : 'My Total Requests'"></span>
+              <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-1 font-mono tracking-tight" x-text="userLeaveRequests.length"></div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-folder-open"></i>
+            </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <span class="text-xs font-semibold text-amber-500">Pending Review</span>
-            <div class="text-2xl font-semibold text-amber-600 mt-1" x-text="userLeaveRequests.filter(l=>l.status==='pending').length"></div>
+          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-amber-200/70 dark:border-amber-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-amber-50/30 dark:from-gray-900 dark:to-amber-950/10">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pending Review</span>
+              <div class="text-2xl font-extrabold text-amber-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='pending').length"></div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm border border-amber-200/50 dark:border-amber-900/50">
+              <i class="fa-solid fa-clock"></i>
+            </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <span class="text-xs font-semibold text-green-500">Approved</span>
-            <div class="text-2xl font-semibold text-green-600 mt-1" x-text="userLeaveRequests.filter(l=>l.status==='approved').length"></div>
+          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-emerald-200/70 dark:border-emerald-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/10">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Approved</span>
+              <div class="text-2xl font-extrabold text-emerald-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='approved').length"></div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm border border-emerald-200/50 dark:border-emerald-900/50">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <span class="text-xs font-semibold text-red-500">Rejected</span>
-            <div class="text-2xl font-semibold text-red-600 mt-1" x-text="userLeaveRequests.filter(l=>l.status==='rejected').length"></div>
+          <div class="bg-white dark:bg-gray-900 p-4.5 rounded-2xl border border-rose-200/70 dark:border-rose-900/40 shadow-xs flex items-center justify-between bg-gradient-to-br from-white via-white to-rose-50/30 dark:from-gray-900 dark:to-rose-950/10">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Rejected</span>
+              <div class="text-2xl font-extrabold text-rose-600 mt-1 font-mono tracking-tight" x-text="userLeaveRequests.filter(l=>l.status==='rejected').length"></div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm border border-rose-200/50 dark:border-rose-900/50">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </div>
           </div>
         </div>
 
         <!-- Leaves Table -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-          <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h3 class="font-bold text-sm text-gray-800 dark:text-gray-200" x-text="canApproveLeaves ? 'Staff Leave Requests & Approval Records' : 'My Leave Applications & Live Status'"></h3>
-            <div class="flex gap-2">
-              <select x-model="leaveFilter" class="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <option value="all">All Leaves</option>
-                <option value="pending">Pending Only</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200/80 dark:border-gray-800 overflow-hidden shadow-sm">
+          <div class="p-5 border-b border-gray-100 dark:border-gray-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-gray-50/70 via-white to-gray-50/40 dark:from-gray-900 dark:via-gray-900 dark:to-gray-850">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm shadow-xs">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-gray-900 dark:text-white tracking-tight" x-text="canApproveLeaves ? 'Staff Leave Requests & Approval Records' : 'My Leave Applications & Live Status'"></h3>
+                <p class="text-[11px] text-gray-400 dark:text-gray-500 font-medium mt-0.5">Real-time attendance ledger, reasons, and approval workflow</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <i class="fa-solid fa-filter text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none"></i>
+                <select x-model="leaveFilter" class="text-xs font-semibold pl-7 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-xs cursor-pointer transition-all">
+                  <option value="all">All Leave Records</option>
+                  <option value="pending">⏳ Pending Only</option>
+                  <option value="approved">✅ Approved</option>
+                  <option value="rejected">❌ Rejected</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <div class="table-responsive">
             <table class="w-full text-left text-xs">
-              <thead class="bg-gray-50/75 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold text-[10px]">
+              <thead class="bg-gray-50/90 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold text-[10px] border-b border-gray-200/70 dark:border-gray-800">
                 <tr>
-                  <th class="py-3 px-4" x-show="canApproveLeaves">Employee</th>
-                  <th class="py-3 px-4">Leave Type</th>
-                  <th class="py-3 px-4">Date Range</th>
-                  <th class="py-3 px-4">Days</th>
-                  <th class="py-3 px-4">Reason</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-right" x-text="canApproveLeaves ? 'Approval Actions' : 'Review Details'"></th>
+                  <th class="py-3.5 px-4 font-bold" x-show="canApproveLeaves">Employee</th>
+                  <th class="py-3.5 px-4 font-bold">Leave Type</th>
+                  <th class="py-3.5 px-4 font-bold">Date Range</th>
+                  <th class="py-3.5 px-4 font-bold">Days</th>
+                  <th class="py-3.5 px-4 font-bold">Reason</th>
+                  <th class="py-3.5 px-4 font-bold">Status</th>
+                  <th class="py-3.5 px-4 font-bold text-right" x-text="canApproveLeaves ? 'Approval Actions' : 'Review Details'"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-200">
                 <template x-for="leave in filteredLeaves" :key="leave.id">
-                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
+                  <tr class="hover:bg-indigo-50/30 dark:hover:bg-gray-800/50 transition-colors">
                     <!-- Employee column for Admin / Manager -->
-                    <td class="py-3.5 px-4 font-bold" x-show="canApproveLeaves">
-                      <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950 border border-teal-200 dark:border-teal-800 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-[10px]"
+                    <td class="py-4 px-4 font-bold" x-show="canApproveLeaves">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xs shadow-sm ring-2 ring-indigo-100 dark:ring-indigo-950 flex-shrink-0 tracking-wide"
                              x-text="(leave.employee_name || 'U').slice(0, 2).toUpperCase()"></div>
-                        <div>
-                          <div class="flex items-center gap-1.5">
-                            <span x-text="leave.employee_name"></span>
-                            <span x-show="leave.role==='manager'" class="px-1.5 py-0.2 rounded text-[9px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold uppercase">Manager</span>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-gray-900 dark:text-gray-100 tracking-tight" x-text="leave.employee_name"></span>
+                            <span x-show="leave.role==='manager'" class="px-1.5 py-0.5 rounded-md text-[9px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wider border border-blue-200/60 dark:border-blue-800">Manager</span>
                           </div>
-                          <div class="text-[10px] text-gray-400 font-normal uppercase" x-text="leave.employee_id || leave.role || 'Staff'"></div>
+                          <div class="text-[10px] text-gray-400 dark:text-gray-500 font-mono font-semibold tracking-wider flex items-center gap-1 mt-0.5 uppercase">
+                            <i class="fa-solid fa-id-badge text-[9px] text-gray-300 dark:text-gray-600"></i>
+                            <span x-text="leave.employee_id || leave.role || 'Staff'"></span>
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td class="py-3.5 px-4">
-                      <span class="px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300" x-text="leave.leave_type"></span>
+                    <td class="py-4 px-4">
+                      <span class="px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1.5 border shadow-xs"
+                        :class="{
+                          'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50': (leave.leave_type||'').toLowerCase().includes('sick'),
+                          'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50': (leave.leave_type||'').toLowerCase().includes('casual'),
+                          'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50': (leave.leave_type||'').toLowerCase().includes('annual') || (leave.leave_type||'').toLowerCase().includes('paid'),
+                          'bg-purple-50 text-purple-700 border-purple-200/80 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50': !(leave.leave_type||'').toLowerCase().includes('sick') && !(leave.leave_type||'').toLowerCase().includes('casual') && !(leave.leave_type||'').toLowerCase().includes('annual') && !(leave.leave_type||'').toLowerCase().includes('paid')
+                        }">
+                        <i class="fa-solid text-[9px]"
+                          :class="{
+                            'fa-heart-pulse text-rose-500': (leave.leave_type||'').toLowerCase().includes('sick'),
+                            'fa-mug-hot text-amber-500': (leave.leave_type||'').toLowerCase().includes('casual'),
+                            'fa-calendar-check text-emerald-500': (leave.leave_type||'').toLowerCase().includes('annual') || (leave.leave_type||'').toLowerCase().includes('paid'),
+                            'fa-tag text-purple-500': !(leave.leave_type||'').toLowerCase().includes('sick') && !(leave.leave_type||'').toLowerCase().includes('casual') && !(leave.leave_type||'').toLowerCase().includes('annual') && !(leave.leave_type||'').toLowerCase().includes('paid')
+                          }"></i>
+                        <span x-text="leave.leave_type"></span>
+                      </span>
                     </td>
-                    <td class="py-3.5 px-4 font-medium" x-text="fmtDate(leave.from_date) + ' → ' + fmtDate(leave.to_date)"></td>
-                    <td class="py-3.5 px-4 font-bold" x-text="leave.days + ' d'"></td>
-                    <td class="py-3.5 px-4 text-gray-500 dark:text-gray-400 max-w-xs truncate" x-text="leave.reason || '—'"></td>
-                    <td class="py-3.5 px-4">
-                      <span class="px-2.5 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1"
-                        :class="leave.status==='approved' ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300' : leave.status==='rejected' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'">
-                        <i class="fa-solid text-[9px]" :class="leave.status==='approved' ? 'fa-check' : leave.status==='rejected' ? 'fa-xmark' : 'fa-clock'"></i>
+                    <td class="py-4 px-4">
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200">
+                        <i class="fa-regular fa-calendar-days text-indigo-500 text-[10px]"></i>
+                        <span x-text="fmtDate(leave.from_date)"></span>
+                        <i class="fa-solid fa-arrow-right-long text-gray-300 dark:text-gray-600 text-[10px] mx-0.5"></i>
+                        <span x-text="fmtDate(leave.to_date)"></span>
+                      </div>
+                    </td>
+                    <td class="py-4 px-4">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold font-mono text-xs border border-slate-200/80 dark:border-slate-700/60 shadow-xs">
+                        <span x-text="leave.days"></span>
+                        <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Days</span>
+                      </span>
+                    </td>
+                    <td class="py-4 px-4 max-w-xs">
+                      <div class="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800/80 text-xs text-gray-700 dark:text-gray-300 font-normal italic flex items-start gap-1.5 shadow-xs" :title="leave.reason">
+                        <i class="fa-solid fa-quote-left text-[9px] text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0"></i>
+                        <span class="line-clamp-2" x-text="leave.reason || 'No description provided'"></span>
+                      </div>
+                    </td>
+                    <td class="py-4 px-4">
+                      <span class="px-2.5 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1.5 border shadow-xs"
+                        :class="leave.status==='approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60' : leave.status==='rejected' ? 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60' : 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60'">
+                        <i class="fa-solid text-[9px]" :class="leave.status==='approved' ? 'fa-circle-check text-emerald-600' : leave.status==='rejected' ? 'fa-circle-xmark text-rose-600' : 'fa-hourglass-half text-amber-600'"></i>
                         <span x-text="leave.status"></span>
                       </span>
                     </td>
-                    <td class="py-3.5 px-4 text-right">
+                    <td class="py-4 px-4 text-right">
                       <!-- Can Approve This Leave (Admin for all, Manager for staff only) -->
                       <template x-if="canApproveLeave(leave)">
                         <div>
-                          <div class="flex items-center justify-end gap-1.5" x-show="leave.status==='pending'">
+                          <div class="flex items-center justify-end gap-2" x-show="leave.status==='pending'">
                             <button @click="updateLeaveStatus(leave.id, 'approved')"
-                              class="px-2.5 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-[11px] transition-all flex items-center gap-1 shadow-sm">
-                              <i class="fa-solid fa-check"></i> Approve
+                              class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                              <i class="fa-solid fa-check text-[10px]"></i> Approve
                             </button>
                             <button @click="updateLeaveStatus(leave.id, 'rejected')"
-                              class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] transition-all flex items-center gap-1 shadow-sm">
-                              <i class="fa-solid fa-xmark"></i> Reject
+                              class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                              <i class="fa-solid fa-xmark text-[10px]"></i> Reject
                             </button>
                           </div>
-                          <div class="text-[11px]" x-show="leave.status!=='pending'">
-                            <span class="font-medium" :class="leave.status==='approved'?'text-green-600 dark:text-green-400':'text-red-600 dark:text-red-400'" x-text="leave.status==='approved' ? ' Approved' : 'Rejected'"></span>
-                            <span x-show="leave.reviewed_by" class="block text-[10px] text-gray-500" x-text="'by ' + leave.reviewed_by"></span>
+                          <div class="flex flex-col items-end gap-0.5" x-show="leave.status!=='pending'">
+                            <span class="inline-flex items-center gap-1 text-xs font-bold"
+                              :class="leave.status==='approved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                              <i class="fa-solid text-[10px]" :class="leave.status==='approved' ? 'fa-check-double' : 'fa-ban'"></i>
+                              <span x-text="leave.status==='approved' ? 'Approved' : 'Rejected'"></span>
+                            </span>
+                            <span x-show="leave.reviewed_by" class="text-[10px] text-gray-400 dark:text-gray-500 font-medium flex items-center gap-1">
+                              <i class="fa-solid fa-user-shield text-[9px] text-gray-300 dark:text-gray-600"></i>
+                              <span x-text="'by ' + leave.reviewed_by"></span>
+                            </span>
                           </div>
                         </div>
                       </template>
 
                       <!-- Non-Approver View or Manager viewing Manager Leave (Requires Admin Approval) -->
                       <template x-if="!canApproveLeave(leave)">
-                        <div class="text-[11px]">
-                          <span x-show="leave.status==='approved'" class="text-green-600 dark:text-green-400 font-bold flex items-center justify-end gap-1">
+                        <div class="flex flex-col items-end gap-0.5">
+                          <span x-show="leave.status==='approved'" class="text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center gap-1">
                             <i class="fa-solid fa-circle-check text-xs"></i> Approved
                           </span>
-                          <span x-show="leave.status==='rejected'" class="text-red-600 dark:text-red-400 font-bold flex items-center justify-end gap-1">
+                          <span x-show="leave.status==='rejected'" class="text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center gap-1">
                             <i class="fa-solid fa-circle-xmark text-xs"></i> Rejected
                           </span>
                           <div x-show="leave.status==='pending'" class="flex items-center justify-end">
-                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 inline-flex items-center gap-1">
+                            <span x-show="leave.role==='manager' || (leave.employee_name && leave.employee_name.toLowerCase().includes('manager')) || (leave.designation && leave.designation.toLowerCase().includes('manager'))" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1 shadow-xs">
                               <i class="fa-solid fa-crown text-[9px]"></i> Awaiting Admin Approval
                             </span>
-                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="text-amber-600 dark:text-amber-400 font-semibold inline-flex items-center gap-1">
-                              <i class="fa-solid fa-clock text-xs"></i> Awaiting Review
+                            <span x-show="leave.role!=='manager' && (!leave.employee_name || !leave.employee_name.toLowerCase().includes('manager')) && (!leave.designation || !leave.designation.toLowerCase().includes('manager'))" class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 inline-flex items-center gap-1 shadow-xs">
+                              <i class="fa-solid fa-clock text-[9px]"></i> Awaiting Review
                             </span>
                           </div>
-                          <span x-show="leave.reviewed_by" class="text-[10px] text-gray-400 block mt-0.5" x-text="'Reviewed by ' + leave.reviewed_by"></span>
+                          <span x-show="leave.reviewed_by" class="text-[10px] text-gray-400 dark:text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+                            <i class="fa-solid fa-user-shield text-[9px] text-gray-300 dark:text-gray-600"></i>
+                            <span x-text="'Reviewed by ' + leave.reviewed_by"></span>
+                          </span>
                         </div>
                       </template>
                     </td>
                   </tr>
                 </template>
                 <tr x-show="filteredLeaves.length===0">
-                  <td :colspan="canApproveLeaves ? 7 : 6" class="py-8 text-center text-gray-400">
-                    <i class="fa-solid fa-calendar-xmark text-2xl block mb-2 text-gray-300 dark:text-gray-700"></i>
-                    <span x-text="canApproveLeaves ? 'No staff leave applications found.' : 'You have not submitted any leave requests yet.'"></span>
+                  <td :colspan="canApproveLeaves ? 7 : 6" class="py-12 text-center text-gray-400">
+                    <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600 flex items-center justify-center mx-auto mb-3 text-xl border border-gray-100 dark:border-gray-700">
+                      <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+                    <p class="font-semibold text-xs text-gray-600 dark:text-gray-300" x-text="canApproveLeaves ? 'No staff leave applications found.' : 'You have not submitted any leave requests yet.'"></p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Any submitted leave forms will appear here in real-time.</p>
                   </td>
                 </tr>
               </tbody>

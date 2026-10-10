@@ -10079,10 +10079,12 @@
                         <template x-if="team.members && team.members.length > 0">
                           <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
                             <template x-for="m in team.members" :key="'tm-card-'+team.id+'-'+m">
-                              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-100 dark:bg-gray-700/80 text-gray-800 dark:text-gray-200 border border-gray-200/60 dark:border-gray-600">
-                                <span class="w-3.5 h-3.5 rounded-full bg-indigo-500 text-white text-[8px] font-semibold flex items-center justify-center" x-text="m.charAt(0).toUpperCase()"></span>
-                                <span class="truncate max-w-[100px]" x-text="m"></span>
-                                <span x-show="m === team.lead_name" class="text-[9px] text-amber-500 font-bold" title="Team Leader"></span>
+                              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-100 dark:bg-gray-700/80 text-gray-800 dark:text-gray-200 border border-gray-200/60 dark:border-gray-600">
+                                <span class="w-4 h-4 rounded-full bg-indigo-500 text-white text-[8px] font-bold flex items-center justify-center shrink-0" x-text="m.charAt(0).toUpperCase()"></span>
+                                <span class="truncate max-w-[120px]" x-text="m"></span>
+                                <span x-show="m === team.lead_name" class="inline-flex items-center text-amber-500 text-[10px]" title="Team Leader">
+                                  <i class="fa-solid fa-crown text-[9px]"></i>
+                                </span>
                               </span>
                             </template>
                           </div>
@@ -12017,8 +12019,8 @@
                       <i class="fa-regular fa-clock text-slate-400 text-[11px]"></i> Last Login
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 text-right whitespace-nowrap min-w-[190px]">
-                    <span class="inline-flex items-center gap-1.5 justify-end">
+                  <th class="py-3.5 px-5 text-center whitespace-nowrap min-w-[210px]">
+                    <span class="inline-flex items-center justify-center gap-1.5 text-center">
                       <i class="fa-solid fa-sliders text-slate-400 text-[11px]"></i> Actions
                     </span>
                   </th>
@@ -12092,41 +12094,47 @@
                     </td>
 
                     <!-- Actions -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap text-right">
-                      <div class="inline-flex items-center justify-end gap-1.5">
+                    <td class="py-3.5 px-5 align-middle whitespace-nowrap text-center">
+                      <div class="inline-flex items-center justify-center gap-2">
                         <!-- Impersonate Button -->
                         <button @click="impersonateStaff(user)"
-                          class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold transition-all text-xs inline-flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 shadow-xs"
+                          class="h-8 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold transition-all text-xs inline-flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 shadow-xs flex-shrink-0"
                           title="Log in / View as this employee">
                           <i class="fa-solid fa-arrow-right-to-bracket text-[11px]"></i>
                           <span>View As</span>
                         </button>
 
-                        <!-- Edit Profile -->
-                        <button @click="openEditStaffModal(user)"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-                          title="Edit Profile">
-                          <i class="fa-solid fa-pen text-xs"></i>
-                        </button>
-
-                        <!-- Reset Password -->
-                        <button @click="openResetStaffPwModal(user)"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-                          title="Reset Password">
-                          <i class="fa-solid fa-key text-xs"></i>
-                        </button>
-
-                        <!-- Delete Staff (with placeholder to preserve pixel-perfect grid alignment across rows) -->
-                        <template x-if="user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1">
-                          <button @click="deleteStaffUser(user.id)"
-                            class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-                            title="Remove Account">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        <!-- Unified Action Icons Toolbar -->
+                        <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex-shrink-0">
+                          <!-- Edit Profile -->
+                          <button @click="openEditStaffModal(user)"
+                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                            title="Edit Profile">
+                            <i class="fa-solid fa-pen text-[11px]"></i>
                           </button>
-                        </template>
-                        <template x-if="!(user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1)">
-                          <span class="w-8 h-8 inline-block"></span>
-                        </template>
+
+                          <!-- Reset Password -->
+                          <button @click="openResetStaffPwModal(user)"
+                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                            title="Reset Password">
+                            <i class="fa-solid fa-key text-[11px]"></i>
+                          </button>
+
+                          <!-- Delete Staff or Protected Lock -->
+                          <template x-if="user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1">
+                            <button @click="deleteStaffUser(user.id)"
+                              class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                              title="Remove Account">
+                              <i class="fa-solid fa-trash-can text-[11px]"></i>
+                            </button>
+                          </template>
+                          <template x-if="!(user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1)">
+                            <div class="w-7 h-7 rounded-md flex items-center justify-center text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                              title="Master Administrator account is protected">
+                              <i class="fa-solid fa-lock text-[10px]"></i>
+                            </div>
+                          </template>
+                        </div>
                       </div>
                     </td>
 
@@ -32068,17 +32076,18 @@ get remindersCount() {
           const sections = {};
           
           const addEntry = (deptName, emp) => {
-            let cleanDept = (deptName || 'General / Operations').trim();
-            if (cleanDept.toLowerCase() === 'tech' || cleanDept.toLowerCase() === 'dev' || cleanDept.toLowerCase() === 'development') {
-              cleanDept = 'Development & Engineering';
-            } else if (cleanDept.toLowerCase() === 'sales') {
-              cleanDept = 'Sales Department';
-            } else if (cleanDept.toLowerCase() === 'support') {
-              cleanDept = 'Customer Support Desk';
-            } else if (cleanDept.toLowerCase() === 'hr' || cleanDept.toLowerCase() === 'human resources') {
-              cleanDept = 'Human Resources (HR)';
-            } else if (cleanDept.toLowerCase() === 'operations' || cleanDept.toLowerCase() === 'management') {
-              cleanDept = 'Operations & Management';
+            let cleanDept = (deptName || 'Operations & Facilities').trim();
+            const dl = cleanDept.toLowerCase();
+            if (dl.includes('sales') || dl.includes('business')) {
+              cleanDept = 'Sales & Business Development';
+            } else if (dl.includes('support') || dl.includes('helpdesk')) {
+              cleanDept = 'Customer Support & Helpdesk';
+            } else if (dl.includes('dev') || dl.includes('tech') || dl.includes('software') || dl.includes('it')) {
+              cleanDept = 'Software Development & IT';
+            } else if (dl.includes('hr') || dl.includes('human') || dl.includes('talent')) {
+              cleanDept = 'Human Resources & Talent';
+            } else if (dl.includes('operat') || dl.includes('manage') || dl.includes('admin') || dl.includes('exec')) {
+              cleanDept = 'Operations & Facilities';
             }
             if (!sections[cleanDept]) {
               sections[cleanDept] = [];
@@ -32089,9 +32098,9 @@ get remindersCount() {
             }
           };
 
-          // 1. Process active employees from database
+          // 1. Process active registered employees from database
           (this.employees || []).forEach(emp => {
-            const dept = emp.department || 'Operations';
+            const dept = emp.department || 'Operations & Facilities';
             addEntry(dept, {
               id: emp.id || ('emp-' + Math.random().toString(36).substr(2, 6)),
               name: emp.name,
@@ -32099,29 +32108,29 @@ get remindersCount() {
               department: dept,
               email: emp.email || '',
               phone: emp.mobile || emp.phone || '',
-              emp_code: emp.emp_code || emp.code || '',
+              emp_code: emp.empId || emp.emp_code || emp.code || '',
               type: 'employee'
             });
           });
 
-          // 2. Process system staff users
+          // 2. Process real system staff users
           (this.staffUsers || []).forEach(staff => {
             const rawRole = (staff.role || '').toLowerCase();
             const dept = staff.department || (
-              rawRole.includes('sales') ? 'Sales' :
-              rawRole.includes('support') ? 'Support' :
-              rawRole.includes('dev') ? 'Development' :
-              rawRole.includes('hr') ? 'HR' :
-              rawRole.includes('manager') ? 'Operations' : 'Executive'
+              rawRole.includes('sales') ? 'Sales & Business Development' :
+              rawRole.includes('support') ? 'Customer Support & Helpdesk' :
+              rawRole.includes('dev') ? 'Software Development & IT' :
+              rawRole.includes('hr') ? 'Human Resources & Talent' : 'Operations & Facilities'
             );
+            const desig = staff.designation || (this.formatStaffRole ? this.formatStaffRole(staff.role) : (staff.role || 'Staff').replace(/_/g, ' ').toUpperCase());
             addEntry(dept, {
               id: staff.id || ('staff-' + Math.random().toString(36).substr(2, 6)),
               name: staff.name || staff.username,
-              designation: (staff.role || 'Staff').replace(/_/g, ' ').toUpperCase(),
+              designation: desig,
               department: dept,
               email: staff.email || '',
               phone: staff.phone || staff.mobile || '',
-              emp_code: staff.username || '',
+              emp_code: staff.username || staff.emp_id || '',
               type: 'staff'
             });
           });
@@ -32130,6 +32139,203 @@ get remindersCount() {
             department: dept,
             list: sections[dept]
           }));
+        },
+
+        _hasDummyTeamData(teams) {
+          if (!Array.isArray(teams) || teams.length === 0) return true;
+          const dummySignatures = [
+            'sudarshan', 'sunvibee.com', 'pooja patil', 'aman verma',
+            'neha kulkarni', 'vikas mehta', 'anjali deshmukh',
+            'kunal joshi', 'deepak more', 'aniket shirodkar',
+            'rohit sawant', 'saurabh kale', 'rohan rane', 'hr assistant', 'admin executive'
+          ];
+          return teams.some(t => {
+            const leadStr = (t.lead_name || '').toLowerCase() + ' ' + (t.lead_email || '').toLowerCase();
+            const memStr = (Array.isArray(t.members) ? t.members.join(' ') : '').toLowerCase();
+            return dummySignatures.some(d => leadStr.includes(d) || memStr.includes(d));
+          });
+        },
+
+        _buildRealTeams() {
+          // Gather real authoritative staff and registered employees present in the software
+          const staff = Array.isArray(this.staffUsers) && this.staffUsers.length > 0 
+            ? this.staffUsers 
+            : [
+                { id: 'usr-admin-001', name: 'Master Administrator', username: 'admin', role: 'admin', department: 'Operations', designation: 'Master Administrator', email: 'admin@invoicepro.local', phone: '9322731612', emp_id: 'usr-admin-001' },
+                { id: 'usr-mgr-001', name: 'Operations Manager', username: 'manager', role: 'manager', department: 'Operations', designation: 'Operations Manager', email: 'manager@invoicepro.local', phone: '9322731612', emp_id: 'usr-mgr-001' },
+                { id: 'usr-slead-001', name: 'Sales Team Leader', username: 'sales_lead', role: 'sales_leader', department: 'Sales', designation: 'Sales Team Leader', email: 'saleslead@invoicepro.local', phone: '9820011223', emp_id: 'usr-slead-001' },
+                { id: 'usr-sales-001', name: 'Senior Sales Executive', username: 'sales', role: 'sales_member', department: 'Sales', designation: 'Senior Sales Executive', email: 'sales@invoicepro.local', phone: '9820011224', emp_id: 'usr-sales-001' },
+                { id: 'usr-suplead-001', name: 'Support Team Leader', username: 'support_lead', role: 'support_leader', department: 'Support', designation: 'Support Team Leader', email: 'supportlead@invoicepro.local', phone: '9820011223', emp_id: 'usr-suplead-001' },
+                { id: 'usr-sup-alias', name: 'Support Specialist', username: 'support', role: 'support_leader', department: 'Support', designation: 'Support Specialist', email: 'support@invoicepro.local', phone: '9820011223', emp_id: 'usr-sup-alias' },
+                { id: 'usr-supmem-001', name: 'Technical Support Specialist', username: 'support_mem', role: 'support_member', department: 'Support', designation: 'Technical Support Specialist', email: 'supportmem@invoicepro.local', phone: '9820044556', emp_id: 'usr-supmem-001' },
+                { id: 'usr-devlead-001', name: 'Development Team Leader', username: 'dev_lead', role: 'dev_leader', department: 'Development', designation: 'Development Team Leader', email: 'devlead@invoicepro.local', phone: '9820033441', emp_id: 'usr-devlead-001' },
+                { id: 'usr-hr-001', name: 'Sakshi Ajit Chavan', username: 'sakshi', role: 'hr', department: 'Human Resources', designation: 'HR Manager', email: 'sakshichavan2409@gmail.com', phone: '8459790520', emp_id: 'EMP-SA0520-478' }
+              ];
+          
+          const employees = Array.isArray(this.employees) ? this.employees : [];
+          const findStaff = (matcher) => staff.find(matcher);
+
+          // 1. Sales Team — Real Software Staff
+          const salesLead = findStaff(s => s.role === 'sales_leader' || s.username === 'sales_lead') || 
+                            findStaff(s => (s.role || '').includes('sales'));
+          const salesStaffMembers = staff.filter(s => (s.role || '').includes('sales') || (s.department || '').toLowerCase() === 'sales');
+          const salesEmpMembers = employees.filter(e => (e.department || '').toLowerCase().includes('sales'));
+          const salesMemberNames = [...new Set([
+            ...(salesLead ? [salesLead.name] : []),
+            ...salesStaffMembers.map(s => s.name),
+            ...salesEmpMembers.map(e => e.name)
+          ])].filter(Boolean);
+
+          // 2. Customer Support Team — Real Software Staff
+          const supportLead = findStaff(s => s.role === 'support_leader' || s.username === 'support_lead') ||
+                              findStaff(s => (s.role || '').includes('support'));
+          const supportStaffMembers = staff.filter(s => (s.role || '').includes('support') || (s.department || '').toLowerCase() === 'support');
+          const supportEmpMembers = employees.filter(e => (e.department || '').toLowerCase().includes('support'));
+          const supportMemberNames = [...new Set([
+            ...(supportLead ? [supportLead.name] : []),
+            ...supportStaffMembers.map(s => s.name),
+            ...supportEmpMembers.map(e => e.name)
+          ])].filter(Boolean);
+
+          // 3. Tech & Engineering Team — Real Software Staff
+          const devLead = findStaff(s => s.role === 'dev_leader' || s.username === 'dev_lead') ||
+                          findStaff(s => (s.role || '').includes('dev'));
+          const devStaffMembers = staff.filter(s => (s.role || '').includes('dev') || (s.department || '').toLowerCase().includes('dev') || (s.department || '').toLowerCase().includes('tech'));
+          const devEmpMembers = employees.filter(e => (e.department || '').toLowerCase().includes('dev') || (e.department || '').toLowerCase().includes('tech') || (e.department || '').toLowerCase().includes('it'));
+          const devMemberNames = [...new Set([
+            ...(devLead ? [devLead.name] : []),
+            ...devStaffMembers.map(s => s.name),
+            ...devEmpMembers.map(e => e.name)
+          ])].filter(Boolean);
+
+          // 4. HR Team — Real Software Staff
+          const hrLead = findStaff(s => s.role === 'hr' || s.username === 'sakshi' || s.username === 'hr') ||
+                         findStaff(s => (s.department || '').toLowerCase().includes('hr') || (s.department || '').toLowerCase().includes('human'));
+          const hrStaffMembers = staff.filter(s => s.role === 'hr' || (s.department || '').toLowerCase().includes('hr'));
+          const hrEmpMembers = employees.filter(e => (e.department || '').toLowerCase().includes('hr') || (e.department || '').toLowerCase().includes('human'));
+          const hrMemberNames = [...new Set([
+            ...(hrLead ? [hrLead.name] : []),
+            ...hrStaffMembers.map(s => s.name),
+            ...hrEmpMembers.map(e => e.name)
+          ])].filter(Boolean);
+
+          // 5. Operations & Facilities Team — Real Software Staff
+          const opsLead = findStaff(s => s.role === 'manager' || s.username === 'manager') ||
+                          findStaff(s => s.role === 'admin' || s.username === 'admin');
+          const opsStaffMembers = staff.filter(s => s.role === 'manager' || s.role === 'admin' || (s.department || '').toLowerCase().includes('operat'));
+          const opsEmpMembers = employees.filter(e => (e.department || '').toLowerCase().includes('operat') || (e.department || '').toLowerCase().includes('admin'));
+          const opsMemberNames = [...new Set([
+            ...(opsLead ? [opsLead.name] : []),
+            ...opsStaffMembers.map(s => s.name),
+            ...opsEmpMembers.map(e => e.name)
+          ])].filter(Boolean);
+
+          return [
+            {
+              id: 'team-1',
+              dept_id: 'dept-1',
+              name: 'Enterprise & Key Accounts Sales Squad',
+              code: 'SALES-ENT',
+              lead_name: salesLead ? salesLead.name : 'Sales Team Leader',
+              lead_phone: salesLead ? (salesLead.phone || '9820011223') : '9820011223',
+              lead_email: salesLead ? (salesLead.email || 'saleslead@invoicepro.local') : 'saleslead@invoicepro.local',
+              members: salesMemberNames.length ? salesMemberNames : ['Sales Team Leader', 'Senior Sales Executive'],
+              headcount: salesMemberNames.length || 2,
+              targetMonthly: '₹25,00,000',
+              progress: 70,
+              focus_area: 'Corporate Retail POS Licenses, Upgrades & Commercial Implementations'
+            },
+            {
+              id: 'team-2',
+              dept_id: 'dept-2',
+              name: 'Customer Support & Technical Helpdesk',
+              code: 'SUPP-L1',
+              lead_name: supportLead ? supportLead.name : 'Support Team Leader',
+              lead_phone: supportLead ? (supportLead.phone || '9820011223') : '9820011223',
+              lead_email: supportLead ? (supportLead.email || 'supportlead@invoicepro.local') : 'supportlead@invoicepro.local',
+              members: supportMemberNames.length ? supportMemberNames : ['Support Team Leader', 'Support Specialist', 'Technical Support Specialist'],
+              headcount: supportMemberNames.length || 3,
+              targetMonthly: '< 10m First Response',
+              progress: 92,
+              focus_area: 'Live Phone & Remote Desk Support, ESC/POS Thermal Drivers & Database Sync'
+            },
+            {
+              id: 'team-3',
+              dept_id: 'dept-3',
+              name: 'Core Software Architecture & Engineering',
+              code: 'DEV-CORE',
+              lead_name: devLead ? devLead.name : 'Development Team Leader',
+              lead_phone: devLead ? (devLead.phone || '9820033441') : '9820033441',
+              lead_email: devLead ? (devLead.email || 'devlead@invoicepro.local') : 'devlead@invoicepro.local',
+              members: devMemberNames.length ? devMemberNames : ['Development Team Leader'],
+              headcount: devMemberNames.length || 1,
+              targetMonthly: 'Sprint Releases & 99.9% Uptime',
+              progress: 85,
+              focus_area: 'Desktop App Engine, Offline SQLite Synchronization, LAN Clustering & QA'
+            },
+            {
+              id: 'team-4',
+              dept_id: 'dept-4',
+              name: 'Talent Acquisition & Employee Operations',
+              code: 'HR-OPS',
+              lead_name: hrLead ? hrLead.name : 'Sakshi Ajit Chavan',
+              lead_phone: hrLead ? (hrLead.phone || '8459790520') : '8459790520',
+              lead_email: hrLead ? (hrLead.email || 'sakshichavan2409@gmail.com') : 'sakshichavan2409@gmail.com',
+              members: hrMemberNames.length ? hrMemberNames : ['Sakshi Ajit Chavan'],
+              headcount: hrMemberNames.length || 1,
+              targetMonthly: '100% Policy Compliance',
+              progress: 80,
+              focus_area: 'Candidate Sourcing, In-Office Onboarding, Biometric Attendance & Payroll'
+            },
+            {
+              id: 'team-5',
+              dept_id: 'dept-5',
+              name: 'Operations Control & Executive Governance',
+              code: 'OPS-MGMT',
+              lead_name: opsLead ? opsLead.name : 'Operations Manager',
+              lead_phone: opsLead ? (opsLead.phone || '9322731612') : '9322731612',
+              lead_email: opsLead ? (opsLead.email || 'manager@invoicepro.local') : 'manager@invoicepro.local',
+              members: opsMemberNames.length ? opsMemberNames : ['Master Administrator', 'Operations Manager'],
+              headcount: opsMemberNames.length || 2,
+              targetMonthly: '100% Operational Efficiency',
+              progress: 95,
+              focus_area: 'Cross-Department Coordination, System Security & Governance Oversight'
+            }
+          ];
+        },
+
+        _syncTeamsWithRealStaff() {
+          if (!this.teams || !this.teams.length || this._hasDummyTeamData(this.teams)) {
+            this.teams = this._buildRealTeams();
+            this._saveTeams();
+            return;
+          }
+          const dummySignatures = [
+            'sudarshan', 'sunvibee.com', 'pooja patil', 'aman verma',
+            'neha kulkarni', 'vikas mehta', 'anjali deshmukh',
+            'kunal joshi', 'deepak more', 'aniket shirodkar',
+            'rohit sawant', 'saurabh kale', 'rohan rane', 'hr assistant', 'admin executive'
+          ];
+          let changed = false;
+          this.teams.forEach(t => {
+            if (t.lead_name && dummySignatures.some(d => t.lead_name.toLowerCase().includes(d))) {
+              t.lead_name = '';
+              t.lead_phone = '';
+              t.lead_email = '';
+              changed = true;
+            }
+            if (Array.isArray(t.members)) {
+              const cleaned = t.members.filter(m => !dummySignatures.some(d => m.toLowerCase().includes(d)));
+              if (cleaned.length !== t.members.length) {
+                t.members = cleaned;
+                t.headcount = Math.max(1, t.members.length);
+                changed = true;
+              }
+            }
+          });
+          if (changed) {
+            this._saveTeams();
+          }
         },
 
         _loadTeams() {
@@ -32147,121 +32353,12 @@ get remindersCount() {
             }
           } catch (e) {}
 
-          if (!this.teams || this.teams.length === 0) {
-            this.teams = [
-              {
-                id: 'team-1',
-                dept_id: 'dept-1',
-                name: 'Enterprise & Key Accounts Team',
-                code: 'SALES-ENT',
-                lead_name: 'Sudarshan Shete',
-                lead_phone: '9322731612',
-                lead_email: 'sudarshan@invoicepro.com',
-                members: ['Sudarshan Shete', 'Rajesh Sharma', 'Pooja Patil', 'Aman Verma'],
-                headcount: 4,
-                targetMonthly: '₹15,00,000',
-                progress: 70,
-                focus_area: 'Corporate Accounts & Multi-Store Retail Implementations'
-              },
-              {
-                id: 'team-2',
-                dept_id: 'dept-1',
-                name: 'Inside Sales & Inbound SDR Squad',
-                code: 'SALES-SDR',
-                lead_name: '',
-                lead_phone: '',
-                lead_email: '',
-                members: ['Neha Kulkarni', 'Vikas Mehta', 'Anjali Deshmukh'],
-                headcount: 3,
-                targetMonthly: '₹10,00,000',
-                progress: 45,
-                focus_area: 'Inbound Web Inquiries, Leads Qualification & Demos'
-              },
-              {
-                id: 'team-3',
-                dept_id: 'dept-2',
-                name: 'Tier-1 Customer Helpdesk',
-                code: 'SUPP-L1',
-                lead_name: 'Aarav Patel',
-                lead_phone: '+91 98200 11223',
-                lead_email: 'aarav@sunvibee.com',
-                members: ['Aarav Patel', 'Rahul Gupta', 'Sneha Rao', 'Manoj Shinde'],
-                headcount: 4,
-                targetMonthly: '< 10m First-Response',
-                progress: 92,
-                focus_area: 'Real-time Phone Calls, WhatsApp & Live Chat Support'
-              },
-              {
-                id: 'team-4',
-                dept_id: 'dept-2',
-                name: 'Tier-2 Technical Solutions & Escalations',
-                code: 'SUPP-L2',
-                lead_name: 'Priya Sharma',
-                lead_phone: '+91 98200 44556',
-                lead_email: 'priya@sunvibee.com',
-                members: ['Priya Sharma', 'Kunal Joshi', 'Deepak More'],
-                headcount: 3,
-                targetMonthly: '< 2h MTTR Resolution',
-                progress: 88,
-                focus_area: 'Database Sync, ESC/POS Thermal Drivers & GST Tax Calculations'
-              },
-              {
-                id: 'team-5',
-                dept_id: 'dept-3',
-                name: 'Frontend & UI/UX Engineering Squad',
-                code: 'DEV-UI',
-                lead_name: 'Dev Lead',
-                lead_phone: '+91 98200 77889',
-                lead_email: 'devlead@invoicepro.com',
-                members: ['Dev Lead', 'Dev Front', 'Aniket Shirodkar'],
-                headcount: 3,
-                targetMonthly: 'Sprint 24 UI Milestones',
-                progress: 80,
-                focus_area: 'Desktop App UI, Dark Mode & Invoice Design Engine'
-              },
-              {
-                id: 'team-6',
-                dept_id: 'dept-3',
-                name: 'Backend, Database & Sync Engine',
-                code: 'DEV-CORE',
-                lead_name: '',
-                lead_phone: '',
-                lead_email: '',
-                members: ['Dev Back', 'Dev QA', 'Rohit Sawant', 'Saurabh Kale'],
-                headcount: 4,
-                targetMonthly: '99.9% Sync Uptime',
-                progress: 85,
-                focus_area: 'SQLite WAL Engine, Local LAN Clustering & Cloud Backups'
-              },
-              {
-                id: 'team-7',
-                dept_id: 'dept-4',
-                name: 'Talent Sourcing & Recruitment Squad',
-                code: 'HR-RECRUIT',
-                lead_name: 'Sakshi Chavan',
-                lead_phone: '+91 89547 40838',
-                lead_email: 'sakshichavan2409@gmail.com',
-                members: ['Sakshi Chavan', 'HR Assistant'],
-                headcount: 2,
-                targetMonthly: '12 Monthly Onboardings',
-                progress: 75,
-                focus_area: 'Candidate Sourcing, Technical Interviewing & Joining Kits'
-              },
-              {
-                id: 'team-8',
-                dept_id: 'dept-5',
-                name: 'Office Operations & In-Office Onboarding Desk',
-                code: 'OPS-MAIN',
-                lead_name: 'Operations Manager',
-                lead_phone: '+91 98200 00001',
-                lead_email: 'manager@invoicepro.com',
-                members: ['Operations Manager', 'Admin Executive', 'Rohan Rane'],
-                headcount: 3,
-                targetMonthly: '100% Policy Compliance',
-                progress: 95,
-                focus_area: 'Physical Document Verification & Employee Creation'
-              }
-            ];
+          // Ensure teams strictly reflect real software employees and purge dummy placeholders
+          if (!this.teams || this.teams.length === 0 || this._hasDummyTeamData(this.teams)) {
+            this.teams = this._buildRealTeams();
+            this._saveTeams();
+          } else {
+            this._syncTeamsWithRealStaff();
           }
 
           // Fetch from server DB if available
@@ -32269,24 +32366,22 @@ get remindersCount() {
             .then(r => r.json())
             .then(data => {
               if (data && data.ok && Array.isArray(data.teams) && data.teams.length > 0) {
-                this.teams = data.teams.map(t => ({
-                  ...t,
-                  members: Array.isArray(t.members) ? t.members : (t.lead_name ? [t.lead_name] : []),
-                  headcount: (Array.isArray(t.members) && t.members.length > 0) ? t.members.length : (parseInt(t.headcount) || 1)
-                }));
-                try {
-                  localStorage.setItem('ip_adm_teams', JSON.stringify(this.teams));
-                } catch (e) {}
+                if (!this._hasDummyTeamData(data.teams)) {
+                  this.teams = data.teams.map(t => ({
+                    ...t,
+                    members: Array.isArray(t.members) ? t.members : (t.lead_name ? [t.lead_name] : []),
+                    headcount: (Array.isArray(t.members) && t.members.length > 0) ? t.members.length : (parseInt(t.headcount) || 1)
+                  }));
+                  try {
+                    localStorage.setItem('ip_adm_teams', JSON.stringify(this.teams));
+                  } catch (e) {}
+                } else {
+                  this._saveTeams();
+                }
               } else if (this.teams && this.teams.length > 0) {
-                // Seed initial teams to server
-                fetch('/api/teams/save', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ teams: this.teams })
-                }).catch(() => {});
+                this._saveTeams();
               }
             })
-            .catch(() => {});
         },
         _saveTeams() {
           try {
@@ -35384,10 +35479,12 @@ get remindersCount() {
                 if (Array.isArray(data)) {
                   this.staffUsers = ensureSakshiHr(_normalizeStaffList(data));
                   localStorage.setItem('ip_adm_staff_users', JSON.stringify(this.staffUsers));
+                  if (this._syncTeamsWithRealStaff) this._syncTeamsWithRealStaff();
                   return;
                 } else if (data && data.ok && Array.isArray(data.users)) {
                   this.staffUsers = ensureSakshiHr(_normalizeStaffList(data.users));
                   localStorage.setItem('ip_adm_staff_users', JSON.stringify(this.staffUsers));
+                  if (this._syncTeamsWithRealStaff) this._syncTeamsWithRealStaff();
                   return;
                 }
               }
@@ -35395,7 +35492,11 @@ get remindersCount() {
           }
           const stored = localStorage.getItem('ip_adm_staff_users');
           if (stored) {
-            try { this.staffUsers = ensureSakshiHr(_normalizeStaffList(JSON.parse(stored))); return; } catch (_) {}
+            try { 
+              this.staffUsers = ensureSakshiHr(_normalizeStaffList(JSON.parse(stored))); 
+              if (this._syncTeamsWithRealStaff) this._syncTeamsWithRealStaff();
+              return; 
+            } catch (_) {}
           }
           this.staffUsers = [
             { id: 'usr-admin-001', name: 'Master Admin', username: 'admin', role: 'admin', department: '', designation: 'Master Administrator', email: 'admin@invoicepro.in', phone: '', emp_id: 'ADM-01', active: 1, last_login: new Date().toISOString() },
@@ -35415,7 +35516,8 @@ get remindersCount() {
             { id: 'usr-dev-003', name: 'Neha Patil', username: 'dev_flutter', role: 'dev_member', department: 'Development', designation: 'Flutter Developer', email: 'neha.dev@invoicepro.in', phone: '9820033444', emp_id: 'DEV-04', active: 1, last_login: null },
             { id: 'usr-dev-004', name: 'Aniket Sawant', username: 'dev_qa', role: 'dev_member', department: 'Development', designation: 'QA Tester', email: 'aniket.dev@invoicepro.in', phone: '9820033445', emp_id: 'DEV-05', active: 1, last_login: null },
             { id: 'usr-dev-alias', name: 'Aakash Mehta', username: 'dev', role: 'dev_leader', department: 'Development', designation: 'Development Team Leader', email: 'aakash.dev@invoicepro.in', phone: '9820033441', emp_id: 'DEV-01A', active: 1, last_login: null }
-          ]
+          ];
+          if (this._syncTeamsWithRealStaff) this._syncTeamsWithRealStaff();
         },
 
         openAddStaffModal() {

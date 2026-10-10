@@ -5647,7 +5647,7 @@
               <span class="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Phone Calls</span>
               <span class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-phone"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesActivities || []).filter(a => a.type === 'Call').length"></div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="salesActivityStats.calls"></div>
             <div class="text-[10px] text-gray-400 mt-0.5">Client outbound calls</div>
           </div>
 
@@ -5656,7 +5656,7 @@
               <span class="text-[11px] font-bold text-purple-500 uppercase tracking-wider">Demos &amp; Meetings</span>
               <span class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center text-xs"><i class="fa-solid fa-laptop-code"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesActivities || []).filter(a => a.type === 'Demo' || a.type === 'Meeting').length"></div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="salesActivityStats.demos"></div>
             <div class="text-[10px] text-purple-600 font-semibold mt-0.5">Product walk-throughs</div>
           </div>
 
@@ -5665,7 +5665,7 @@
               <span class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">WhatsApp Chats</span>
               <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-brands fa-whatsapp"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1" x-text="(salesActivities || []).filter(a => a.type === 'WhatsApp').length"></div>
+            <div class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1" x-text="salesActivityStats.chats"></div>
             <div class="text-[10px] text-emerald-600 font-semibold mt-0.5">Chat communications</div>
           </div>
 
@@ -5674,8 +5674,8 @@
               <span class="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Total Interactions</span>
               <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-list-check"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesActivities || []).length"></div>
-            <div class="text-[10px] text-gray-400 mt-0.5">All logged outreach</div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="salesActivityStats.total"></div>
+            <div class="text-[10px] text-gray-400 mt-0.5" x-text="isSalesMember ? 'My logged outreach' : 'All logged outreach'"></div>
           </div>
         </div>
 
@@ -5689,7 +5689,7 @@
             </div>
 
             <!-- Rep Filter (Visible to Leaders / Admins) -->
-            <select x-model="salesActivityRepFilter"
+            <select x-show="isAdminOrManager || isSalesLeader" x-model="salesActivityRepFilter"
               class="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold">
               <option value="all">All Sales Executives</option>
               <template x-for="rep in salesTeamScorecardList" :key="rep.username">
@@ -5774,13 +5774,13 @@
                 <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center mx-auto text-lg">
                   <i class="fa-solid fa-phone-slash"></i>
                 </div>
-                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No Activity Logs Found</h4>
-                <p class="text-xs text-gray-400 max-w-sm mx-auto">No outreach activities match the current filters or none have been logged yet.</p>
+                <p class="text-xs text-gray-400 max-w-sm mx-auto"
+                  x-text="isSalesMember ? 'No outreach activities logged by you yet. Click below to record your first client touchpoint.' : 'No outreach activities match the current filters or none have been logged yet.'"></p>
                 <div class="flex items-center justify-center gap-2 pt-1">
                   <button @click="openLogActivityModal(null)" class="px-3.5 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs shadow hover:bg-purple-700 transition-all">
                     <i class="fa-solid fa-plus mr-1"></i> Log First Interaction
                   </button>
-                  <button @click="salesActivityRepFilter='all'; salesActivityTypeFilter='all'; salesActivitySearch='';" class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                  <button x-show="isAdminOrManager || isSalesLeader || salesActivityTypeFilter !== 'all' || salesActivitySearch" @click="salesActivityRepFilter='all'; salesActivityTypeFilter='all'; salesActivitySearch='';" class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-bold text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
                     Clear Filters
                   </button>
                 </div>
@@ -21278,6 +21278,49 @@
           return false;
         },
 
+        // ── Check if a sales outreach activity was logged by / belongs to a specific sales rep ──
+        isActivityBelongingToRep(a, repUser) {
+          if (!a || !repUser) return false;
+          const uName = String(repUser.name || '').trim().toLowerCase();
+          const uUser = String(repUser.username || '').trim().toLowerCase().replace(/^@/, '');
+          const uId = String(repUser.id || '').trim().toLowerCase();
+          const uEmpId = String(repUser.emp_id || repUser.empId || '').trim().toLowerCase();
+
+          // Locate employee object if present
+          let myEmp = null;
+          if (Array.isArray(this.employees)) {
+            myEmp = this.employees.find(e => {
+              const eName = String(e.name || '').trim().toLowerCase();
+              const eEmpId = String(e.empId || '').trim().toLowerCase();
+              const eStaff = String(e.staffUsername || '').trim().toLowerCase().replace(/^@/, '');
+              const eId = String(e.id || '').trim().toLowerCase();
+              return (uEmpId && eEmpId === uEmpId) || 
+                     (uUser && eStaff === uUser) || 
+                     (uId && (eId === uId || eEmpId === uId)) ||
+                     (uName && eName === uName);
+            });
+          }
+
+          const myEmpId = myEmp ? String(myEmp.empId || myEmp.id || '').trim().toLowerCase() : '';
+          const myEmpName = myEmp ? String(myEmp.name || '').trim().toLowerCase() : '';
+          const myEmpStaff = myEmp ? String(myEmp.staffUsername || '').trim().toLowerCase().replace(/^@/, '') : '';
+
+          const repUsername = String(a.rep_username || a.logged_by || a.createdBy || a.added_by || '').trim().toLowerCase().replace(/^@/, '');
+          const repName = String(a.rep_name || a.repName || '').trim().toLowerCase();
+          const repEmpId = String(a.emp_id || a.empId || '').trim().toLowerCase();
+
+          // 1. Direct username match (with or without leading @)
+          if (repUsername && (repUsername === uUser || (myEmpStaff && repUsername === myEmpStaff) || repUsername === uId)) return true;
+
+          // 2. Direct display name match
+          if (repName && (repName === uName || (myEmpName && repName === myEmpName) || repName === uUser)) return true;
+
+          // 3. Employee ID match
+          if (repEmpId && ((uEmpId && repEmpId === uEmpId) || (myEmpId && repEmpId === myEmpId))) return true;
+
+          return false;
+        },
+
         get filteredCustomers() {
           const role = (this.currentUser?.role || '').toLowerCase();
           const isSalesMember = ['sales_member', 'sales', 'sales2'].includes(role);
@@ -27402,21 +27445,78 @@
           return list;
         },
 
+        get visibleSalesActivities() {
+          const role = (this.currentUser?.role || '').toLowerCase();
+          const isSalesMember = ['sales_member', 'sales', 'sales2'].includes(role);
+          const isAdminOrLeader = ['admin', 'super_admin', 'manager', 'sales_leader', 'sales_lead'].includes(role);
+
+          let list = Array.isArray(this.salesActivities) ? this.salesActivities : [];
+          // For Sales Member: STRICTLY show ONLY those activities specifically logged by this sales executive
+          if (isSalesMember && !isAdminOrLeader) {
+            list = list.filter(a => this.isActivityBelongingToRep(a, this.currentUser));
+          }
+          return list;
+        },
+
+        get salesActivityStats() {
+          const acts = this.visibleSalesActivities;
+          const calls = acts.filter(a => {
+            const t = String(a.type || '').toLowerCase();
+            return t.includes('call') || t.includes('phone');
+          }).length;
+          const demos = acts.filter(a => {
+            const t = String(a.type || '').toLowerCase();
+            return t.includes('demo') || t.includes('meeting') || t.includes('meet');
+          }).length;
+          const chats = acts.filter(a => {
+            const t = String(a.type || '').toLowerCase();
+            return t.includes('whatsapp') || t.includes('chat');
+          }).length;
+          return {
+            calls,
+            demos,
+            chats,
+            total: acts.length
+          };
+        },
+
         get filteredSalesActivities() {
-          let list = this.salesActivities || [];
-          if (this.salesActivityRepFilter && this.salesActivityRepFilter !== 'all') {
-            list = list.filter(a => (a.rep_username || '').toLowerCase() === this.salesActivityRepFilter.toLowerCase());
+          let list = this.visibleSalesActivities;
+          const role = (this.currentUser?.role || '').toLowerCase();
+          const isAdminOrLeader = ['admin', 'super_admin', 'manager', 'sales_leader', 'sales_lead'].includes(role);
+
+          // Leaders/Admins can filter by representative
+          if (isAdminOrLeader && this.salesActivityRepFilter && this.salesActivityRepFilter !== 'all') {
+            const rf = String(this.salesActivityRepFilter).toLowerCase().replace(/^@/, '').trim();
+            list = list.filter(a => {
+              const u = String(a.rep_username || a.logged_by || '').toLowerCase().replace(/^@/, '').trim();
+              const n = String(a.rep_name || '').toLowerCase().trim();
+              return u === rf || n === rf;
+            });
           }
+
           if (this.salesActivityTypeFilter && this.salesActivityTypeFilter !== 'all') {
-            list = list.filter(a => (a.type || '').toLowerCase() === this.salesActivityTypeFilter.toLowerCase());
+            const tf = String(this.salesActivityTypeFilter).toLowerCase().trim();
+            list = list.filter(a => {
+              const t = String(a.type || '').toLowerCase().trim();
+              if (tf === 'call') return t.includes('call') || t.includes('phone');
+              if (tf === 'demo') return t.includes('demo');
+              if (tf === 'whatsapp') return t.includes('whatsapp') || t.includes('chat');
+              if (tf === 'meeting') return t.includes('meet');
+              if (tf === 'payment') return t.includes('pay');
+              return t === tf;
+            });
           }
+
           if (this.salesActivitySearch && this.salesActivitySearch.trim()) {
             const q = this.salesActivitySearch.toLowerCase().trim();
             list = list.filter(a =>
               (a.lead_name || '').toLowerCase().includes(q) ||
               (a.summary || '').toLowerCase().includes(q) ||
               (a.outcome || '').toLowerCase().includes(q) ||
-              (a.rep_username || '').toLowerCase().includes(q)
+              (a.rep_username || '').toLowerCase().includes(q) ||
+              (a.rep_name || '').toLowerCase().includes(q) ||
+              (a.next_action || '').toLowerCase().includes(q)
             );
           }
           return list;
@@ -29857,10 +29957,12 @@ get remindersCount() {
           }
           const repName = this.currentUser ? this.currentUser.name : 'Sales Executive';
           const repUser = this.currentUser ? this.currentUser.username : 'sales';
+          const repEmpId = this.currentUser ? (this.currentUser.emp_id || this.currentUser.empId || '') : '';
           const newAct = {
             id: 'act-' + Date.now(),
             rep_name: repName,
             rep_username: repUser,
+            emp_id: repEmpId,
             lead_name: this.activityForm.lead_name,
             type: this.activityForm.type,
             summary: this.activityForm.summary.trim(),

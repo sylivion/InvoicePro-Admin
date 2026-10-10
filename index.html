@@ -22235,6 +22235,9 @@
               await this._recordKeygenEmpSaleDirect(assignedEmp, newCustomer.name, newCustomer);
             }
             this.save();
+            if (typeof this._syncCustomersToLeads === 'function') {
+              this._syncCustomersToLeads();
+            }
             this.showAddModal = false;
             this._logAction('customer', newCustomer.id, `Added new customer "${newCustomer.name}" (${newCustomer.city || 'India'})`);
             const commNote = assignedEmp ? ` · ₹${Math.round(payload.purchaseAmount * 0.10)} commission credited to ${assignedEmp.name}` : '';
@@ -27298,6 +27301,9 @@
         },
 
         get filteredTeamSalesLeads() {
+          if (typeof this._syncCustomersToLeads === 'function') {
+            this._syncCustomersToLeads();
+          }
           let list = this.deduplicateLeadsList(this.salesLeads || []);
 
           // 1. Rep Filter
@@ -29289,6 +29295,78 @@ get remindersCount() {
           if (Array.isArray(this.salesLeads) && typeof this.deduplicateLeadsList === 'function') {
             this.salesLeads = this.deduplicateLeadsList(this.salesLeads);
           }
+          if (typeof this._syncCustomersToLeads === 'function') {
+            this._syncCustomersToLeads();
+          }
+        },
+
+        _syncCustomersToLeads() {
+          if (!Array.isArray(this.customers) || this.customers.length === 0) return;
+          if (!Array.isArray(this.salesLeads)) this.salesLeads = [];
+
+          const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
+
+          let changed = false;
+          for (const c of this.customers) {
+            if (!c || !c.name) continue;
+            const cId = String(c.id || '').trim();
+            const cleanCustPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+            const custCompLower = (c.company || c.name || '').trim().toLowerCase();
+            const custNameLower = (c.name || '').trim().toLowerCase();
+
+            // Check if customer already exists in salesLeads
+            const exists = this.salesLeads.some(l => {
+              if (!l || dummyLeadIds.has(l.id)) return false;
+              if (cId && l.customerId && String(l.customerId).trim() === cId) return true;
+              const lPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+              if (cleanCustPhone && lPhone && cleanCustPhone === lPhone) return true;
+              const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+              if (lComp && (lComp === custCompLower || lComp === custNameLower)) return true;
+              return false;
+            });
+
+            if (!exists) {
+              const repInfo = typeof this.getCustomerEffectiveRep === 'function' ? this.getCustomerEffectiveRep(c) : null;
+              const repUser = (repInfo && repInfo.repUser) || c.salesRep || c.soldByEmpName || c.createdBy || c.addedBy || 'sales';
+              const resolvedLicense = c.licenseKey || c.license_key || (c.licenses && c.licenses[0] ? (typeof c.licenses[0] === 'string' ? c.licenses[0] : (c.licenses[0].key || c.licenses[0].license_key)) : '');
+              const amt = parseFloat(c.purchaseAmount || c.purchase_amount || c.amount || 1499) || 1499;
+              const rawPlan = c.planLabel || c.plan || (resolvedLicense ? 'Professional (Annual)' : 'Trial');
+
+              const syncedLead = {
+                id: 'lead-' + (cId ? cId.replace(/[^a-zA-Z0-9-]/g, '') : Date.now()),
+                customerId: c.id,
+                customer_name: c.owner || c.name,
+                company: c.company || c.name,
+                phone: c.phone || '',
+                email: c.email || '',
+                city: c.city || 'Satara',
+                license_key: resolvedLicense,
+                licenseKey: resolvedLicense,
+                requirement: 'Purchased ' + rawPlan,
+                plan_interested: rawPlan,
+                deal_value: '₹' + amt.toLocaleString('en-IN'),
+                status: 'Won',
+                assigned_to: repUser,
+                assigned_by: 'system',
+                priority: 'High',
+                notes: c.notes || 'Converted Customer Account',
+                customer_added_at: c.createdAt || c.purchaseDate || c.created_at || '',
+                created_at: typeof this.getCustomerAddedDate === 'function' ? this.getCustomerAddedDate(c) : (c.purchaseDate || '24/9/2026'),
+                sale_recorded_at: c.purchaseDate || ''
+              };
+              this.salesLeads.push(syncedLead);
+              changed = true;
+            }
+          }
+
+          if (changed) {
+            if (typeof this.deduplicateLeadsList === 'function') {
+              this.salesLeads = this.deduplicateLeadsList(this.salesLeads);
+            }
+            try {
+              localStorage.setItem('ip_adm_sales_leads', JSON.stringify(this.salesLeads));
+            } catch (_) {}
+          }
         },
 
         _saveSalesData() {
@@ -29318,19 +29396,77 @@ get remindersCount() {
         },
 
         getMyAssignedLeads() {
-          if (!Array.isArray(this.salesLeads)) return [];
+          if (!Array.isArray(this.salesLeads)) this.salesLeads = [];
           const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
           const myUser = (this.currentUser ? this.currentUser.username : 'sales').toLowerCase();
           const myName = (this.currentUser ? this.currentUser.name : '').toLowerCase();
           const myEmpId = (this.currentUser ? (this.currentUser.emp_id || this.currentUser.empId) : '').toLowerCase();
           const isAdmin = this.currentUser?.role === 'admin' || this.currentUser?.role === 'super_admin';
 
+          if (typeof this._syncCustomersToLeads === 'function') {
+            this._syncCustomersToLeads();
+          }
+
           const filtered = this.salesLeads.filter(l => {
             if (!l || dummyLeadIds.has(l.id) || l.company === '45rtetdsfdsg') return false;
             if (isAdmin) return true;
             const assigned = (l.assigned_to || '').toLowerCase();
-            return assigned === myUser || (myName && assigned === myName) || (myEmpId && assigned === myEmpId) || !assigned || assigned === 'unassigned';
+            if (assigned === myUser || (myName && assigned === myName) || (myEmpId && assigned === myEmpId) || !assigned || assigned === 'unassigned') {
+              return true;
+            }
+            if (l.customerId && Array.isArray(this.customers)) {
+              const cust = this.customers.find(c => c.id === l.customerId);
+              if (cust && typeof this.isCustomerBelongingToRep === 'function' && this.isCustomerBelongingToRep(cust, this.currentUser)) {
+                return true;
+              }
+            }
+            return false;
           });
+
+          // Fallback: If any customer belongs to current user but is still missing from filtered list
+          if (Array.isArray(this.customers) && this.currentUser) {
+            for (const c of this.customers) {
+              if (typeof this.isCustomerBelongingToRep === 'function' && this.isCustomerBelongingToRep(c, this.currentUser)) {
+                const cCleanPhone = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+                const cComp = (c.company || c.name || '').trim().toLowerCase();
+                const alreadyIncluded = filtered.some(l => {
+                  if (c.id && l.customerId && String(l.customerId).trim() === String(c.id).trim()) return true;
+                  const lPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+                  if (cCleanPhone && lPhone && cCleanPhone === lPhone) return true;
+                  const lComp = (l.company || l.customer_name || '').trim().toLowerCase();
+                  if (lComp && lComp === cComp) return true;
+                  return false;
+                });
+                if (!alreadyIncluded) {
+                  const resolvedLicense = c.licenseKey || c.license_key || (c.licenses && c.licenses[0] ? (typeof c.licenses[0] === 'string' ? c.licenses[0] : (c.licenses[0].key || c.licenses[0].license_key)) : '');
+                  const amt = parseFloat(c.purchaseAmount || c.purchase_amount || c.amount || 1499) || 1499;
+                  const rawPlan = c.planLabel || c.plan || (resolvedLicense ? 'Professional (Annual)' : 'Trial');
+                  filtered.push({
+                    id: 'lead-cust-' + (c.id || Date.now()),
+                    customerId: c.id,
+                    customer_name: c.owner || c.name,
+                    company: c.company || c.name,
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    city: c.city || 'Satara',
+                    license_key: resolvedLicense,
+                    licenseKey: resolvedLicense,
+                    requirement: 'Purchased ' + rawPlan,
+                    plan_interested: rawPlan,
+                    deal_value: '₹' + amt.toLocaleString('en-IN'),
+                    status: 'Won',
+                    assigned_to: this.currentUser.username || 'sales',
+                    assigned_by: 'system',
+                    priority: 'High',
+                    notes: c.notes || 'Converted Customer Account',
+                    customer_added_at: c.createdAt || c.purchaseDate || c.created_at || '',
+                    created_at: typeof this.getCustomerAddedDate === 'function' ? this.getCustomerAddedDate(c) : (c.purchaseDate || '24/9/2026'),
+                    sale_recorded_at: c.purchaseDate || ''
+                  });
+                }
+              }
+            }
+          }
 
           return typeof this.deduplicateLeadsList === 'function' ? this.deduplicateLeadsList(filtered) : filtered;
         },

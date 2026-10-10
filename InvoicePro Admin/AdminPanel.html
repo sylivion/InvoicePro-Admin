@@ -4492,171 +4492,221 @@
         </div>
 
         <!-- Sales Leader & Sales Executives Target Plans Performance Table -->
-        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden space-y-4 p-5 sm:p-6">
+        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden p-5 sm:p-6 space-y-5">
           <!-- Controls & Filters Header -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100 dark:border-gray-800">
-            <div>
-              <h2 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <i class="fa-solid fa-users-viewfinder text-indigo-600"></i> Sales Team Plan Quota &amp; Generated Sales
-              </h2>
-              <p class="text-xs text-gray-500 mt-0.5">Comprehensive target attainment breakdown for Sales Leader &amp; Sales Executives</p>
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg border border-indigo-100 dark:border-indigo-900/50 shadow-xs shrink-0">
+                <i class="fa-solid fa-users-viewfinder"></i>
+              </div>
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                  Sales Team Plan Quota &amp; Generated Sales
+                </h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Comprehensive target attainment breakdown for Sales Leader &amp; Sales Executives</p>
+              </div>
             </div>
 
             <!-- Filter Pills & Search -->
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <div class="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+              <div class="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50 shrink-0">
                 <button type="button" @click="salesTargetFilter = 'all'"
                   :class="salesTargetFilter === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
-                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all">
                   All Team (<span x-text="salesTeamTargetsRoster.length"></span>)
                 </button>
                 <button type="button" @click="salesTargetFilter = 'leader'"
                   :class="salesTargetFilter === 'leader' ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
-                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                  <i class="fa-solid fa-crown text-[10px] text-amber-500"></i>
                   <span>Leader</span>
                 </button>
                 <button type="button" @click="salesTargetFilter = 'executives'"
                   :class="salesTargetFilter === 'executives' ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-300 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
-                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-tie text-[10px] text-blue-500"></i>
                   <span>Executives</span>
                 </button>
               </div>
 
-              <div class="relative min-w-[200px]">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+              <div class="relative w-full sm:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" x-model="salesTargetSearch" placeholder="Search team member..."
-                  class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
               </div>
             </div>
           </div>
 
-          <!-- Performance Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-gray-50/80 dark:bg-gray-800/50 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-y border-gray-100 dark:border-gray-800">
+          <!-- Performance Table Container -->
+          <div class="overflow-x-auto rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-50/90 dark:bg-slate-800/70 border-b border-gray-200 dark:border-gray-800">
                 <tr>
-                  <th class="py-3 px-3.5">Sales Member</th>
-                  <th class="py-3 px-3 text-center">1 Month (₹149)</th>
-                  <th class="py-3 px-3 text-center">1 Year (Target: 15)</th>
-                  <th class="py-3 px-3 text-center">3 Year (Target: 10)</th>
-                  <th class="py-3 px-3 text-center">5 Year (Target: 7)</th>
-                  <th class="py-3 px-3 text-center">VIP (Target: 3)</th>
-                  <th class="py-3 px-3 text-right">Total Generated</th>
-                  <th class="py-3 px-3.5 text-center">Target Status</th>
+                  <th class="py-3.5 px-5 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[280px]">
+                    Sales Member
+                  </th>
+                  <th class="py-3.5 px-4 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[120px]">
+                    <div>1 Month</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(₹149 Plan)</div>
+                  </th>
+                  <th class="py-3.5 px-4 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[125px]">
+                    <div>1 Year</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Target: 15)</div>
+                  </th>
+                  <th class="py-3.5 px-4 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[125px]">
+                    <div>3 Year</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Target: 10)</div>
+                  </th>
+                  <th class="py-3.5 px-4 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[125px]">
+                    <div>5 Year</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Target: 7)</div>
+                  </th>
+                  <th class="py-3.5 px-4 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[125px]">
+                    <div>VIP Lifetime</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Target: 3)</div>
+                  </th>
+                  <th class="py-3.5 px-5 text-right text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
+                    <div>Total Generated</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Revenue &amp; Deals)</div>
+                  </th>
+                  <th class="py-3.5 px-5 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap min-w-[130px]">
+                    <div>Target Status</div>
+                    <div class="text-[10px] font-normal text-slate-400 dark:text-slate-400 normal-case">(Attainment)</div>
+                  </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
                 <template x-for="rep in filteredSalesTeamTargetsRoster" :key="rep.id || rep.username">
-                  <tr class="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
-                    :class="rep.isLeader ? 'bg-indigo-50/30 dark:bg-indigo-950/20 font-medium' : ''">
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                    :class="rep.isLeader ? 'bg-indigo-50/25 dark:bg-indigo-950/20' : ''">
                     <!-- Member Details -->
-                    <td class="py-3 px-3.5">
-                      <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-sm relative"
-                          :class="rep.isLeader ? 'bg-gradient-to-tr from-amber-500 to-indigo-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'">
+                    <td class="py-4 px-5 whitespace-nowrap">
+                      <div class="flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm shadow-xs shrink-0 ring-1 ring-slate-200/70 dark:ring-slate-700/60"
+                          :class="rep.isLeader ? 'bg-gradient-to-tr from-amber-500 via-indigo-600 to-purple-600 text-white' : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200'">
                           <span x-text="(rep.name || rep.username || 'S').charAt(0).toUpperCase()"></span>
-                          <span x-show="rep.isLeader" class="absolute -top-1 -right-1 text-[10px]" title="Sales Team Leader"></span>
                         </div>
-                        <div>
-                          <div class="flex items-center gap-1.5">
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="rep.name"></span>
-                            <span x-show="rep.isLeader" class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 uppercase">Leader</span>
-                            <span x-show="!rep.isLeader" class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">Executive</span>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="rep.name"></span>
+                            <span x-show="rep.isLeader" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 uppercase tracking-wide">
+                              <i class="fa-solid fa-crown text-[9px] mr-1 text-amber-500"></i>Leader
+                            </span>
+                            <span x-show="!rep.isLeader" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase tracking-wide">
+                              Executive
+                            </span>
                           </div>
-                          <div class="text-[10px] text-gray-400" x-text="(rep.empId ? rep.empId + ' • ' : '') + '@' + rep.username"></div>
+                          <div class="flex items-center gap-1.5 mt-1 text-[11px] text-gray-400 dark:text-gray-400">
+                            <span x-show="rep.empId" class="font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded" x-text="rep.empId"></span>
+                            <span x-show="rep.empId" class="text-slate-300 dark:text-slate-600">•</span>
+                            <span class="font-mono text-slate-500 dark:text-slate-400" x-text="'@' + rep.username"></span>
+                          </div>
                         </div>
                       </div>
                     </td>
 
                     <!-- 1 Month Plan -->
-                    <td class="py-3 px-3 text-center">
-                      <div class="font-bold text-gray-900 dark:text-white" x-text="rep.count1m + ' Deals'"></div>
-                      <div class="text-[10px] text-gray-400 font-mono" x-text="fmtCurrency(rep.rev1m)"></div>
+                    <td class="py-4 px-4 text-center whitespace-nowrap">
+                      <div class="text-sm font-bold text-gray-900 dark:text-white" x-text="rep.count1m + ' Deals'"></div>
+                      <div class="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5" x-text="fmtCurrency(rep.rev1m)"></div>
                     </td>
 
                     <!-- 1 Year Plan (Target: 15) -->
-                    <td class="py-3 px-3 text-center">
-                      <div class="inline-flex flex-col items-center">
-                        <div class="flex items-center gap-1 text-xs font-bold"
-                          :class="rep.count1y >= 15 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'">
-                          <span x-text="rep.count1y"></span>
-                          <span class="text-gray-400 font-normal">/ 15</span>
-                          <i x-show="rep.count1y >= 15" class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i>
+                    <td class="py-4 px-4 text-center whitespace-nowrap">
+                      <div class="inline-flex flex-col items-center justify-center min-w-[96px]">
+                        <div class="flex items-center gap-1 text-xs">
+                          <span class="text-sm font-bold"
+                            :class="rep.count1y >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (rep.count1y > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white')"
+                            x-text="rep.count1y"></span>
+                          <span class="text-gray-400 font-medium text-[11px]">/ 15</span>
+                          <i x-show="rep.count1y >= 15" class="fa-solid fa-circle-check text-emerald-500 text-[11px] ml-0.5"></i>
                         </div>
-                        <div class="w-16 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                          <div class="h-1.5 rounded-full"
+                        <div class="w-20 bg-gray-100 dark:bg-gray-800 h-2 rounded-full mt-1.5 overflow-hidden ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                          <div class="h-full rounded-full transition-all duration-300"
                             :class="rep.count1y >= 15 ? 'bg-emerald-500' : 'bg-indigo-500'"
                             :style="'width: ' + rep.pct1y + '%'"></div>
                         </div>
+                        <div class="text-[10px] text-gray-400 dark:text-gray-400 font-mono mt-0.5" x-text="rep.pct1y + '%'"></div>
                       </div>
                     </td>
 
                     <!-- 3 Year Plan (Target: 10) -->
-                    <td class="py-3 px-3 text-center">
-                      <div class="inline-flex flex-col items-center">
-                        <div class="flex items-center gap-1 text-xs font-bold"
-                          :class="rep.count3y >= 10 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'">
-                          <span x-text="rep.count3y"></span>
-                          <span class="text-gray-400 font-normal">/ 10</span>
-                          <i x-show="rep.count3y >= 10" class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i>
+                    <td class="py-4 px-4 text-center whitespace-nowrap">
+                      <div class="inline-flex flex-col items-center justify-center min-w-[96px]">
+                        <div class="flex items-center gap-1 text-xs">
+                          <span class="text-sm font-bold"
+                            :class="rep.count3y >= 10 ? 'text-emerald-600 dark:text-emerald-400' : (rep.count3y > 0 ? 'text-purple-600 dark:text-purple-400' : 'text-gray-900 dark:text-white')"
+                            x-text="rep.count3y"></span>
+                          <span class="text-gray-400 font-medium text-[11px]">/ 10</span>
+                          <i x-show="rep.count3y >= 10" class="fa-solid fa-circle-check text-emerald-500 text-[11px] ml-0.5"></i>
                         </div>
-                        <div class="w-16 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                          <div class="h-1.5 rounded-full"
+                        <div class="w-20 bg-gray-100 dark:bg-gray-800 h-2 rounded-full mt-1.5 overflow-hidden ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                          <div class="h-full rounded-full transition-all duration-300"
                             :class="rep.count3y >= 10 ? 'bg-emerald-500' : 'bg-purple-500'"
                             :style="'width: ' + rep.pct3y + '%'"></div>
                         </div>
+                        <div class="text-[10px] text-gray-400 dark:text-gray-400 font-mono mt-0.5" x-text="rep.pct3y + '%'"></div>
                       </div>
                     </td>
 
                     <!-- 5 Year Plan (Target: 7) -->
-                    <td class="py-3 px-3 text-center">
-                      <div class="inline-flex flex-col items-center">
-                        <div class="flex items-center gap-1 text-xs font-bold"
-                          :class="rep.count5y >= 7 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'">
-                          <span x-text="rep.count5y"></span>
-                          <span class="text-gray-400 font-normal">/ 7</span>
-                          <i x-show="rep.count5y >= 7" class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i>
+                    <td class="py-4 px-4 text-center whitespace-nowrap">
+                      <div class="inline-flex flex-col items-center justify-center min-w-[96px]">
+                        <div class="flex items-center gap-1 text-xs">
+                          <span class="text-sm font-bold"
+                            :class="rep.count5y >= 7 ? 'text-emerald-600 dark:text-emerald-400' : (rep.count5y > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-gray-900 dark:text-white')"
+                            x-text="rep.count5y"></span>
+                          <span class="text-gray-400 font-medium text-[11px]">/ 7</span>
+                          <i x-show="rep.count5y >= 7" class="fa-solid fa-circle-check text-emerald-500 text-[11px] ml-0.5"></i>
                         </div>
-                        <div class="w-16 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                          <div class="h-1.5 rounded-full"
-                            :class="rep.count5y >= 7 ? 'bg-emerald-500' : 'bg-emerald-600'"
+                        <div class="w-20 bg-gray-100 dark:bg-gray-800 h-2 rounded-full mt-1.5 overflow-hidden ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                          <div class="h-full rounded-full transition-all duration-300"
+                            :class="rep.count5y >= 7 ? 'bg-emerald-500' : 'bg-teal-500'"
                             :style="'width: ' + rep.pct5y + '%'"></div>
                         </div>
+                        <div class="text-[10px] text-gray-400 dark:text-gray-400 font-mono mt-0.5" x-text="rep.pct5y + '%'"></div>
                       </div>
                     </td>
 
                     <!-- VIP Lifetime Plan (Target: 3) -->
-                    <td class="py-3 px-3 text-center">
-                      <div class="inline-flex flex-col items-center">
-                        <div class="flex items-center gap-1 text-xs font-bold"
-                          :class="rep.countVip >= 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'">
-                          <span x-text="rep.countVip"></span>
-                          <span class="text-gray-400 font-normal">/ 3</span>
-                          <i x-show="rep.countVip >= 3" class="fa-solid fa-crown text-amber-500 text-[11px]"></i>
+                    <td class="py-4 px-4 text-center whitespace-nowrap">
+                      <div class="inline-flex flex-col items-center justify-center min-w-[96px]">
+                        <div class="flex items-center gap-1 text-xs">
+                          <span class="text-sm font-bold"
+                            :class="rep.countVip >= 3 ? 'text-emerald-600 dark:text-emerald-400' : (rep.countVip > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white')"
+                            x-text="rep.countVip"></span>
+                          <span class="text-gray-400 font-medium text-[11px]">/ 3</span>
+                          <i x-show="rep.countVip >= 3" class="fa-solid fa-crown text-amber-500 text-[11px] ml-0.5"></i>
                         </div>
-                        <div class="w-16 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                          <div class="h-1.5 rounded-full"
-                            :class="rep.countVip >= 3 ? 'bg-amber-500' : 'bg-amber-400'"
+                        <div class="w-20 bg-gray-100 dark:bg-gray-800 h-2 rounded-full mt-1.5 overflow-hidden ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                          <div class="h-full rounded-full transition-all duration-300"
+                            :class="rep.countVip >= 3 ? 'bg-emerald-500' : 'bg-amber-500'"
                             :style="'width: ' + rep.pctVip + '%'"></div>
                         </div>
+                        <div class="text-[10px] text-gray-400 dark:text-gray-400 font-mono mt-0.5" x-text="rep.pctVip + '%'"></div>
                       </div>
                     </td>
 
                     <!-- Total Generated -->
-                    <td class="py-3 px-3 text-right">
-                      <div class="font-semibold text-gray-900 dark:text-white" x-text="rep.totalRevenueFormatted"></div>
-                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold" x-text="rep.totalDeals + ' Total Deals'"></div>
+                    <td class="py-4 px-5 text-right whitespace-nowrap">
+                      <div class="text-sm font-bold font-mono text-gray-900 dark:text-white tracking-tight" x-text="rep.totalRevenueFormatted"></div>
+                      <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 inline-flex items-center gap-1">
+                        <i class="fa-solid fa-handshake text-[10px]"></i>
+                        <span x-text="rep.totalDeals + ' Total Deals'"></span>
+                      </div>
                     </td>
 
                     <!-- Quota Status -->
-                    <td class="py-3 px-3.5 text-center">
+                    <td class="py-4 px-5 text-center whitespace-nowrap">
                       <span x-show="rep.isTargetMet"
-                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        <i class="fa-solid fa-bullseye"></i> Quota Met
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-xs">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Quota Met</span>
                       </span>
                       <span x-show="!rep.isTargetMet"
-                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                        <i class="fa-solid fa-clock"></i> In Progress
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-xs">
+                        <i class="fa-regular fa-clock text-[10px] text-amber-600 dark:text-amber-400"></i>
+                        <span>In Progress</span>
                       </span>
                     </td>
                   </tr>
@@ -4665,9 +4715,12 @@
                 <!-- Empty State -->
                 <template x-if="filteredSalesTeamTargetsRoster.length === 0">
                   <tr>
-                    <td colspan="8" class="py-8 text-center text-gray-400">
-                      <i class="fa-solid fa-magnifying-glass text-2xl mb-2 block text-gray-300"></i>
-                      No sales team members found matching your search.
+                    <td colspan="8" class="py-12 text-center text-gray-400">
+                      <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 text-gray-400 text-lg">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                      </div>
+                      <div class="text-sm font-semibold text-gray-900 dark:text-white">No sales team members found</div>
+                      <div class="text-xs text-gray-400 mt-1">Try adjusting your search or filters to find team members.</div>
                     </td>
                   </tr>
                 </template>
@@ -4737,8 +4790,9 @@
             <select x-model="salesTeamPipelineRepFilter"
               class="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
               <option value="all">All Sales Executives</option>
-              <template x-for="rep in salesTeamScorecardList" :key="rep.username">
-                <option :value="rep.username" x-text="rep.name + ' (@' + rep.username + ')'"></option>
+              <option value="unassigned">Unassigned Leads</option>
+              <template x-for="rep in (salesTeamTargetsRoster && salesTeamTargetsRoster.length > 0 ? salesTeamTargetsRoster : salesTeamScorecardList)" :key="rep.id || rep.username">
+                <option :value="rep.username || rep.name" x-text="rep.name + (rep.username ? ' (@' + rep.username + ')' : '')"></option>
               </template>
             </select>
 
@@ -4746,20 +4800,18 @@
             <select x-model="salesTeamPipelinePlanFilter"
               class="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
               <option value="all">All Software Plans</option>
-              <option value="1 Month">1 Month Plan</option>
-              <option value="1 Year">1 Year Plan</option>
-              <option value="3 Year">3 Year Plan</option>
-              <option value="5 Year">5 Year Plan</option>
-              <option value="VIP">VIP Lifetime Plan</option>
+              <option value="1y">1 Year / Annual Plans</option>
+              <option value="1m">1 Month Plan</option>
+              <option value="3y">3 Year Plan</option>
+              <option value="5y">5 Year Plan</option>
+              <option value="vip">VIP Lifetime Plan</option>
             </select>
 
             <!-- Status Filter -->
             <select x-model="salesTeamPipelineStatusFilter"
               class="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
               <option value="all">All Statuses</option>
-              <option value="New">Active Customers</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Negotiation">In Follow-up</option>
+              <option value="active">Active Customers</option>
             </select>
           </div>
 
@@ -4802,11 +4854,11 @@
                     <td class="py-3.5 px-3">
                       <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold"
                         :class="{
-                          'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300': (lead.plan_interested||'').includes('1 Year'),
+                          'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300': (lead.plan_interested||'').includes('1 Year') || (lead.plan_interested||'').includes('Annual') || (lead.plan_interested||'').includes('Professional'),
                           'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300': (lead.plan_interested||'').includes('3 Year'),
                           'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300': (lead.plan_interested||'').includes('5 Year'),
                           'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300': (lead.plan_interested||'').includes('VIP') || (lead.plan_interested||'').includes('Lifetime'),
-                          'bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300': (lead.plan_interested||'').includes('1 Month')
+                          'bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300': (lead.plan_interested||'').includes('1 Month') || (lead.plan_interested||'').includes('Trial')
                         }"
                         x-text="lead.plan_interested || '1 Year Plan'"></span>
                     </td>
@@ -17819,7 +17871,7 @@
           </div>
           <div>
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">Record New Sale</h3>
-            <p class="text-xs text-gray-500">Record new customer sale and automatically create active account</p>
+            <p class="text-xs text-gray-500">Record new customer sale</p>
           </div>
         </div>
         <button @click="showCreateLeadModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 text-lg">
@@ -27204,25 +27256,141 @@
 
         get filteredTeamSalesLeads() {
           let list = this.deduplicateLeadsList(this.salesLeads || []);
+
+          // 1. Rep Filter
           if (this.salesTeamPipelineRepFilter && this.salesTeamPipelineRepFilter !== 'all') {
-            list = list.filter(l => (l.assigned_to || '').toLowerCase() === this.salesTeamPipelineRepFilter.toLowerCase());
+            const selectedRep = String(this.salesTeamPipelineRepFilter).toLowerCase().trim();
+            if (selectedRep === 'unassigned') {
+              list = list.filter(l => {
+                const assigned = (l.assigned_to || l.rep_username || l.sales_rep || l.rep_name || '').toLowerCase().trim();
+                return !assigned || assigned === 'unassigned';
+              });
+            } else {
+              const repObj = (this.salesTeamTargetsRoster || []).find(r => 
+                (r.username && r.username.toLowerCase() === selectedRep) ||
+                (r.name && r.name.toLowerCase() === selectedRep) ||
+                (r.empId && r.empId.toLowerCase() === selectedRep) ||
+                (r.id && String(r.id).toLowerCase() === selectedRep)
+              ) || (this.salesTeamScorecardList || []).find(r =>
+                (r.username && r.username.toLowerCase() === selectedRep) ||
+                (r.name && r.name.toLowerCase() === selectedRep) ||
+                (r.empId && r.empId.toLowerCase() === selectedRep) ||
+                (r.id && String(r.id).toLowerCase() === selectedRep)
+              );
+
+              const repAliases = new Set([selectedRep]);
+              if (repObj) {
+                if (repObj.username) repAliases.add(repObj.username.toLowerCase().trim());
+                if (repObj.name) repAliases.add(repObj.name.toLowerCase().trim());
+                if (repObj.empId) repAliases.add(repObj.empId.toLowerCase().trim());
+                if (repObj.aliases) repObj.aliases.forEach(a => repAliases.add(String(a).toLowerCase().trim()));
+              }
+
+              list = list.filter(l => {
+                const assigned = (l.assigned_to || l.rep_username || l.sales_rep || l.rep_name || '').toLowerCase().trim();
+                if (assigned && (assigned === selectedRep || repAliases.has(assigned))) return true;
+
+                // Check linked customer in this.customers
+                if (l.customerId && Array.isArray(this.customers)) {
+                  const cust = this.customers.find(c => c.id === l.customerId);
+                  if (cust) {
+                    if (typeof this.getCustomerEffectiveRep === 'function') {
+                      const eff = this.getCustomerEffectiveRep(cust);
+                      const effUser = (eff.repUser || '').toLowerCase().trim();
+                      const effName = (eff.repName || '').toLowerCase().trim();
+                      if (effUser && (effUser === selectedRep || repAliases.has(effUser))) return true;
+                      if (effName && (effName === selectedRep || repAliases.has(effName))) return true;
+                    }
+                    const cRep = (cust.salesRep || cust.sales_rep || cust.assignedTo || cust.assigned_to || cust.soldByEmpName || '').toLowerCase().trim();
+                    if (cRep && (cRep === selectedRep || repAliases.has(cRep))) return true;
+                  }
+                }
+                return false;
+              });
+            }
           }
+
+          // 2. Plan Filter
           if (this.salesTeamPipelinePlanFilter && this.salesTeamPipelinePlanFilter !== 'all') {
-            list = list.filter(l => (l.plan_interested || '').toLowerCase().includes(this.salesTeamPipelinePlanFilter.toLowerCase()));
+            const pf = String(this.salesTeamPipelinePlanFilter).toLowerCase().trim();
+            list = list.filter(l => {
+              const rawPlan = (l.plan_interested || l.planLabel || l.plan || '').toLowerCase();
+              const pk = typeof this.classifySalePlan === 'function' ? this.classifySalePlan(l.plan_interested || l.plan, l.requirement || l.notes, l.deal_value) : '';
+              if (pf === '1y' || pf === '1 year' || pf === 'annual') {
+                return pk === '1y' || rawPlan.includes('1 year') || rawPlan.includes('annual') || rawPlan.includes('yearly') || rawPlan.includes('1y');
+              }
+              if (pf === '1m' || pf === '1 month') {
+                return pk === '1m' || rawPlan.includes('1 month') || rawPlan.includes('1m') || rawPlan.includes('149');
+              }
+              if (pf === '3y' || pf === '3 year') {
+                return pk === '3y' || rawPlan.includes('3 year') || rawPlan.includes('3y');
+              }
+              if (pf === '5y' || pf === '5 year') {
+                return pk === '5y' || rawPlan.includes('5 year') || rawPlan.includes('5y');
+              }
+              if (pf === 'vip' || pf === 'lifetime') {
+                return pk === 'vip' || rawPlan.includes('vip') || rawPlan.includes('lifetime');
+              }
+              return rawPlan.includes(pf) || pk === pf;
+            });
           }
+
+          // 3. Status Filter
           if (this.salesTeamPipelineStatusFilter && this.salesTeamPipelineStatusFilter !== 'all') {
-            list = list.filter(l => (l.status || '').toLowerCase() === this.salesTeamPipelineStatusFilter.toLowerCase());
+            const sf = String(this.salesTeamPipelineStatusFilter).toLowerCase().trim();
+            list = list.filter(l => {
+              const st = (l.status || '').toLowerCase().trim();
+              if (sf === 'active' || sf === 'won') {
+                return st === 'won' || st === 'active' || st === 'sale' || Boolean(l.license_key || l.licenseKey);
+              }
+              if (sf === 'new') {
+                return st === 'new';
+              }
+              if (sf === 'contacted') {
+                return st === 'contacted';
+              }
+              if (sf === 'quoted' || sf === 'quotation sent') {
+                return st.includes('quot') || st.includes('proposal');
+              }
+              if (sf === 'negotiation') {
+                return st === 'negotiation' || st.includes('follow');
+              }
+              if (sf === 'lost') {
+                return st === 'lost';
+              }
+              return st === sf;
+            });
           }
+
+          // 4. Search Filter
           if (this.salesTeamPipelineSearch && this.salesTeamPipelineSearch.trim()) {
             const q = this.salesTeamPipelineSearch.toLowerCase().trim();
-            list = list.filter(l =>
-              (l.customer_name || '').toLowerCase().includes(q) ||
-              (l.company || '').toLowerCase().includes(q) ||
-              (l.phone || '').includes(q) ||
-              (l.city || '').toLowerCase().includes(q) ||
-              (l.assigned_to || '').toLowerCase().includes(q)
-            );
+            const cleanQ = q.replace(/[^0-9]/g, '');
+            list = list.filter(l => {
+              const cName = (l.customer_name || '').toLowerCase();
+              const comp = (l.company || '').toLowerCase();
+              const phone = (l.phone || '').toLowerCase();
+              const cleanPhone = phone.replace(/[^0-9]/g, '');
+              const city = (l.city || '').toLowerCase();
+              const assigned = (l.assigned_to || '').toLowerCase();
+              const lic = (l.license_key || l.licenseKey || '').toLowerCase();
+              const plan = (l.plan_interested || l.plan || '').toLowerCase();
+              const val = (l.deal_value || '').toLowerCase();
+              const email = (l.email || '').toLowerCase();
+
+              return cName.includes(q) ||
+                comp.includes(q) ||
+                phone.includes(q) ||
+                (cleanQ.length >= 3 && cleanPhone.includes(cleanQ)) ||
+                city.includes(q) ||
+                assigned.includes(q) ||
+                lic.includes(q) ||
+                plan.includes(q) ||
+                val.includes(q) ||
+                email.includes(q);
+            });
           }
+
           return list;
         },
 

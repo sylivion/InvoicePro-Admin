@@ -739,12 +739,6 @@
           x-text="myActiveLeadsCount"></span>
       </button>
 
-      <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_my_customers')" @click="navigate('sales_my_customers')"
-        :class="view==='sales_my_customers'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
-        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
-        <i class="fa-solid fa-users w-4 text-center text-sm text-slate-500" :class="view==='sales_my_customers'?'!text-blue-600':''"></i> My Customers &amp; Renewals
-      </button>
-
       <button x-show="(currentUser?.role === 'sales_member' || currentUser?.role === 'sales' || currentUser?.role === 'sales2') && canAccess('sales_activity_log')" @click="navigate('sales_activity_log')"
         :class="view==='sales_activity_log'?'bg-blue-50 text-blue-700 font-semibold':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'"
         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
@@ -5243,13 +5237,13 @@
             <div class="text-[11px] text-purple-600 font-semibold mt-1">Calls &amp; meetings logged</div>
           </div>
 
-          <div @click="navigate('sales_my_customers')" class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-cyan-400 transition-all">
+          <div @click="navigate('sales_my_leads')" class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-cyan-400 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-cyan-600 uppercase">My Customers</span>
-              <span class="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950 text-cyan-600 flex items-center justify-center text-sm"><i class="fa-solid fa-users-viewfinder"></i></span>
+              <span class="text-xs font-bold text-cyan-600 uppercase">Closed Sales</span>
+              <span class="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950 text-cyan-600 flex items-center justify-center text-sm"><i class="fa-solid fa-cart-check"></i></span>
             </div>
             <div class="text-2xl font-semibold text-cyan-600 mt-2" x-text="myWonDealsCount"></div>
-            <div class="text-[11px] text-gray-400 mt-1">View customer records</div>
+            <div class="text-[11px] text-gray-400 mt-1">View leads &amp; recorded sales</div>
           </div>
         </div>
 
@@ -5351,8 +5345,8 @@
               <button @click="openAddModal()" class="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all">
                 <i class="fa-solid fa-plus text-[10px]"></i> Add Sale
               </button>
-              <button @click="navigate('sales_my_customers')" class="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1">
-                View All Accounts <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              <button @click="navigate('sales_my_leads')" class="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1">
+                View In Leads &amp; Sales <i class="fa-solid fa-arrow-right text-[10px]"></i>
               </button>
             </div>
           </div>
@@ -21206,7 +21200,7 @@
         isCustomerBelongingToRep(c, repUser) {
           if (!c || !repUser) return false;
           const uName = String(repUser.name || '').trim().toLowerCase();
-          const uUser = String(repUser.username || '').trim().toLowerCase();
+          const uUser = String(repUser.username || '').trim().toLowerCase().replace(/^@/, '');
           const uId = String(repUser.id || '').trim().toLowerCase();
           const uEmpId = String(repUser.emp_id || repUser.empId || '').trim().toLowerCase();
 
@@ -21216,7 +21210,7 @@
             myEmp = this.employees.find(e => {
               const eName = String(e.name || '').trim().toLowerCase();
               const eEmpId = String(e.empId || '').trim().toLowerCase();
-              const eStaff = String(e.staffUsername || '').trim().toLowerCase();
+              const eStaff = String(e.staffUsername || '').trim().toLowerCase().replace(/^@/, '');
               const eId = String(e.id || '').trim().toLowerCase();
               return (uEmpId && eEmpId === uEmpId) || 
                      (uUser && eStaff === uUser) || 
@@ -21227,10 +21221,11 @@
 
           const myEmpId = myEmp ? String(myEmp.empId || myEmp.id || '').trim().toLowerCase() : '';
           const myEmpName = myEmp ? String(myEmp.name || '').trim().toLowerCase() : '';
+          const myEmpStaff = myEmp ? String(myEmp.staffUsername || '').trim().toLowerCase().replace(/^@/, '') : '';
 
-          const addedBy = String(c.addedBy || c.added_by || '').trim().toLowerCase();
-          const createdBy = String(c.createdBy || c.created_by || '').trim().toLowerCase();
-          const salesPerson = String(c.salesPerson || c.sales_person || c.salesRep || c.sales_rep || c.assignedTo || c.assigned_to || c.rep_name || c.rep_username || '').trim().toLowerCase();
+          const addedBy = String(c.addedBy || c.added_by || '').trim().toLowerCase().replace(/^@/, '');
+          const createdBy = String(c.createdBy || c.created_by || '').trim().toLowerCase().replace(/^@/, '');
+          const salesPerson = String(c.salesPerson || c.sales_person || c.salesRep || c.sales_rep || c.assignedTo || c.assigned_to || c.rep_name || c.rep_username || '').trim().toLowerCase().replace(/^@/, '');
           const soldByEmpId = String(c.soldByEmpId || c.sold_by_emp_id || c.emp_id || c.empId || '').trim().toLowerCase();
           const soldByEmpName = String(c.soldByEmpName || c.sold_by_emp_name || '').trim().toLowerCase();
           const cName = String(c.name || '').trim().toLowerCase();
@@ -21238,13 +21233,13 @@
           const notes = String(c.notes || '').toLowerCase();
 
           // 1. Direct match on addedBy / createdBy
-          if (addedBy && (addedBy === uUser || addedBy === uName || addedBy === uId || (uEmpId && addedBy === uEmpId) || (myEmpId && addedBy === myEmpId))) return true;
-          if (createdBy && (createdBy === uUser || createdBy === uName || createdBy === uId || (uEmpId && createdBy === uEmpId) || (myEmpId && createdBy === myEmpId))) return true;
+          if (addedBy && (addedBy === uUser || addedBy === uName || addedBy === uId || (uEmpId && addedBy === uEmpId) || (myEmpId && addedBy === myEmpId) || (myEmpStaff && addedBy === myEmpStaff) || addedBy.includes(uUser) || (uName && addedBy.includes(uName)))) return true;
+          if (createdBy && (createdBy === uUser || createdBy === uName || createdBy === uId || (uEmpId && createdBy === uEmpId) || (myEmpId && createdBy === myEmpId) || (myEmpStaff && createdBy === myEmpStaff) || createdBy.includes(uUser) || (uName && createdBy.includes(uName)))) return true;
 
           // 2. Direct match on soldBy / salesPerson
           if (soldByEmpId && ((uEmpId && soldByEmpId === uEmpId) || (myEmpId && soldByEmpId === myEmpId) || soldByEmpId === uUser || soldByEmpId === uId)) return true;
-          if (soldByEmpName && (soldByEmpName === uName || soldByEmpName === uUser || (myEmpName && soldByEmpName === myEmpName))) return true;
-          if (salesPerson && (salesPerson === uUser || salesPerson === uName || (uEmpId && salesPerson === uEmpId) || (myEmpId && salesPerson === myEmpId) || (myEmpName && salesPerson === myEmpName))) return true;
+          if (soldByEmpName && (soldByEmpName === uName || soldByEmpName === uUser || (myEmpName && soldByEmpName === myEmpName) || soldByEmpName.includes(uName) || (uUser && soldByEmpName.includes(uUser)))) return true;
+          if (salesPerson && (salesPerson === uUser || salesPerson === uName || (uEmpId && salesPerson === uEmpId) || (myEmpId && salesPerson === myEmpId) || (myEmpName && salesPerson === myEmpName) || salesPerson.includes(uUser) || (uName && salesPerson.includes(uName)))) return true;
 
           // 3. Match in employee recorded sales history
           if (myEmp && Array.isArray(myEmp.sales)) {
@@ -21337,11 +21332,12 @@
 
         get filteredCustomers() {
           const role = (this.currentUser?.role || '').toLowerCase();
-          const isSalesMember = ['sales_member', 'sales', 'sales2'].includes(role);
-          const isSalesLeader = ['sales_leader', 'sales_lead'].includes(role);
+          const isSalesMember = ['sales_member', 'sales', 'sales2', 'sales_rep', 'salesperson', 'salesman'].includes(role) || this.view === 'sales_my_customers';
+          const isSalesLeader = ['sales_leader', 'sales_lead'].includes(role) && this.view !== 'sales_my_customers';
 
           return this.customers.filter(c => {
-            // For Sales Member: STRICTLY show ONLY those customers who came through themselves
+            // For Sales Member or in My Customers & Renewals view:
+            // STRICTLY show ONLY those customers who were added by / belong to the logged-in sales executive
             if (isSalesMember) {
               if (!this.isCustomerBelongingToRep(c, this.currentUser)) {
                 return false;
@@ -21352,7 +21348,7 @@
               if (!belongsToLeader) {
                 const isAssignedToSalesTeam = (this.staffUsers || []).some(s => {
                   const sRole = (s.role || '').toLowerCase();
-                  if (['sales_member', 'sales', 'sales2'].includes(sRole)) {
+                  if (['sales_member', 'sales', 'sales2', 'sales_rep', 'salesperson', 'salesman'].includes(sRole)) {
                     return this.isCustomerBelongingToRep(c, s);
                   }
                   return false;
@@ -21361,15 +21357,18 @@
               }
             }
 
-            const st = this.getStatus(c);
-            if (this.filter === 'all') return true;
-            if (this.filter === 'trial') return st === 'trial';
-            if (this.filter === 'all-licensed') return !!c.licenseKey;
-            if (this.filter === 'expiring' || this.filter === 'support-expiring') return st === 'expiring' || st === 'support-expiring';
-            if (this.filter === 'expired' || this.filter === 'support-expired') return st === 'expired' || st === 'support-expired';
-            return st === this.filter;
+            if (this.view !== 'sales_my_customers') {
+              const st = this.getStatus(c);
+              if (this.filter === 'all') return true;
+              if (this.filter === 'trial') return st === 'trial';
+              if (this.filter === 'all-licensed') return !!c.licenseKey;
+              if (this.filter === 'expiring' || this.filter === 'support-expiring') return st === 'expiring' || st === 'support-expiring';
+              if (this.filter === 'expired' || this.filter === 'support-expired') return st === 'expired' || st === 'support-expired';
+              if (st !== this.filter) return false;
+            }
+            return true;
           }).filter(c => {
-            if (!this.tagFilter) return true;
+            if (!this.tagFilter || this.view === 'sales_my_customers') return true;
             return (c.tags || []).includes(this.tagFilter);
           }).filter(c => {
             if (!this.search) return true;

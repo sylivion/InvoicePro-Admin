@@ -5043,27 +5043,27 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
             <div class="bg-blue-50/50 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/50 text-center">
-              <span class="text-xs font-bold text-blue-500 uppercase">1. Inbound Leads</span>
+              <span class="text-xs font-bold text-blue-500 uppercase">Inbound Leads</span>
               <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesLeads || []).length"></div>
               <div class="text-[10px] text-gray-400 mt-0.5">Total prospects</div>
             </div>
             <div class="bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/50 text-center">
-              <span class="text-xs font-bold text-indigo-500 uppercase">2. Contacted</span>
+              <span class="text-xs font-bold text-indigo-500 uppercase">Contacted</span>
               <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesLeads || []).filter(l=>l.status==='Contacted').length"></div>
               <div class="text-[10px] text-gray-400 mt-0.5">In discovery</div>
             </div>
             <div class="bg-purple-50/50 dark:bg-purple-950/30 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/50 text-center">
-              <span class="text-xs font-bold text-purple-500 uppercase">3. Quotation Sent</span>
+              <span class="text-xs font-bold text-purple-500 uppercase">Quotation Sent</span>
               <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesLeads || []).filter(l=>l.status==='Quoted' || l.status==='Proposal Sent').length"></div>
               <div class="text-[10px] text-gray-400 mt-0.5">Proposal pending</div>
             </div>
             <div class="bg-amber-50/50 dark:bg-amber-950/30 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/50 text-center">
-              <span class="text-xs font-bold text-amber-500 uppercase">4. Negotiation</span>
+              <span class="text-xs font-bold text-amber-500 uppercase">Negotiation</span>
               <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1" x-text="(salesLeads || []).filter(l=>l.status==='Negotiation' || l.status==='Follow-up').length"></div>
               <div class="text-[10px] text-gray-400 mt-0.5">Decision stage</div>
             </div>
             <div class="bg-emerald-50/50 dark:bg-emerald-950/30 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-900/50 text-center">
-              <span class="text-xs font-bold text-emerald-500 uppercase">5. Active Customers</span>
+              <span class="text-xs font-bold text-emerald-500 uppercase">Active Customers</span>
               <div class="text-2xl font-semibold text-emerald-600 mt-1" x-text="(salesLeads || []).length"></div>
               <div class="text-[10px] text-emerald-600 font-bold mt-0.5">Recorded &amp; Licensed</div>
             </div>

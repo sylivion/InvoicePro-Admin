@@ -11985,41 +11985,41 @@
         </div>
 
         <!-- Role KPI Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-gray-500">Total Staff</span>
-              <span class="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-users"></i></span>
+              <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Staff</span>
+              <span class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-users"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="staffUsers.length"></div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2" x-text="staffUsers.length"></div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-blue-600">Managers</span>
-              <span class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-user-tie"></i></span>
+              <span class="text-xs font-semibold text-blue-600 dark:text-blue-400">Managers</span>
+              <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-user-tie"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='manager').length"></div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='manager').length"></div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-green-600">Sales</span>
-              <span class="w-6 h-6 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 flex items-center justify-center text-xs"><i class="fa-solid fa-bag-shopping"></i></span>
+              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Sales</span>
+              <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-bag-shopping"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='sales').length"></div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='sales' || u.role==='sales_leader' || u.role==='sales_member').length"></div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-amber-600">Support</span>
-              <span class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-headset"></i></span>
+              <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">Support</span>
+              <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-headset"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='support').length"></div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='support' || u.role==='support_leader' || u.role==='support_member').length"></div>
           </div>
-          <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-pink-600">HR</span>
-              <span class="w-6 h-6 rounded-lg bg-pink-50 dark:bg-pink-950 text-pink-600 flex items-center justify-center text-xs"><i class="fa-solid fa-id-badge"></i></span>
+              <span class="text-xs font-semibold text-pink-600 dark:text-pink-400">HR</span>
+              <span class="w-8 h-8 rounded-xl bg-pink-50 dark:bg-pink-950/70 text-pink-600 dark:text-pink-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-id-badge"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='hr').length"></div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2" x-text="staffUsers.filter(u=>u.role==='hr' || u.role==='hr_manager' || u.role==='hr_executive').length"></div>
           </div>
         </div>
 
@@ -12027,17 +12027,17 @@
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-sm">
           
           <!-- Card Header & Search -->
-          <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base shadow-xs flex-shrink-0">
+          <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shadow-sm flex-shrink-0">
                 <i class="fa-solid fa-users-gear"></i>
               </div>
               <div>
                 <div class="flex items-center gap-2.5 flex-wrap">
                   <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">System Staff &amp; Team Accounts</h3>
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/40">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/40">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                    <span x-text="filteredStaffUsers.length + ' accounts'"></span>
+                    <span x-text="filteredStaffUsers.length + ' accounts found'"></span>
                   </span>
                 </div>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Active login credentials, assigned departmental permissions, and account governance</p>
@@ -12048,9 +12048,9 @@
               <div class="relative flex-1 md:w-80">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 <input type="text" x-model="staffSearch" placeholder="Search by name, username, email, EMP ID…"
-                  class="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all shadow-xs" />
+                  class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all shadow-sm" />
                 <button x-show="staffSearch" @click="staffSearch=''"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1"
                   title="Clear search">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -12061,41 +12061,41 @@
           <!-- Table Container -->
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
-              <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 uppercase tracking-wider font-bold text-xs border-b border-slate-200 dark:border-slate-800 select-none">
+              <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 uppercase tracking-wider font-semibold text-xs border-b border-slate-200 dark:border-slate-800 select-none">
                 <tr>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[250px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-solid fa-user text-slate-400 text-[11px]"></i> Staff Member
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[260px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-solid fa-user text-slate-400 text-xs"></i> Staff Member
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[140px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-solid fa-at text-slate-400 text-[11px]"></i> Username
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[150px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-solid fa-at text-slate-400 text-xs"></i> Username
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[170px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-solid fa-shield-halved text-slate-400 text-[11px]"></i> Role
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[180px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-solid fa-shield-halved text-slate-400 text-xs"></i> Role
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[210px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-solid fa-address-book text-slate-400 text-[11px]"></i> Contact
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[220px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-solid fa-address-book text-slate-400 text-xs"></i> Contact
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[120px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-solid fa-circle-dot text-slate-400 text-[11px]"></i> Status
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[130px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-solid fa-circle-dot text-slate-400 text-xs"></i> Status
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 whitespace-nowrap min-w-[140px]">
-                    <span class="inline-flex items-center gap-1.5">
-                      <i class="fa-regular fa-clock text-slate-400 text-[11px]"></i> Last Login
+                  <th class="py-4 px-5 whitespace-nowrap min-w-[150px]">
+                    <span class="inline-flex items-center gap-2">
+                      <i class="fa-regular fa-clock text-slate-400 text-xs"></i> Last Login
                     </span>
                   </th>
-                  <th class="py-3.5 px-5 text-center whitespace-nowrap min-w-[210px]">
-                    <span class="inline-flex items-center justify-center gap-1.5 text-center">
-                      <i class="fa-solid fa-sliders text-slate-400 text-[11px]"></i> Actions
+                  <th class="py-4 px-5 text-center whitespace-nowrap min-w-[220px]">
+                    <span class="inline-flex items-center justify-center gap-2">
+                      <i class="fa-solid fa-sliders text-slate-400 text-xs"></i> Actions
                     </span>
                   </th>
                 </tr>
@@ -12105,107 +12105,107 @@
                   <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-colors group">
                     
                     <!-- Staff Member (Avatar + Name + ID) -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap">
+                    <td class="py-4 px-5 align-middle whitespace-nowrap">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0 transition-transform group-hover:scale-105"
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10 transition-transform group-hover:scale-105"
                           :class="getStaffRoleBadge(user.role).avatar"
                           x-text="(user.name || 'U').charAt(0).toUpperCase()"></div>
                         <div class="min-w-0">
                           <div class="font-bold text-sm text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" x-text="user.name"></div>
                           <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="inline-flex items-center font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60" x-text="user.emp_id ? user.emp_id : user.id"></span>
+                            <span class="inline-flex items-center font-mono text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60" x-text="user.emp_id ? user.emp_id : user.id"></span>
                           </div>
                         </div>
                       </div>
                     </td>
 
                     <!-- Username -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap">
-                      <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs">
-                        <span class="text-indigo-500 font-bold select-none text-[11px]">@</span>
+                    <td class="py-4 px-5 align-middle whitespace-nowrap">
+                      <div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm">
+                        <span class="text-indigo-500 font-bold select-none text-xs">@</span>
                         <span x-text="user.username"></span>
                       </div>
                     </td>
 
                     <!-- Role Badge -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap">
-                      <span class="px-2.5 py-1 rounded-full font-bold text-[11px] tracking-wide inline-flex items-center gap-1.5 border shadow-xs"
+                    <td class="py-4 px-5 align-middle whitespace-nowrap">
+                      <span class="px-3 py-1.5 rounded-full font-bold text-xs tracking-wide inline-flex items-center gap-1.5 border shadow-sm"
                         :class="getStaffRoleBadge(user.role).bg">
-                        <i :class="getStaffRoleBadge(user.role).icon" class="text-[11px]"></i>
+                        <i :class="getStaffRoleBadge(user.role).icon" class="text-xs"></i>
                         <span x-text="formatStaffRole(user.role)"></span>
                       </span>
                     </td>
 
                     <!-- Contact -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap">
-                      <div class="space-y-0.5">
-                        <div class="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200">
-                          <i class="fa-regular fa-envelope text-slate-400 text-[11px] w-3.5 text-center flex-shrink-0"></i>
-                          <a :href="'mailto:' + user.email" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium" x-text="user.email || '—'"></a>
+                    <td class="py-4 px-5 align-middle whitespace-nowrap">
+                      <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 font-medium">
+                          <i class="fa-regular fa-envelope text-slate-400 text-xs w-4 text-center flex-shrink-0"></i>
+                          <a :href="'mailto:' + user.email" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" x-text="user.email || '—'"></a>
                         </div>
-                        <div x-show="user.phone" class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          <i class="fa-solid fa-phone text-slate-400 text-[10px] w-3.5 text-center flex-shrink-0"></i>
-                          <span class="font-mono" x-text="user.phone"></span>
+                        <div x-show="user.phone" class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          <i class="fa-solid fa-phone text-slate-400 text-[11px] w-4 text-center flex-shrink-0"></i>
+                          <span x-text="user.phone"></span>
                         </div>
                       </div>
                     </td>
 
                     <!-- Status -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap">
-                      <span class="px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 border shadow-xs"
+                    <td class="py-4 px-5 align-middle whitespace-nowrap">
+                      <span class="px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-2 border shadow-sm"
                         :class="user.active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800'">
-                        <span class="w-1.5 h-1.5 rounded-full" :class="user.active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+                        <span class="w-2 h-2 rounded-full" :class="user.active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
                         <span x-text="user.active ? 'Active' : 'Deactivated'"></span>
                       </span>
                     </td>
 
                     <!-- Last Login -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">
-                      <div class="inline-flex items-center gap-1.5">
-                        <i class="fa-regular fa-clock text-slate-400 text-[11px]"></i>
+                    <td class="py-4 px-5 align-middle whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">
+                      <div class="inline-flex items-center gap-2">
+                        <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
                         <span class="font-medium" x-text="user.last_login ? fmtDate(user.last_login) : 'Never'"></span>
                       </div>
                     </td>
 
                     <!-- Actions -->
-                    <td class="py-3.5 px-5 align-middle whitespace-nowrap text-center">
+                    <td class="py-4 px-5 align-middle whitespace-nowrap text-center">
                       <div class="inline-flex items-center justify-center gap-2">
                         <!-- Impersonate Button -->
                         <button @click="impersonateStaff(user)"
-                          class="h-8 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold transition-all text-xs inline-flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 shadow-xs flex-shrink-0"
+                          class="h-8 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold transition-all text-xs inline-flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 shadow-sm flex-shrink-0 cursor-pointer"
                           title="Log in / View as this employee">
-                          <i class="fa-solid fa-arrow-right-to-bracket text-[11px]"></i>
+                          <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
                           <span>View As</span>
                         </button>
 
                         <!-- Unified Action Icons Toolbar -->
-                        <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex-shrink-0">
+                        <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex-shrink-0">
                           <!-- Edit Profile -->
                           <button @click="openEditStaffModal(user)"
-                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
                             title="Edit Profile">
-                            <i class="fa-solid fa-pen text-[11px]"></i>
+                            <i class="fa-solid fa-pen text-xs"></i>
                           </button>
 
                           <!-- Reset Password -->
                           <button @click="openResetStaffPwModal(user)"
-                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                            class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
                             title="Reset Password">
-                            <i class="fa-solid fa-key text-[11px]"></i>
+                            <i class="fa-solid fa-key text-xs"></i>
                           </button>
 
                           <!-- Delete Staff or Protected Lock -->
                           <template x-if="user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1">
                             <button @click="deleteStaffUser(user.id)"
-                              class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                              class="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
                               title="Remove Account">
-                              <i class="fa-solid fa-trash-can text-[11px]"></i>
+                              <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                           </template>
                           <template x-if="!(user.role !== 'admin' || staffUsers.filter(u=>u.role==='admin').length > 1)">
                             <div class="w-7 h-7 rounded-md flex items-center justify-center text-slate-300 dark:text-slate-600 cursor-not-allowed"
                               title="Master Administrator account is protected">
-                              <i class="fa-solid fa-lock text-[10px]"></i>
+                              <i class="fa-solid fa-lock text-[11px]"></i>
                             </div>
                           </template>
                         </div>
@@ -12224,7 +12224,7 @@
                       </div>
                       <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No matching staff accounts found</p>
                       <p class="text-xs text-slate-400 max-w-sm">Try modifying your search query or clear the filter to view all staff members.</p>
-                      <button @click="staffSearch=''" class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                      <button @click="staffSearch=''" class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
                         Clear search filter
                       </button>
                     </div>

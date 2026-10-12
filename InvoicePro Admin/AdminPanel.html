@@ -7267,9 +7267,10 @@
           </select>
           <select x-model="supportPriorityFilter" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-slate-800 dark:text-slate-200">
             <option value="all">All Priorities</option>
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
+            <option value="Critical">Critical (P0)</option>
+            <option value="High">High (P1)</option>
+            <option value="Medium">Medium (P2)</option>
+            <option value="Low">Low (P3)</option>
           </select>
           <select x-model="supportStatusFilter" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-slate-800 dark:text-slate-200">
             <option value="all">All Statuses (Active &amp; Resolved)</option>
@@ -36645,6 +36646,8 @@ get remindersCount() {
               class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500">
               <option value="Critical">Critical (P0 SLA)</option>
               <option value="High">High (P1 SLA)</option>
+              <option value="Medium">Medium (P2 SLA)</option>
+              <option value="Low">Low (P3 SLA)</option>
             </select>
           </div>
           <div>
@@ -36653,7 +36656,9 @@ get remindersCount() {
               class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500">
               <option value="1">1 Hour (P0 Urgent)</option>
               <option value="2">2 Hours (Standard VIP)</option>
-              <option value="4">4 Hours (Same Day)</option>
+              <option value="4">4 Hours (P1 Same Day)</option>
+              <option value="12">12 Hours (P2 Standard)</option>
+              <option value="24">24 Hours (P3 Next Day)</option>
             </select>
           </div>
         </div>
@@ -37389,9 +37394,10 @@ get remindersCount() {
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Priority</label>
             <select x-model="newSupportTicketForm.priority" class="w-full px-2.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs focus:ring-2 focus:ring-amber-500 font-semibold">
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical (VIP)</option>
+              <option value="Critical">Critical (P0 SLA)</option>
+              <option value="High">High (P1 SLA)</option>
+              <option value="Medium">Medium (P2 SLA)</option>
+              <option value="Low">Low (P3 SLA)</option>
             </select>
           </div>
           <div>

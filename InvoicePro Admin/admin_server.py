@@ -44,20 +44,179 @@ DATA_DIR  = os.path.join(BASE_DIR, "admin_data")
 DB_PATH   = os.path.join(DATA_DIR, "admin.db")
 HR_SMTP_PROFILE_PATH = os.path.join(DATA_DIR, "hr_smtp_profile.json")
 HTML_PATH = os.path.join(BASE_DIR, "AdminPanel.html")
-PORT      = 8766
+PORT      = int(os.environ.get("PORT", 8766))
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
-_db_lock = threading.Lock()
+_db_lock = threading.RLock()
 
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip() or os.environ.get("POSTGRES_URL", "").strip() or "postgresql://postgres:abiXJrwSDcLZzVWvWRTgAMSGIBVOoyoP@yamanote.proxy.rlwy.net:52510/railway"
+
+class IndexableRow(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._values = list(self.values())
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+class PGCursorWrapper:
+    def __init__(self, cur, conn):
+        self._cur = cur
+        self._conn = conn
+    def fetchone(self):
+        r = self._cur.fetchone()
+        return IndexableRow(r) if r is not None else None
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        return [IndexableRow(r) for r in rows]
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+    @property
+    def description(self):
+        return self._cur.description
+    def close(self):
+        try: self._cur.close()
+        except Exception: pass
+
+class PGDatabaseWrapper:
+    def __init__(self, pg_conn):
+        self.conn = pg_conn
+    def execute(self, sql, params=None):
+        if sql.strip().upper().startswith("PRAGMA"):
+            cur = self.conn.cursor()
+            cur.execute("SELECT 1")
+            return PGCursorWrapper(cur, self.conn)
+        sql_trans = self._transform(sql)
+        import psycopg2.extras
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        if params is not None:
+            cur.execute(sql_trans, params)
+        else:
+            cur.execute(sql_trans)
+        return PGCursorWrapper(cur, self.conn)
+    def executemany(self, sql, params_list):
+        if sql.strip().upper().startswith("PRAGMA"):
+            cur = self.conn.cursor()
+            cur.execute("SELECT 1")
+            return PGCursorWrapper(cur, self.conn)
+        sql_trans = self._transform(sql)
+        import psycopg2.extras
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.executemany(sql_trans, params_list)
+        return PGCursorWrapper(cur, self.conn)
+    def executescript(self, sql_script):
+        cur = self.conn.cursor()
+        for statement in sql_script.split(';'):
+            s = statement.strip()
+            if s:
+                try:
+                    cur.execute(self._transform(s))
+                except Exception:
+                    try: self.conn.rollback()
+                    except Exception: pass
+        try: self.conn.commit()
+        except Exception: pass
+        try: cur.close()
+        except Exception: pass
+    def commit(self):
+        try: self.conn.commit()
+        except Exception: pass
+    def rollback(self):
+        try: self.conn.rollback()
+        except Exception: pass
+    def close(self):
+        try: self.conn.close()
+        except Exception: pass
+    def _transform(self, sql):
+        if sql.strip().upper().startswith("PRAGMA"):
+            return "SELECT 1"
+        # Remove SQLite-specific collation that causes syntax errors in PostgreSQL
+        sql = re.sub(r'\s+COLLATE\s+BINARY\b', '', sql, flags=re.IGNORECASE)
+        sql = re.sub(r'\s+COLLATE\s+NOCASE\b', '', sql, flags=re.IGNORECASE)
+        # Transform INSERT OR IGNORE INTO to INSERT INTO ... ON CONFLICT DO NOTHING
+        if re.search(r'INSERT\s+OR\s+IGNORE\s+INTO', sql, re.IGNORECASE):
+            sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+            sql = sql.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
+        # Transform INSERT OR REPLACE INTO to INSERT INTO ... ON CONFLICT (pk) DO UPDATE SET ...
+        m = re.search(r'INSERT\s+OR\s+REPLACE\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*VALUES\s*(?:\([^)]+\)|%s|\?)', sql, re.IGNORECASE | re.DOTALL)
+        if m:
+            tbl = m.group(1)
+            cols_raw = m.group(2)
+            cols = [c.strip() for c in cols_raw.split(',') if c.strip()]
+            pk = cols[0]
+            update_clauses = [f'{c}=EXCLUDED.{c}' for c in cols if c != pk]
+            update_str = ', '.join(update_clauses) if update_clauses else f'{pk}=EXCLUDED.{pk}'
+            sql = re.sub(r'INSERT\s+OR\s+REPLACE\s+INTO\s+', 'INSERT INTO ', sql, flags=re.IGNORECASE)
+            sql = sql.rstrip().rstrip(';') + f' ON CONFLICT ({pk}) DO UPDATE SET {update_str}'
+        return sql.replace('?', '%s')
+
+
+class SQLiteDatabaseWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+    def execute(self, sql, params=None):
+        if params is not None:
+            return self.conn.execute(sql, params)
+        return self.conn.execute(sql)
+    def executemany(self, sql, params_list):
+        return self.conn.executemany(sql, params_list)
+    def executescript(self, sql):
+        return self.conn.executescript(sql)
+    def cursor(self):
+        return self.conn.cursor()
+    def commit(self):
+        try:
+            self.conn.commit()
+        except Exception:
+            pass
+    def rollback(self):
+        try:
+            self.conn.rollback()
+        except Exception:
+            pass
+    def close(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass
+    @property
+    def row_factory(self):
+        return self.conn.row_factory
+    @row_factory.setter
+    def row_factory(self, val):
+        self.conn.row_factory = val
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
+        try:
+            import psycopg2
+            import psycopg2.extras
+            conn = psycopg2.connect(DATABASE_URL)
+            conn.autocommit = True
+            return PGDatabaseWrapper(conn)
+        except Exception as e:
+            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
+
+    conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
-    return conn
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=60000")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA wal_autocheckpoint=100")
+    except Exception:
+        pass
+    return SQLiteDatabaseWrapper(conn)
 
 
 def init_db():
@@ -224,6 +383,18 @@ def init_db():
                 resume_data             TEXT DEFAULT '',
                 resume_size             TEXT DEFAULT '',
                 resume_text             TEXT DEFAULT '',
+                added_by_id             TEXT DEFAULT '',
+                added_by_name           TEXT DEFAULT '',
+                added_by_email          TEXT DEFAULT '',
+                added_by_username       TEXT DEFAULT '',
+                scheduled_by_id         TEXT DEFAULT '',
+                scheduled_by_name       TEXT DEFAULT '',
+                scheduled_by_email      TEXT DEFAULT '',
+                scheduled_by_username   TEXT DEFAULT '',
+                interview_status        TEXT DEFAULT '',
+                offer_sent_at           TEXT DEFAULT '',
+                offer_accepted_at       TEXT DEFAULT '',
+                offer_declined_at       TEXT DEFAULT '',
                 created_at              TEXT DEFAULT '',
                 updated_at              TEXT DEFAULT ''
             );
@@ -274,12 +445,140 @@ def init_db():
                 status           TEXT DEFAULT 'in_progress',
                 created_at       TEXT DEFAULT ''
             );
+            CREATE TABLE IF NOT EXISTS teams (
+                id               TEXT PRIMARY KEY,
+                dept_id          TEXT DEFAULT '',
+                name             TEXT NOT NULL DEFAULT '',
+                code             TEXT DEFAULT '',
+                lead_name        TEXT DEFAULT '',
+                lead_phone       TEXT DEFAULT '',
+                lead_email       TEXT DEFAULT '',
+                members          TEXT DEFAULT '[]',
+                headcount        INTEGER DEFAULT 0,
+                targetMonthly    REAL DEFAULT 0,
+                progress         REAL DEFAULT 0,
+                focus_area       TEXT DEFAULT '',
+                created_at       TEXT DEFAULT '',
+                updated_at       TEXT DEFAULT ''
+            );
+            CREATE TABLE IF NOT EXISTS checkout_orders (
+                id                      TEXT PRIMARY KEY,
+                order_id                TEXT UNIQUE NOT NULL,
+                customer_id             TEXT DEFAULT '',
+                customer_name           TEXT NOT NULL DEFAULT '',
+                customer_email          TEXT DEFAULT '',
+                customer_phone          TEXT DEFAULT '',
+                city                    TEXT DEFAULT '',
+                plan_name               TEXT NOT NULL DEFAULT 'Standard License',
+                plan_duration_years     INTEGER DEFAULT 1,
+                amount                  REAL NOT NULL DEFAULT 1499,
+                currency                TEXT DEFAULT 'INR',
+                payment_status          TEXT NOT NULL DEFAULT 'completed',
+                payment_method          TEXT DEFAULT 'Razorpay / Sylivion Checkout',
+                transaction_id          TEXT DEFAULT '',
+                emp_id                  TEXT DEFAULT '',
+                emp_name                TEXT DEFAULT '',
+                commission_calculated   REAL DEFAULT 0,
+                license_key_generated   TEXT DEFAULT '',
+                checkout_source         TEXT DEFAULT 'Sylivion Checkout',
+                raw_payload             TEXT DEFAULT '{}',
+                created_at              TEXT NOT NULL,
+                updated_at              TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dev_tasks (
+                id             TEXT PRIMARY KEY,
+                title          TEXT NOT NULL DEFAULT '',
+                description    TEXT DEFAULT '',
+                category       TEXT DEFAULT 'Bug',
+                priority       TEXT DEFAULT 'High',
+                status         TEXT DEFAULT 'todo',
+                assignee_id    TEXT DEFAULT '',
+                assignee_name  TEXT DEFAULT '',
+                dev_notes      TEXT DEFAULT '',
+                branch_name    TEXT DEFAULT '',
+                pr_link        TEXT DEFAULT '',
+                due_date       TEXT DEFAULT '',
+                created_by_id  TEXT DEFAULT '',
+                created_by_name TEXT DEFAULT '',
+                created_at     TEXT NOT NULL,
+                updated_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dev_releases (
+                id             TEXT PRIMARY KEY,
+                version        TEXT NOT NULL UNIQUE,
+                title          TEXT NOT NULL DEFAULT '',
+                release_date   TEXT DEFAULT '',
+                status         TEXT DEFAULT 'draft',
+                features_json  TEXT DEFAULT '[]',
+                fixes_json     TEXT DEFAULT '[]',
+                notes          TEXT DEFAULT '',
+                download_url   TEXT DEFAULT '',
+                created_by     TEXT DEFAULT '',
+                created_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id             TEXT PRIMARY KEY,
+                user_id        TEXT DEFAULT '',
+                user_name      TEXT DEFAULT '',
+                role           TEXT DEFAULT '',
+                action         TEXT NOT NULL,
+                module         TEXT DEFAULT 'General',
+                details        TEXT DEFAULT '',
+                ip_address     TEXT DEFAULT '',
+                timestamp      TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id             TEXT PRIMARY KEY,
+                employee_id    TEXT DEFAULT '',
+                employee_name  TEXT DEFAULT '',
+                activity_type  TEXT DEFAULT 'call',
+                target_contact TEXT DEFAULT '',
+                details        TEXT DEFAULT '',
+                extra_data     TEXT DEFAULT '{}',
+                created_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS license_keys (
+                id             TEXT PRIMARY KEY,
+                license_key    TEXT UNIQUE NOT NULL,
+                customer_id    TEXT DEFAULT '',
+                customer_name  TEXT DEFAULT '',
+                plan_name      TEXT DEFAULT 'Standard Plan',
+                duration_years INTEGER DEFAULT 1,
+                status         TEXT DEFAULT 'active',
+                generated_by   TEXT DEFAULT 'system',
+                expiry_date    TEXT DEFAULT '',
+                created_at     TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key            TEXT PRIMARY KEY,
+                value          TEXT NOT NULL DEFAULT '',
+                category       TEXT DEFAULT 'general',
+                updated_at     TEXT DEFAULT ''
+            );
 
         """)
-                # Ensure customer table columns for sales attribution & commission
-        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label"]:
+        # Ensure customer table columns for sales attribution, checkout tracking, GSTIN & commission
+        for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label", "payment_method", "transaction_id", "checkout_source", "status", "order_id", "gstin"]:
             try:
                 db.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
+            except Exception:
+                pass
+
+        # Ensure employee_sales table columns for comprehensive employee attribution
+        for col in ["emp_id", "customer_id", "plan_name", "status", "target_month"]:
+            try:
+                db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
+            except Exception:
+                pass
+
+        # Ensure activity_logs and audit_logs columns
+        for col in ["extra_data"]:
+            try:
+                db.execute(f"ALTER TABLE activity_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
+            except Exception:
+                pass
+            try:
+                db.execute(f"ALTER TABLE audit_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
             except Exception:
                 pass
 
@@ -354,6 +653,56 @@ def init_db():
         except Exception:
             pass
 
+        # Automated customer deduplication cleanup on server startup
+        try:
+            raw_c = rows_to_list(db.execute("SELECT id, license_key, phone, email, order_id, updated_at, created_at FROM customers ORDER BY updated_at DESC, created_at DESC").fetchall())
+            seen_ids = set()
+            seen_lics = set()
+            seen_orders = set()
+            seen_contacts = set()
+            dup_ids_to_remove = []
+
+            for r in raw_c:
+                cid = r.get("id")
+                if not cid or cid in seen_ids:
+                    dup_ids_to_remove.append(cid)
+                    continue
+
+                lic = (r.get("license_key") or "").strip()
+                if lic:
+                    if lic in seen_lics:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_lics.add(lic)
+
+                ord_id = (r.get("order_id") or "").strip()
+                if ord_id:
+                    if ord_id in seen_orders:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_orders.add(ord_id)
+
+                p10 = clean_phone_number(r.get("phone"))[-10:]
+                em = (r.get("email") or "").strip().lower()
+                if p10 and em:
+                    ckey = f"{p10}|{em}"
+                    if ckey in seen_contacts:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_contacts.add(ckey)
+
+                seen_ids.add(cid)
+
+            for d_id in dup_ids_to_remove:
+                if d_id:
+                    db.execute("DELETE FROM customers WHERE id = ?", (d_id,))
+            if dup_ids_to_remove:
+                db.commit()
+                print(f"  [Startup Dedup] Cleaned {len(dup_ids_to_remove)} duplicate customer records.")
+        except Exception:
+            pass
+
+
         # Seed default Admin and initial role users if staff_users table is empty
         try:
             count = db.execute("SELECT COUNT(*) FROM staff_users").fetchone()[0]
@@ -361,6 +710,8 @@ def init_db():
             default_users = [
                 ("usr-admin-001", "Master Administrator", "admin", "admin123", "admin", "admin@invoicepro.local", "9322731612", "", 1, now_str),
                 ("usr-mgr-001", "Operations Manager", "manager", "manager123", "manager", "manager@invoicepro.local", "", "", 1, now_str),
+                ("usr-hr-001", "Sakshi Ajit Chavan", "sakshi", "sakshi123", "hr", "sakshichavan2409@gmail.com", "8459790520", "EMP-SA0520-478", 1, now_str),
+                ("usr-hr-alias", "Sakshi", "hr", "hr123", "hr", "sakshi.hr@invoicepro.in", "8459790520", "EMP-SA0520-478", 1, now_str),
                 ("usr-slead-001", "Sales Team Leader", "sales_lead", "sales123", "sales_leader", "saleslead@invoicepro.local", "", "", 1, now_str),
                 ("usr-sales-001", "Senior Sales Executive", "sales", "sales123", "sales_member", "sales@invoicepro.local", "", "", 1, now_str),
                 ("usr-suplead-001", "Support Team Leader", "support_lead", "support123", "support_leader", "supportlead@invoicepro.local", "", "", 1, now_str),
@@ -375,16 +726,24 @@ def init_db():
             """, default_users)
             db.commit()
 
-            # Ensure support, sales, dev roles are correctly normalized and not mapped to sales
+            # Ensure support, sales, dev, hr roles are correctly normalized
             db.execute("UPDATE staff_users SET role='support_leader', department='Support', designation='Support Team Leader' WHERE username IN ('support_lead', 'support')")
             db.execute("UPDATE staff_users SET role='support_member', department='Support', designation='Technical Support Specialist' WHERE username IN ('support_mem', 'support_priya', 'support_rahul', 'sarah_support')")
             db.execute("UPDATE staff_users SET role='sales_leader', department='Sales', designation='Sales Team Leader' WHERE username IN ('sales_lead')")
             db.execute("UPDATE staff_users SET role='sales_member', department='Sales', designation='Senior Sales Executive' WHERE username IN ('sales', 'sales2')")
             db.execute("UPDATE staff_users SET role='dev_leader', department='Development', designation='Development Team Leader' WHERE username IN ('dev_lead', 'dev')")
             db.execute("UPDATE staff_users SET role='dev_member', department='Development', designation='Senior Frontend Engineer' WHERE username IN ('dev_front', 'dev_back', 'dev_flutter', 'dev_qa')")
-            
-            # Clean up legacy default HR user if present so only manager-created HR employees exist
-            db.execute("DELETE FROM staff_users WHERE id='usr-hr-001' OR (username='hr' AND (name='HR Manager' OR name='Pooja Deshmukh'))")
+            db.execute("UPDATE staff_users SET role='hr', department='Human Resources', designation='HR Manager' WHERE username IN ('sakshi', 'hr', 'hr_sakshi')")
+
+            # Ensure Sakshi HR is always present in staff_users table
+            db.execute("""
+                INSERT OR IGNORE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
+                VALUES ('usr-hr-001', 'Sakshi Ajit Chavan', 'sakshi', 'sakshi123', 'hr', 'Human Resources', 'HR Manager', 'sakshichavan2409@gmail.com', '8459790520', 'EMP-SA0520-478', 1, ?)
+            """, (now_str,))
+            db.execute("""
+                INSERT OR IGNORE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
+                VALUES ('usr-hr-alias', 'Sakshi', 'hr', 'hr123', 'hr', 'Human Resources', 'HR & Talent Specialist', 'sakshi.hr@invoicepro.in', '8459790520', 'EMP-SA0520-478', 1, ?)
+            """, (now_str,))
             db.commit()
         except Exception as seed_err:
             print(f"  [Seed Notice] {seed_err}")
@@ -533,7 +892,19 @@ def init_db():
             "resume_filename": "TEXT DEFAULT ''",
             "resume_data": "TEXT DEFAULT ''",
             "resume_size": "TEXT DEFAULT ''",
-            "resume_text": "TEXT DEFAULT ''"
+            "resume_text": "TEXT DEFAULT ''",
+            "added_by_id": "TEXT DEFAULT ''",
+            "added_by_name": "TEXT DEFAULT ''",
+            "added_by_email": "TEXT DEFAULT ''",
+            "added_by_username": "TEXT DEFAULT ''",
+            "scheduled_by_id": "TEXT DEFAULT ''",
+            "scheduled_by_name": "TEXT DEFAULT ''",
+            "scheduled_by_email": "TEXT DEFAULT ''",
+            "scheduled_by_username": "TEXT DEFAULT ''",
+            "interview_status": "TEXT DEFAULT ''",
+            "offer_sent_at": "TEXT DEFAULT ''",
+            "offer_accepted_at": "TEXT DEFAULT ''",
+            "offer_declined_at": "TEXT DEFAULT ''"
         }
         for col, col_def in cand_cols.items():
             try:
@@ -630,6 +1001,72 @@ def is_valid_phone(phone, required=False):
     return True
 
 
+def find_matching_customer(db, email=None, phone=None, license_key=None, order_id=None, transaction_id=None, name=None, exclude_id=None):
+    """
+    Search database for an existing customer to strictly prevent duplicate creation.
+    Matches across license key, order ID, transaction ID, email, normalized phone, and company name.
+    """
+    exclude_clause = " AND id != ?" if exclude_id else ""
+    exclude_param = (exclude_id,) if exclude_id else ()
+
+    # 1. Match by exact license key (highest fidelity)
+    if license_key and str(license_key).strip():
+        lic = str(license_key).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE license_key = ? AND license_key != ''{exclude_clause}", (lic,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 2. Match by exact order ID
+    if order_id and str(order_id).strip():
+        ord_id = str(order_id).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE order_id = ? AND order_id != ''{exclude_clause}", (ord_id,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 3. Match by transaction ID
+    if transaction_id and str(transaction_id).strip():
+        tx = str(transaction_id).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE transaction_id = ? AND transaction_id != ''{exclude_clause}", (tx,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 4. Match by email (case-insensitive)
+    em = (str(email).strip().lower()) if email else ""
+    if em:
+        row = db.execute(f"SELECT id FROM customers WHERE LOWER(TRIM(email)) = ?{exclude_clause}", (em,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 5. Match by normalized 10-digit mobile number
+    clean_p = clean_phone_number(phone)
+    if clean_p and len(clean_p) >= 10:
+        clean_p_10 = clean_p[-10:]
+        rows = db.execute(f"SELECT id, phone, email, name FROM customers WHERE phone != ''{exclude_clause}", exclude_param).fetchall()
+        for r in rows:
+            if clean_phone_number(r["phone"])[-10:] == clean_p_10:
+                r_em = str(r["email"] or "").strip().lower()
+                r_nm = str(r["name"] or "").strip().lower()
+                c_nm = (str(name).strip().lower()) if name else ""
+                # If email matches, or neither has conflicting email, or company name matches
+                if not r_em or not em or r_em == em or (c_nm and r_nm == c_nm):
+                    return r["id"]
+
+    # 6. Match by exact company name
+    if name and str(name).strip():
+        c_name = str(name).strip().lower()
+        rows = db.execute(f"SELECT id, name, email, phone FROM customers WHERE LOWER(TRIM(name)) = ?{exclude_clause}", (c_name,) + exclude_param).fetchall()
+        for r in rows:
+            r_email = str(r["email"] or "").strip().lower()
+            r_phone = clean_phone_number(r["phone"])
+            if not r_email or not em or r_email == em:
+                return r["id"]
+            if not r_phone or not clean_p or r_phone[-10:] == clean_p[-10:]:
+                return r["id"]
+
+    return None
+
+
+
 def calculate_plan_commission(plan_label="", amount=0, notes=""):
     """
     Commission rules for salesperson after target completed:
@@ -676,7 +1113,17 @@ def load_smtp_config():
     if os.path.exists(SMTP_CONFIG_PATH):
         try:
             with open(SMTP_CONFIG_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                cfg = json.load(f)
+                if cfg and cfg.get("host") and cfg.get("password") and not is_dummy_password(cfg.get("password")):
+                    return cfg
+        except Exception:
+            pass
+    if os.path.exists(HR_SMTP_PROFILE_PATH):
+        try:
+            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                hr_cfg = json.load(f)
+                if hr_cfg and hr_cfg.get("host") and hr_cfg.get("password") and not is_dummy_password(hr_cfg.get("password")):
+                    return hr_cfg
         except Exception:
             pass
     return {}
@@ -837,6 +1284,10 @@ def do_send_smtp(cfg, to_list, subject, body, attachments=None, cc_list=None, fr
     if is_dummy_password(password):
         stored = load_smtp_config()
         password = stored.get("password", "")
+    
+    password = str(password or "").strip()
+    if host.lower() in ("smtp.gmail.com", "smtp-mail.outlook.com") or len(password) in (19, 16):
+        password = password.replace(" ", "")
     
     from_name  = (from_name_override or cfg.get("from_name", "Sylivion Tech Powered By Workmate4U Pvt. Ltd.")).strip()
     if from_name in ["InvoicePro", "InvoicePro Billing Systems Pvt Ltd", ""]:
@@ -1129,8 +1580,8 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.wfile.write(body)
                     return
 
-            if path == "/api/ping":
-                self.send_json({"ok": True, "service": "InvoicePro Admin", "port": PORT})
+            if path in ("/api/ping", "/api/health", "/health"):
+                self.send_json({"ok": True, "status": "healthy", "service": "InvoicePro Admin", "port": PORT})
                 return
 
             if path == "/api/smtp-config":
@@ -1160,12 +1611,55 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             if path == "/api/customers":
                 with _db_lock:
                     db = get_db()
-                    customers = rows_to_list(db.execute("SELECT * FROM customers ORDER BY created_at DESC").fetchall())
-                    for c in customers:
+                    raw_customers = rows_to_list(db.execute("SELECT * FROM customers ORDER BY updated_at DESC, created_at DESC").fetchall())
+                    db.close()
+
+                    seen_ids = set()
+                    seen_licenses = set()
+                    seen_contacts = set()
+                    customers = []
+
+                    for c in raw_customers:
+                        cid = c.get("id")
+                        if not cid or cid in seen_ids:
+                            continue
+
+                        lic = (c.get("license_key") or "").strip()
+                        if lic:
+                            if lic in seen_licenses:
+                                continue
+                            seen_licenses.add(lic)
+
+                        phone_10 = clean_phone_number(c.get("phone"))[-10:]
+                        email_clean = (c.get("email") or "").strip().lower()
+                        name_clean = (c.get("name") or "").strip().lower()
+
+                        if phone_10 and email_clean:
+                            contact_key = f"{phone_10}|{email_clean}"
+                            if contact_key in seen_contacts:
+                                continue
+                            seen_contacts.add(contact_key)
+
+                        if phone_10 and name_clean:
+                            name_phone_key = f"{phone_10}|{name_clean}"
+                            if name_phone_key in seen_contacts:
+                                continue
+                            seen_contacts.add(name_phone_key)
+
+                        seen_ids.add(cid)
                         c["support_renewals"] = []
                         c["support_purchased"] = False
-                    db.close()
+                        customers.append(c)
+
                 self.send_json(customers)
+                return
+
+            if path in ("/api/checkout/orders", "/api/orders"):
+                with _db_lock:
+                    db = get_db()
+                    orders = rows_to_list(db.execute("SELECT * FROM checkout_orders ORDER BY created_at DESC LIMIT 200").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "orders": orders})
                 return
 
             if path == "/api/reports":
@@ -1202,6 +1696,10 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                                 t["members"] = json.loads(t["members"])
                             except Exception:
                                 t["members"] = [t["members"]] if t["members"] else []
+                        if "targetMonthly" not in t and "targetmonthly" in t:
+                            t["targetMonthly"] = t["targetmonthly"]
+                        if "targetMonthly" not in t:
+                            t["targetMonthly"] = 0
                 self.send_json({"ok": True, "teams": teams})
                 return
 
@@ -1260,6 +1758,14 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json(users)
                 return
 
+            if path in ("/api/activity-logs", "/api/audit-logs", "/api/activities", "/api/logs"):
+                with _db_lock:
+                    db = get_db()
+                    audit_rows = rows_to_list(db.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 1000").fetchall())
+                    act_rows = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 1000").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "logs": audit_rows, "audit_logs": audit_rows, "activity_logs": act_rows})
+                return
             
             if path == "/api/hr/candidates":
                 with _db_lock:
@@ -1621,6 +2127,117 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 })
                 return
 
+            if path in ("/api/system/settings", "/api/system-settings"):
+                with _db_lock:
+                    db = get_db()
+                    rows = rows_to_list(db.execute("SELECT * FROM system_settings").fetchall())
+                    db.close()
+                settings = {}
+                for r in rows:
+                    k = r.get("key")
+                    v = r.get("value")
+                    try:
+                        settings[k] = json.loads(v)
+                    except Exception:
+                        settings[k] = v
+                self.send_json({"ok": True, "settings": settings})
+                return
+
+            if path in ("/api/dev/data", "/api/dev/tasks"):
+                with _db_lock:
+                    db = get_db()
+                    tasks = rows_to_list(db.execute("SELECT * FROM dev_tasks ORDER BY created_at DESC").fetchall())
+                    releases = rows_to_list(db.execute("SELECT * FROM dev_releases ORDER BY release_date DESC").fetchall())
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='dev_metadata'").fetchone()
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "tasks": tasks,
+                    "releases": releases,
+                    "sprints": meta.get("sprints", []),
+                    "prs": meta.get("prs", []),
+                    "escalations": meta.get("escalations", []),
+                    "docs": meta.get("docs", [])
+                })
+                return
+
+            if path == "/api/sales/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='sales_metadata'").fetchone()
+                    acts = rows_to_list(db.execute("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 500").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                self.send_json({
+                    "ok": True,
+                    "leads": meta.get("leads", []),
+                    "targets": meta.get("targets", []),
+                    "escalations": meta.get("escalations", []),
+                    "activities": acts
+                })
+                return
+
+            if path == "/api/support/data":
+                with _db_lock:
+                    db = get_db()
+                    meta_row = db.execute("SELECT value FROM system_settings WHERE key='support_metadata'").fetchone()
+                    recs = rows_to_list(db.execute("SELECT * FROM recurring_issues ORDER BY impacted_count DESC").fetchall())
+                    enqs = rows_to_list(db.execute("SELECT * FROM enquiries ORDER BY created_at DESC").fetchall())
+                    db.close()
+                meta = {}
+                if meta_row:
+                    try: meta = json.loads(meta_row[0] or "{}")
+                    except Exception: pass
+                
+                raw_tickets = meta.get("tickets", [])
+                if not raw_tickets:
+                    raw_tickets = []
+                    for e in enqs:
+                        tid = e.get("id") or ("ST-" + str(random.randint(100, 999)))
+                        raw_tickets.append({
+                            "id": tid,
+                            "ticketNo": tid,
+                            "ticket_no": tid,
+                            "customerName": e.get("customer_name") or e.get("name") or "Customer",
+                            "customer_name": e.get("customer_name") or e.get("name") or "Customer",
+                            "phone": e.get("phone") or "",
+                            "mobile": e.get("phone") or "",
+                            "subject": e.get("subject") or e.get("message") or "Support Request",
+                            "category": e.get("category") or "GST & Invoicing",
+                            "channel": e.get("channel") or "Phone Call",
+                            "priority": (e.get("priority") or "Medium").capitalize(),
+                            "status": e.get("status") or "open",
+                            "assignedTo": e.get("assigned_to") or "",
+                            "assigned_to": e.get("assigned_to") or "",
+                            "assignedToName": e.get("assigned_to_name") or "Unassigned",
+                            "createdAt": e.get("created_at") or "",
+                            "created_at": e.get("created_at") or ""
+                        })
+
+                self.send_json({
+                    "ok": True,
+                    "tickets": raw_tickets,
+                    "calls": meta.get("calls", []),
+                    "kb": meta.get("kb", []),
+                    "recurring_issues": recs
+                })
+                return
+
+            if path == "/api/license-keys":
+                with _db_lock:
+                    db = get_db()
+                    keys = rows_to_list(db.execute("SELECT * FROM license_keys ORDER BY created_at DESC").fetchall())
+                    db.close()
+                self.send_json({"ok": True, "license_keys": keys})
+                return
+
             if path == "/api/export":
                 with _db_lock:
                     db = get_db()
@@ -1788,14 +2405,183 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.commit()
                     db.close()
                 print(f"  [Report IN] [{data.get('category','?')}] {(data.get('message') or '')[:60]}")
-                self.send_ok(f"Report received id={rid}")
+            # ── Sylivion Checkout Integration ────────────────────────────────
+            if path in ("/api/checkout/order", "/api/checkout/webhook"):
+                c_company = (data.get("company") or data.get("customer_name") or data.get("name") or "").strip()
+                c_owner = (data.get("owner") or c_company).strip()
+                c_name = c_company if c_company else c_owner
+                if not c_name:
+                    self.send_err("customer_name or company is required", 400)
+                    return
+                
+                c_email = (data.get("customer_email") or data.get("email") or "").strip()
+                c_phone = (data.get("customer_phone") or data.get("phone") or "").strip()
+                c_city = (data.get("city") or "").strip()
+                c_gstin = (data.get("gstin") or "").strip()
+                plan_name = (data.get("plan_name") or data.get("plan") or "1 Year Plan").strip()
+                amount = float(data.get("amount") or data.get("price") or data.get("total_amount") or 1499.0)
+                currency = (data.get("currency") or "INR").strip()
+                tx_id = (data.get("transaction_id") or data.get("payment_id") or data.get("utr") or data.get("txId") or f"TXN-{os.urandom(4).hex().upper()}").strip()
+                is_upi = bool(data.get("is_manual_upi") or "upi" in (data.get("payment_method") or "").lower())
+                pay_method = (data.get("payment_method") or ("Direct UPI QR Code" if is_upi else "Razorpay Gateway")).strip()
+                order_num = (data.get("order_id") or f"ORD-{int(time.time())}-{os.urandom(2).hex().upper()}").strip()
+                raw_emp_id = (data.get("emp_id") or data.get("empId") or data.get("referral_code") or "").strip()
+                c_status = "pending_verification" if is_upi else "active"
+                order_status = "pending_verification" if is_upi else "completed"
+                
+                # License Key Generation
+                lic_key = (data.get("license_key") or "").strip()
+                if not lic_key and not is_upi:
+                    lic_key = f"INV-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}-{os.urandom(2).hex().upper()}"
+                
+                # Plan duration calculation
+                plan_years = 1
+                if "3" in plan_name or "3y" in plan_name.lower(): plan_years = 3
+                elif "5" in plan_name or "5y" in plan_name.lower(): plan_years = 5
+                elif "lifetime" in plan_name.lower() or "vip" in plan_name.lower() or "life" in plan_name.lower(): plan_years = 99
+                
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                try:
+                    exp_year = datetime.now().year + (plan_years if plan_years < 50 else 50)
+                    plan_end_date = datetime.now().replace(year=exp_year).strftime("%Y-%m-%d")
+                except Exception:
+                    plan_end_date = f"{datetime.now().year + 1}-12-31"
+
+                with _db_lock:
+                    db = get_db()
+                    # 1. Match Employee attribution
+                    matched_emp = None
+                    if raw_emp_id:
+                        matched_emp = db.execute(
+                            "SELECT id, emp_id, name, department, designation FROM employees WHERE LOWER(emp_id)=? OR LOWER(id)=? OR LOWER(name)=?",
+                            (raw_emp_id.lower(), raw_emp_id.lower(), raw_emp_id.lower())
+                        ).fetchone()
+                    
+                    emp_db_id = matched_emp["id"] if matched_emp else ""
+                    emp_code = matched_emp["emp_id"] if matched_emp else raw_emp_id
+                    emp_real_name = matched_emp["name"] if matched_emp else ""
+                    
+                    # Commission calculation
+                    commission = calculate_plan_commission(plan_name, amount, f"EMP: {emp_code}") if emp_code else 0.0
+
+                    # 2. Check or Create Customer with strict zero-duplicate lookup
+                    matched_cid = find_matching_customer(
+                        db,
+                        email=c_email,
+                        phone=c_phone,
+                        license_key=lic_key,
+                        order_id=order_num,
+                        transaction_id=tx_id,
+                        name=c_name
+                    )
+
+                    if matched_cid:
+                        cid = matched_cid
+                        db.execute("""UPDATE customers SET 
+                            name=?, owner=?, city=?, gstin=?, license_key=?, purchase_date=?, purchase_amount=?, 
+                            plan_end_date=?, plan_label=?, sold_by_emp_id=?, sold_by_emp_name=?, 
+                            sales_person=?, payment_method=?, transaction_id=?, checkout_source=?, 
+                            status=?, order_id=?, updated_at=?
+                            WHERE id=?""",
+                            (c_name, c_owner, c_city, c_gstin, lic_key, today_str, amount, plan_end_date, plan_name,
+                             emp_code, emp_real_name, emp_real_name, pay_method, tx_id,
+                             "Sylivion Checkout", c_status, order_num, now_iso(), cid))
+                    else:
+                        cid = new_id()
+                        db.execute("""INSERT INTO customers 
+                            (id, name, owner, city, currency, email, phone, gstin, license_key, purchase_date,
+                             purchase_amount, support_purchased, support_amount, notes, plan_end_date,
+                             sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
+                             payment_method, transaction_id, checkout_source, status, order_id, created_at, updated_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (cid, c_name, c_owner, c_city, currency, c_email, c_phone, c_gstin, lic_key, today_str,
+                             amount, 1, 0, f"Purchased via Sylivion Checkout. EMP: {emp_code} ({emp_real_name})",
+                             plan_end_date, emp_code, emp_real_name, emp_real_name, "Sylivion Checkout",
+                             plan_name, pay_method, tx_id, "Sylivion Checkout", c_status, order_num, now_iso(), now_iso()))
+
+                    # 3. Record in employee_sales if employee attributed
+                    if matched_emp:
+                        sale_id = new_id()
+                        cur_month = today_str[:7]
+                        db.execute("""INSERT INTO employee_sales 
+                            (id, employee_id, emp_id, customer_id, customer_name, plan_name, amount, commission, date, note, status, target_month, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (sale_id, emp_db_id, emp_code, cid, c_name, plan_name, amount, commission,
+                             today_str, f"Online Checkout ({order_num}) - {plan_name}", "approved", cur_month, now_iso()))
+
+                    # 4. Insert or Update checkout_orders
+                    existing_order = db.execute("SELECT id FROM checkout_orders WHERE order_id=?", (order_num,)).fetchone()
+                    if existing_order:
+                        db.execute("""UPDATE checkout_orders SET
+                            customer_id=?, customer_name=?, customer_email=?, customer_phone=?, city=?,
+                            plan_name=?, plan_duration_years=?, amount=?, currency=?, payment_status=?, payment_method=?,
+                            transaction_id=?, emp_id=?, emp_name=?, commission_calculated=?, license_key_generated=?,
+                            checkout_source=?, raw_payload=?, updated_at=?
+                            WHERE id=?""",
+                            (cid, c_name, c_email, c_phone, c_city, plan_name, plan_years, amount, currency,
+                             "completed", pay_method, tx_id, emp_code, emp_real_name, commission, lic_key,
+                             "Sylivion Checkout", json.dumps(data), now_iso(), existing_order["id"]))
+                    else:
+                        chk_id = new_id()
+                        db.execute("""INSERT INTO checkout_orders
+                            (id, order_id, customer_id, customer_name, customer_email, customer_phone, city,
+                             plan_name, plan_duration_years, amount, currency, payment_status, payment_method,
+                             transaction_id, emp_id, emp_name, commission_calculated, license_key_generated,
+                             checkout_source, raw_payload, created_at, updated_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (chk_id, order_num, cid, c_name, c_email, c_phone, c_city,
+                             plan_name, plan_years, amount, currency, "completed", pay_method,
+                             tx_id, emp_code, emp_real_name, commission, lic_key,
+                             "Sylivion Checkout", json.dumps(data), now_iso(), now_iso()))
+
+                    # 5. Insert or Update license key record
+                    if lic_key:
+                        existing_lic = db.execute("SELECT id FROM license_keys WHERE license_key=?", (lic_key,)).fetchone()
+                        if existing_lic:
+                            db.execute("""UPDATE license_keys SET
+                                customer_id=?, customer_name=?, plan_name=?, duration_years=?, status='active', expiry_date=?
+                                WHERE id=?""",
+                                (cid, c_name, plan_name, plan_years, plan_end_date, existing_lic["id"]))
+                        else:
+                            db.execute("""INSERT INTO license_keys 
+                                (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                                VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                                (new_id(), lic_key, cid, c_name, plan_name, plan_years, "active", "checkout", plan_end_date, now_iso()))
+
+                    # 6. Audit Log
+                    db.execute("""INSERT INTO audit_logs 
+                        (id, user_id, user_name, role, action, module, details, timestamp)
+                        VALUES (?,?,?,?,?,?,?,?)""",
+                        (new_id(), "checkout-system", "Sylivion Checkout", "system",
+                         f"Processed checkout order {order_num} for {c_name} (Plan: {plan_name}, EMP: {emp_code or 'None'})",
+                         "Checkout", f"Amount: {currency} {amount}, License: {lic_key}", now_iso()))
+
+                    db.commit()
+                    db.close()
+
+                self.send_json({
+                    "ok": True,
+                    "order_id": order_num,
+                    "customer_id": cid,
+                    "license_key": lic_key,
+                    "plan_name": plan_name,
+                    "plan_end_date": plan_end_date,
+                    "amount": amount,
+                    "currency": currency,
+                    "employee_attributed": {
+                        "matched": bool(matched_emp),
+                        "emp_id": emp_code,
+                        "name": emp_real_name,
+                        "commission": commission
+                    } if emp_code else None
+                })
                 return
 
             # ── Customers ─────────────────────────────────────────────────────
             if path == "/api/customers/add":
                 with _db_lock:
                     db = get_db()
-                    cid = (data.get("id") or "").strip() or new_id()
+                    cid = (data.get("id") or "").strip()
                     name = (data.get("name") or "").strip()
                     if not name:
                         self.send_err("name is required", 400)
@@ -1808,6 +2594,34 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     if email and not is_valid_email(email, required=False):
                         self.send_err("Invalid email address format (e.g. customer@gmail.com).", 400)
                         return
+
+                    # Zero-Duplicate Customer Detection: check if matching customer already exists
+                    existing_id = None
+                    created_at_val = now_iso()
+                    if cid:
+                        row = db.execute("SELECT id, created_at FROM customers WHERE id=?", (cid,)).fetchone()
+                        if row:
+                            existing_id = row["id"]
+                            created_at_val = row["created_at"] or now_iso()
+
+                    if not existing_id:
+                        matched_id = find_matching_customer(
+                            db,
+                            email=email,
+                            phone=phone,
+                            license_key=data.get("licenseKey") or data.get("license_key"),
+                            order_id=data.get("orderId") or data.get("order_id"),
+                            name=name
+                        )
+                        if matched_id:
+                            cid = matched_id
+                            existing_id = matched_id
+                            old_row = db.execute("SELECT created_at FROM customers WHERE id=?", (cid,)).fetchone()
+                            created_at_val = old_row["created_at"] if (old_row and old_row["created_at"]) else now_iso()
+
+                    if not cid:
+                        cid = new_id()
+
                     # Safe numeric coercion — data.get() returns None when key exists
                     # but value is null/None, so we must handle that explicitly
                     def safe_num(key, default):
@@ -1850,7 +2664,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                          str(data.get("notes") or ""),
                          str(data.get("planEndDate") or ""), str(data.get("trialEndDate") or ""),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
-                         now_iso(), now_iso()))
+                         created_at_val, now_iso()))
 
                     # Automatically record employee sale and credit 10% commission if sold under a salesperson
                     if sold_by_emp_id or sold_by_emp_name or sales_person:
@@ -2558,6 +3372,191 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     self.send_json({"ok": False, "error": f"Failed to send email: {str(e)}"})
                 return
 
+            # ── Send broadcast emails ─────────────────────────────────────────
+            if path == "/api/send-broadcast":
+                cfg = load_smtp_config()
+                stored_pw = cfg.get("password", "")
+                if data.get("cfg") and isinstance(data["cfg"], dict):
+                    client_cfg = data["cfg"]
+                    for k, v in client_cfg.items():
+                        if k == "password" and is_dummy_password(v):
+                            continue
+                        if v or k not in cfg:
+                            cfg[k] = v
+                if is_dummy_password(cfg.get("password")) and stored_pw:
+                    cfg["password"] = stored_pw
+
+                if not cfg.get("host"):
+                    self.send_json({"ok": False, "error": "SMTP not configured. Open Email Settings to set up."})
+                    return
+                to_list     = data.get("to") or []
+                if isinstance(to_list, str):
+                    to_list = [t.strip() for t in to_list.split(",") if t.strip()]
+                subject     = data.get("subject", "").strip()
+                body        = data.get("body", "").strip()
+                attachments = data.get("attachments") or ([] if not data.get("attachment") else [data.get("attachment")])
+                
+                sent_count = 0
+                errors = []
+                for recipient in to_list:
+                    r_clean = (recipient or "").strip()
+                    if not r_clean:
+                        continue
+                    try:
+                        do_send_smtp(cfg, r_clean, subject, body, attachments=attachments)
+                        sent_count += 1
+                    except Exception as err:
+                        errors.append({"to": r_clean, "error": str(err)})
+                self.send_json({"ok": True, "sent": sent_count, "errors": errors})
+                return
+
+            # ── Sync Fallback ─────────────────────────────────────────────────
+            if path == "/api/sync":
+                self.send_json({"ok": True, "msg": "Sync batch received successfully"})
+                return
+
+            # ── Activity & Audit Logs ─────────────────────────────────────────
+            if path in ("/api/activity-logs/add", "/api/audit-logs/add", "/api/log-activity", "/api/sales/activities/add"):
+                log_id = data.get("id") or ("act-" + str(int(time.time() * 1000)) + "-" + uuid.uuid4().hex[:5])
+                user_id = data.get("user_id") or data.get("user_emp_id") or data.get("employee_id") or ""
+                user_name = data.get("user_name") or data.get("rep_name") or data.get("employee_name") or "Staff"
+                role = data.get("user_role") or data.get("role") or ""
+                action = data.get("description") or data.get("action") or data.get("summary") or "Action logged"
+                module = data.get("type") or data.get("category") or data.get("module") or "General"
+                details = data.get("details") or data.get("summary") or action
+                client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+                ts = data.get("timestamp") or data.get("ts") or data.get("created_at") or now_iso()
+                extra_json = json.dumps(data)
+
+                with _db_lock:
+                    db = get_db()
+                    # Record in audit_logs
+                    db.execute("""
+                        INSERT OR REPLACE INTO audit_logs (id, user_id, user_name, role, action, module, details, ip_address, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, role, action, module, details, client_ip, ts))
+                    
+                    # Also record in activity_logs
+                    act_type = data.get("type") or data.get("activity_type") or "call"
+                    target = data.get("lead_name") or data.get("customer_name") or data.get("target_contact") or ""
+                    db.execute("""
+                        INSERT OR REPLACE INTO activity_logs (id, employee_id, employee_name, activity_type, target_contact, details, extra_data, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (log_id, user_id, user_name, act_type, target, details, extra_json, ts))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "id": log_id})
+                return
+
+            if path in ("/api/activity-logs/clear", "/api/audit-logs/clear"):
+                with _db_lock:
+                    db = get_db()
+                    db.execute("DELETE FROM audit_logs")
+                    db.execute("DELETE FROM activity_logs")
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Logs cleared successfully"})
+                return
+
+            if path in ("/api/system/settings/save", "/api/system/settings", "/api/system-settings/save"):
+                settings_map = data.get("settings") if isinstance(data.get("settings"), dict) else data
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    for k, v in settings_map.items():
+                        v_str = json.dumps(v) if not isinstance(v, str) else v
+                        cat = "company" if "company" in k else "security" if "pin" in k or "sec" in k else "general"
+                        db.execute("""
+                            INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                            VALUES (?, ?, ?, ?)
+                        """, (k, v_str, cat, now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Settings saved successfully"})
+                return
+
+            if path in ("/api/dev/data/save", "/api/dev/tasks/save"):
+                now_str = now_iso()
+                with _db_lock:
+                    db = get_db()
+                    tasks = data.get("tasks") or []
+                    for t in tasks:
+                        tid = t.get("id") or ("TASK-" + str(int(time.time() * 1000)))
+                        db.execute("""
+                            INSERT OR REPLACE INTO dev_tasks (id, title, description, category, priority, status, assignee_id, assignee_name, dev_notes, branch_name, pr_link, due_date, created_by_id, created_by_name, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            tid,
+                            t.get("title", ""),
+                            t.get("description", "") or t.get("dev_notes", ""),
+                            t.get("category", "Bug"),
+                            t.get("priority", "High"),
+                            t.get("status", "todo"),
+                            t.get("assignee_id", "") or t.get("assignee", ""),
+                            t.get("assignee_name", "") or t.get("assigneeName", ""),
+                            t.get("dev_notes", ""),
+                            t.get("branch", "") or t.get("branch_name", ""),
+                            t.get("pr_link", "") or t.get("prLink", ""),
+                            t.get("due_date", ""),
+                            t.get("created_by_id", ""),
+                            t.get("created_by_name", ""),
+                            t.get("created_at") or now_str,
+                            t.get("updated_at") or now_str
+                        ))
+                    
+                    meta = {
+                        "sprints": data.get("sprints", []),
+                        "prs": data.get("prs", []),
+                        "escalations": data.get("escalations", []),
+                        "docs": data.get("docs", [])
+                    }
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('dev_metadata', ?, 'development', ?)
+                    """, (json.dumps(meta), now_str))
+                    
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Dev data synchronized successfully"})
+                return
+
+            if path == "/api/sales/data/save":
+                now_str = now_iso()
+                meta = {
+                    "leads": data.get("leads", []),
+                    "targets": data.get("targets", []),
+                    "escalations": data.get("escalations", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('sales_metadata', ?, 'sales', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Sales data synchronized successfully"})
+                return
+
+            if path == "/api/support/data/save":
+                now_str = now_iso()
+                meta = {
+                    "tickets": data.get("tickets", []),
+                    "calls": data.get("calls", []),
+                    "kb": data.get("kb", [])
+                }
+                with _db_lock:
+                    db = get_db()
+                    db.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value, category, updated_at)
+                        VALUES ('support_metadata', ?, 'support', ?)
+                    """, (json.dumps(meta), now_str))
+                    db.commit()
+                    db.close()
+                self.send_json({"ok": True, "message": "Support data synchronized successfully"})
+                return
+
             if path == "/api/test-email":
                 cfg = load_smtp_config()
                 stored_pw = cfg.get("password", "")
@@ -2610,15 +3609,15 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     return
                 with _db_lock:
                     db = get_db()
-                    # Strict case-sensitive match for both username and password (exact capital/small characters)
-                    user_row = db.execute("SELECT * FROM staff_users WHERE username = ? COLLATE BINARY", (username,)).fetchone()
+                    # Strict match for username, employee ID, or email with matching password
+                    user_row = db.execute("SELECT * FROM staff_users WHERE (username = ? OR emp_id = ? OR email = ?)", (username, username, username)).fetchone()
                     user = None
                     if user_row:
                         user_dict = dict(user_row)
                         if user_dict.get("password") == password:
                             user = user_row
 
-                    # If still not found in staff_users, check employees table with exact case-sensitive username & password
+                    # If still not found in staff_users, check employees table
                     if not user:
                         emps = rows_to_list(db.execute("SELECT * FROM employees").fetchall())
                         matched_emp = None
@@ -2626,7 +3625,9 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             parse_emp_extra(e)
                             emp_user = (e.get("staffUsername") or (e.get("name", "").split()[0] + "_" + (e.get("role") or "sales"))).strip()
                             emp_pass = e.get("staffPassword") or "emp123"
-                            if emp_user == username and password == emp_pass:
+                            emp_id_val = (e.get("emp_id") or "").strip()
+                            emp_email = (e.get("email") or "").strip()
+                            if (emp_user == username or (emp_id_val and emp_id_val.lower() == username.lower()) or (emp_email and emp_email.lower() == username.lower())) and password == emp_pass:
                                 matched_emp = e
                                 break
                         if matched_emp:
@@ -2686,11 +3687,18 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.close()
                         self.send_json({"ok": False, "error": "This account is inactive/suspended. Please contact the administrator."})
                         return
-                    # Update last login
+                    # Update last login safely
                     now_str = now_iso()
-                    db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
-                    db.commit()
-                    db.close()
+                    try:
+                        db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
+                        db.commit()
+                    except Exception as db_err:
+                        print(f"  [AUTH] Warning: Failed to update last_login timestamp: {db_err}")
+                    finally:
+                        try:
+                            db.close()
+                        except Exception:
+                            pass
 
                 # Normalize username-to-role mappings
                 un_lower = (user_dict.get("username") or "").lower()
@@ -3162,13 +4170,27 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
                 email_sent = False
                 email_err = None
-                if send_email and cand and cand["email"]:
-                    # Method 1: Check if HR provided their own SMTP config
+                to_email = ((cand and cand["email"]) or candidate_email).strip()
+                cand_name = ((cand and cand["name"]) or str(data.get("candidate_name", "Candidate"))).strip()
+                cand_role = ((cand and cand["role_applied"]) or str(data.get("role_applied", "Position"))).strip()
+                cc_raw = str(data.get("cc_email", "info@sylivion.com")).strip()
+                cc_list = [c.strip() for c in cc_raw.split(",") if c.strip()] if cc_raw else ["info@sylivion.com"]
+                if send_email and to_email:
                     cfg = None
-                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password"):
+                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password") and not is_dummy_password(hr_smtp_cfg.get("password")):
                         cfg = hr_smtp_cfg
                         sender_addr = hr_smtp_cfg.get("from_email") or hr_smtp_cfg.get("username")
                         sender_name = hr_smtp_cfg.get("from_name") or from_name
+                    elif os.path.exists(HR_SMTP_PROFILE_PATH):
+                        try:
+                            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                                cfg = json.load(f)
+                            sender_addr = cfg.get("from_email") or cfg.get("username") or from_email
+                            sender_name = cfg.get("from_name") or from_name
+                        except Exception:
+                            cfg = load_smtp_config()
+                            sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
+                            sender_name = from_name
                     else:
                         cfg = load_smtp_config()
                         sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
@@ -3178,12 +4200,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         sender_name = company_name
 
                     if cfg and cfg.get("host"):
-                        subj = f"Interview Invitation — {cand['role_applied'] or 'Position'} at {company_name}"
+                        subj = f"Interview Invitation — {cand_role or 'Position'} at {company_name}"
                         city_suffix = f", {company_city}" if company_city else ""
                         phone_line = f"Phone: {from_phone}\n" if from_phone else ""
                         body = (
-                            f"Dear {cand['name']},\n\n"
-                            f"Thank you for your interest in joining {company_name}. We are pleased to invite you for the interview round for the {cand['role_applied'] or 'Position'} position.\n\n"
+                            f"Dear {cand_name},\n\n"
+                            f"Thank you for your interest in joining {company_name}. We are pleased to invite you for the interview round for the {cand_role or 'Position'} position.\n\n"
                             f"Interview Details:\n"
                             f"• Date & Time: {sched_at}\n"
                             f"• Interviewer: {interviewer}\n"
@@ -3196,9 +4218,9 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             f"{phone_line}"
                         )
                         try:
-                            do_send_smtp(cfg, cand["email"], subj, body, cc_list=None, from_email_override=sender_addr, from_name_override=company_name)
+                            do_send_smtp(cfg, to_email, subj, body, cc_list=cc_list, from_email_override=sender_addr, from_name_override=company_name)
                             email_sent = True
-                            print(f"  [HR Interview Email] Sent to {cand['email']} using {cfg.get('username')} (Sender: {company_name})")
+                            print(f"  [HR Interview Email] Sent to {to_email} (Cc: {', '.join(cc_list)}) using {cfg.get('username')} (Sender: {company_name})")
                         except Exception as em_err:
                             email_err = str(em_err)
                             print(f"  [Schedule Email Err] {em_err}")
@@ -3255,13 +4277,25 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
                 email_sent = False
                 email_err = None
-                if send_email and cand and cand["email"]:
-                    # Method 1: Check if HR provided their own SMTP config
+                to_email = ((cand and cand["email"]) or candidate_email).strip()
+                cand_name = ((cand and cand["name"]) or str(data.get("candidate_name", "Candidate"))).strip()
+                role_name = offered_desig or (cand and cand['role_applied']) or str(data.get("role_applied", "Position"))
+                if send_email and to_email:
                     cfg = None
-                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password"):
+                    if hr_smtp_cfg and isinstance(hr_smtp_cfg, dict) and hr_smtp_cfg.get("host") and hr_smtp_cfg.get("username") and hr_smtp_cfg.get("password") and not is_dummy_password(hr_smtp_cfg.get("password")):
                         cfg = hr_smtp_cfg
                         sender_addr = hr_smtp_cfg.get("from_email") or hr_smtp_cfg.get("username")
                         sender_name = hr_smtp_cfg.get("from_name") or from_name
+                    elif os.path.exists(HR_SMTP_PROFILE_PATH):
+                        try:
+                            with open(HR_SMTP_PROFILE_PATH, "r", encoding="utf-8") as f:
+                                cfg = json.load(f)
+                            sender_addr = cfg.get("from_email") or cfg.get("username") or from_email
+                            sender_name = cfg.get("from_name") or from_name
+                        except Exception:
+                            cfg = load_smtp_config()
+                            sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
+                            sender_name = from_name
                     else:
                         cfg = load_smtp_config()
                         sender_addr = from_email or cfg.get("from_email") or cfg.get("username")
@@ -3271,35 +4305,33 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         sender_name = company_name
 
                     if cfg and cfg.get("host"):
-                        role_name = offered_desig or cand['role_applied'] or 'Role'
                         subj = f"Selection Confirmation |  {company_name} - {role_name}"
                         city_suffix = f", {company_city}" if company_city else ""
                         phone_line = f"Phone: {from_phone}\n" if from_phone else ""
 
-                        accept_subject = quote(f"Selection Confirmation Accepted - {cand['name']} ({role_name}) - {company_name}")
+                        accept_subject = quote(f"Selection Confirmation Accepted - {cand_name} ({role_name}) - {company_name}")
                         accept_body = quote(
                             f"Dear Human Resources,\n\n"
                             f"I am pleased to accept the job offer for the position of {role_name} at {company_name}.\n"
                             f"I confirm that I will join on {joining_date} and carry all required documents.\n\n"
                             f"Candidate Details:\n"
-                            f"• Name: {cand['name']}\n"
-                            f"• Contact: {cand['phone']}\n"
+                            f"• Name: {cand_name}\n"
                             f"• Designation: {role_name}\n\n"
                             f"Regards,\n"
-                            f"{cand['name']}"
+                            f"{cand_name}"
                         )
                         accept_url = f"mailto:{sender_addr}?subject={accept_subject}&body={accept_body}"
 
-                        decline_subject = quote(f"Selection Confirmation Declined - {cand['name']} ({role_name}) - {company_name}")
+                        decline_subject = quote(f"Selection Confirmation Declined - {cand_name} ({role_name}) - {company_name}")
                         decline_body = quote(
                             f"Dear Human Resources,\n\n"
                             f"Thank you for considering me for the position of {role_name} at {company_name}.\n"
                             f"I regret to inform you that I will not be able to accept the offer at this time.\n\n"
                             f"Candidate Details:\n"
-                            f"• Name: {cand['name']}\n"
+                            f"• Name: {cand_name}\n"
                             f"• Designation: {role_name}\n\n"
                             f"Regards,\n"
-                            f"{cand['name']}"
+                            f"{cand_name}"
                         )
                         decline_url = f"mailto:{sender_addr}?subject={decline_subject}&body={decline_body}"
 
@@ -3309,7 +4341,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         ]
 
                         body = (
-                            f"Dear {cand['name']},\n\n"
+                            f"Dear {cand_name},\n\n"
                             f"Following your interview and HR discussions, we are delighted to offer you the position of {role_name} at {company_name}.\n"
                             f"Congratulations on your selection!\n\n"
                             f"Key Details:\n"
@@ -3331,19 +4363,21 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             f"{phone_line}"
                         )
 
+                        cc_raw = str(data.get("cc_email", "info@sylivion.com")).strip()
+                        cc_list = [c.strip() for c in cc_raw.split(",") if c.strip()] if cc_raw else ["info@sylivion.com"]
                         try:
                             do_send_smtp(
                                 cfg,
-                                cand["email"],
+                                to_email,
                                 subj,
                                 body,
-                                cc_list=["info@sylivion.com"],
+                                cc_list=cc_list,
                                 from_email_override=sender_addr,
                                 from_name_override=company_name,
                                 action_buttons=action_buttons
                             )
                             email_sent = True
-                            print(f"  [HR Joining Email with Action Buttons] Sent to {cand['email']} (Sender: {company_name})")
+                            print(f"  [HR Joining Email with Action Buttons] Sent to {to_email} (Cc: {', '.join(cc_list)}) (Sender: {company_name})")
                         except Exception as em_err:
                             email_err = str(em_err)
                             print(f"  [Joining Kit Email Err] {em_err}")
@@ -3910,10 +4944,14 @@ def main():
     except Exception:
         pass
     print()
-    print("  Stop : Ctrl+C")
-    print("=" * 56)
+    def _open_url():
+        try:
+            if not os.environ.get("RAILWAY_ENVIRONMENT") and not os.environ.get("DYNO") and not os.environ.get("DOCKER"):
+                webbrowser.open(url)
+        except Exception:
+            pass
 
-    threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    threading.Timer(1.0, _open_url).start()
 
     # Start background scheduler (daily reminders + auto-backup)
     _start_scheduler()

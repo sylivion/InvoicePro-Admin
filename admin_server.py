@@ -653,6 +653,56 @@ def init_db():
         except Exception:
             pass
 
+        # Automated customer deduplication cleanup on server startup
+        try:
+            raw_c = rows_to_list(db.execute("SELECT id, license_key, phone, email, order_id, updated_at, created_at FROM customers ORDER BY updated_at DESC, created_at DESC").fetchall())
+            seen_ids = set()
+            seen_lics = set()
+            seen_orders = set()
+            seen_contacts = set()
+            dup_ids_to_remove = []
+
+            for r in raw_c:
+                cid = r.get("id")
+                if not cid or cid in seen_ids:
+                    dup_ids_to_remove.append(cid)
+                    continue
+
+                lic = (r.get("license_key") or "").strip()
+                if lic:
+                    if lic in seen_lics:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_lics.add(lic)
+
+                ord_id = (r.get("order_id") or "").strip()
+                if ord_id:
+                    if ord_id in seen_orders:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_orders.add(ord_id)
+
+                p10 = clean_phone_number(r.get("phone"))[-10:]
+                em = (r.get("email") or "").strip().lower()
+                if p10 and em:
+                    ckey = f"{p10}|{em}"
+                    if ckey in seen_contacts:
+                        dup_ids_to_remove.append(cid)
+                        continue
+                    seen_contacts.add(ckey)
+
+                seen_ids.add(cid)
+
+            for d_id in dup_ids_to_remove:
+                if d_id:
+                    db.execute("DELETE FROM customers WHERE id = ?", (d_id,))
+            if dup_ids_to_remove:
+                db.commit()
+                print(f"  [Startup Dedup] Cleaned {len(dup_ids_to_remove)} duplicate customer records.")
+        except Exception:
+            pass
+
+
         # Seed default Admin and initial role users if staff_users table is empty
         try:
             count = db.execute("SELECT COUNT(*) FROM staff_users").fetchone()[0]
@@ -949,6 +999,72 @@ def is_valid_phone(phone, required=False):
     if digits in ("1234567890", "0123456789"):
         return False
     return True
+
+
+def find_matching_customer(db, email=None, phone=None, license_key=None, order_id=None, transaction_id=None, name=None, exclude_id=None):
+    """
+    Search database for an existing customer to strictly prevent duplicate creation.
+    Matches across license key, order ID, transaction ID, email, normalized phone, and company name.
+    """
+    exclude_clause = " AND id != ?" if exclude_id else ""
+    exclude_param = (exclude_id,) if exclude_id else ()
+
+    # 1. Match by exact license key (highest fidelity)
+    if license_key and str(license_key).strip():
+        lic = str(license_key).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE license_key = ? AND license_key != ''{exclude_clause}", (lic,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 2. Match by exact order ID
+    if order_id and str(order_id).strip():
+        ord_id = str(order_id).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE order_id = ? AND order_id != ''{exclude_clause}", (ord_id,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 3. Match by transaction ID
+    if transaction_id and str(transaction_id).strip():
+        tx = str(transaction_id).strip()
+        row = db.execute(f"SELECT id FROM customers WHERE transaction_id = ? AND transaction_id != ''{exclude_clause}", (tx,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 4. Match by email (case-insensitive)
+    em = (str(email).strip().lower()) if email else ""
+    if em:
+        row = db.execute(f"SELECT id FROM customers WHERE LOWER(TRIM(email)) = ?{exclude_clause}", (em,) + exclude_param).fetchone()
+        if row:
+            return row["id"]
+
+    # 5. Match by normalized 10-digit mobile number
+    clean_p = clean_phone_number(phone)
+    if clean_p and len(clean_p) >= 10:
+        clean_p_10 = clean_p[-10:]
+        rows = db.execute(f"SELECT id, phone, email, name FROM customers WHERE phone != ''{exclude_clause}", exclude_param).fetchall()
+        for r in rows:
+            if clean_phone_number(r["phone"])[-10:] == clean_p_10:
+                r_em = str(r["email"] or "").strip().lower()
+                r_nm = str(r["name"] or "").strip().lower()
+                c_nm = (str(name).strip().lower()) if name else ""
+                # If email matches, or neither has conflicting email, or company name matches
+                if not r_em or not em or r_em == em or (c_nm and r_nm == c_nm):
+                    return r["id"]
+
+    # 6. Match by exact company name
+    if name and str(name).strip():
+        c_name = str(name).strip().lower()
+        rows = db.execute(f"SELECT id, name, email, phone FROM customers WHERE LOWER(TRIM(name)) = ?{exclude_clause}", (c_name,) + exclude_param).fetchall()
+        for r in rows:
+            r_email = str(r["email"] or "").strip().lower()
+            r_phone = clean_phone_number(r["phone"])
+            if not r_email or not em or r_email == em:
+                return r["id"]
+            if not r_phone or not clean_p or r_phone[-10:] == clean_p[-10:]:
+                return r["id"]
+
+    return None
+
 
 
 def calculate_plan_commission(plan_label="", amount=0, notes=""):
@@ -1495,11 +1611,46 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             if path == "/api/customers":
                 with _db_lock:
                     db = get_db()
-                    customers = rows_to_list(db.execute("SELECT * FROM customers ORDER BY created_at DESC").fetchall())
-                    for c in customers:
+                    raw_customers = rows_to_list(db.execute("SELECT * FROM customers ORDER BY updated_at DESC, created_at DESC").fetchall())
+                    db.close()
+
+                    seen_ids = set()
+                    seen_licenses = set()
+                    seen_contacts = set()
+                    customers = []
+
+                    for c in raw_customers:
+                        cid = c.get("id")
+                        if not cid or cid in seen_ids:
+                            continue
+
+                        lic = (c.get("license_key") or "").strip()
+                        if lic:
+                            if lic in seen_licenses:
+                                continue
+                            seen_licenses.add(lic)
+
+                        phone_10 = clean_phone_number(c.get("phone"))[-10:]
+                        email_clean = (c.get("email") or "").strip().lower()
+                        name_clean = (c.get("name") or "").strip().lower()
+
+                        if phone_10 and email_clean:
+                            contact_key = f"{phone_10}|{email_clean}"
+                            if contact_key in seen_contacts:
+                                continue
+                            seen_contacts.add(contact_key)
+
+                        if phone_10 and name_clean:
+                            name_phone_key = f"{phone_10}|{name_clean}"
+                            if name_phone_key in seen_contacts:
+                                continue
+                            seen_contacts.add(name_phone_key)
+
+                        seen_ids.add(cid)
                         c["support_renewals"] = []
                         c["support_purchased"] = False
-                    db.close()
+                        customers.append(c)
+
                 self.send_json(customers)
                 return
 
@@ -2313,15 +2464,19 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     # Commission calculation
                     commission = calculate_plan_commission(plan_name, amount, f"EMP: {emp_code}") if emp_code else 0.0
 
-                    # 2. Check or Create Customer
-                    cust_row = None
-                    if c_email:
-                        cust_row = db.execute("SELECT id FROM customers WHERE LOWER(email)=?", (c_email.lower(),)).fetchone()
-                    if not cust_row and c_phone:
-                        cust_row = db.execute("SELECT id FROM customers WHERE phone=?", (c_phone,)).fetchone()
-                    
-                    if cust_row:
-                        cid = cust_row["id"]
+                    # 2. Check or Create Customer with strict zero-duplicate lookup
+                    matched_cid = find_matching_customer(
+                        db,
+                        email=c_email,
+                        phone=c_phone,
+                        license_key=lic_key,
+                        order_id=order_num,
+                        transaction_id=tx_id,
+                        name=c_name
+                    )
+
+                    if matched_cid:
+                        cid = matched_cid
                         db.execute("""UPDATE customers SET 
                             name=?, owner=?, city=?, gstin=?, license_key=?, purchase_date=?, purchase_amount=?, 
                             plan_end_date=?, plan_label=?, sold_by_emp_id=?, sold_by_emp_name=?, 
@@ -2354,24 +2509,44 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             (sale_id, emp_db_id, emp_code, cid, c_name, plan_name, amount, commission,
                              today_str, f"Online Checkout ({order_num}) - {plan_name}", "approved", cur_month, now_iso()))
 
-                    # 4. Insert into checkout_orders
-                    chk_id = new_id()
-                    db.execute("""INSERT INTO checkout_orders
-                        (id, order_id, customer_id, customer_name, customer_email, customer_phone, city,
-                         plan_name, plan_duration_years, amount, currency, payment_status, payment_method,
-                         transaction_id, emp_id, emp_name, commission_calculated, license_key_generated,
-                         checkout_source, raw_payload, created_at, updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                        (chk_id, order_num, cid, c_name, c_email, c_phone, c_city,
-                         plan_name, plan_years, amount, currency, "completed", pay_method,
-                         tx_id, emp_code, emp_real_name, commission, lic_key,
-                         "Sylivion Checkout", json.dumps(data), now_iso(), now_iso()))
+                    # 4. Insert or Update checkout_orders
+                    existing_order = db.execute("SELECT id FROM checkout_orders WHERE order_id=?", (order_num,)).fetchone()
+                    if existing_order:
+                        db.execute("""UPDATE checkout_orders SET
+                            customer_id=?, customer_name=?, customer_email=?, customer_phone=?, city=?,
+                            plan_name=?, plan_duration_years=?, amount=?, currency=?, payment_status=?, payment_method=?,
+                            transaction_id=?, emp_id=?, emp_name=?, commission_calculated=?, license_key_generated=?,
+                            checkout_source=?, raw_payload=?, updated_at=?
+                            WHERE id=?""",
+                            (cid, c_name, c_email, c_phone, c_city, plan_name, plan_years, amount, currency,
+                             "completed", pay_method, tx_id, emp_code, emp_real_name, commission, lic_key,
+                             "Sylivion Checkout", json.dumps(data), now_iso(), existing_order["id"]))
+                    else:
+                        chk_id = new_id()
+                        db.execute("""INSERT INTO checkout_orders
+                            (id, order_id, customer_id, customer_name, customer_email, customer_phone, city,
+                             plan_name, plan_duration_years, amount, currency, payment_status, payment_method,
+                             transaction_id, emp_id, emp_name, commission_calculated, license_key_generated,
+                             checkout_source, raw_payload, created_at, updated_at)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (chk_id, order_num, cid, c_name, c_email, c_phone, c_city,
+                             plan_name, plan_years, amount, currency, "completed", pay_method,
+                             tx_id, emp_code, emp_real_name, commission, lic_key,
+                             "Sylivion Checkout", json.dumps(data), now_iso(), now_iso()))
 
-                    # 5. Insert license key record
-                    db.execute("""INSERT OR REPLACE INTO license_keys 
-                        (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                        (new_id(), lic_key, cid, c_name, plan_name, plan_years, "active", "checkout", plan_end_date, now_iso()))
+                    # 5. Insert or Update license key record
+                    if lic_key:
+                        existing_lic = db.execute("SELECT id FROM license_keys WHERE license_key=?", (lic_key,)).fetchone()
+                        if existing_lic:
+                            db.execute("""UPDATE license_keys SET
+                                customer_id=?, customer_name=?, plan_name=?, duration_years=?, status='active', expiry_date=?
+                                WHERE id=?""",
+                                (cid, c_name, plan_name, plan_years, plan_end_date, existing_lic["id"]))
+                        else:
+                            db.execute("""INSERT INTO license_keys 
+                                (id, license_key, customer_id, customer_name, plan_name, duration_years, status, generated_by, expiry_date, created_at)
+                                VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                                (new_id(), lic_key, cid, c_name, plan_name, plan_years, "active", "checkout", plan_end_date, now_iso()))
 
                     # 6. Audit Log
                     db.execute("""INSERT INTO audit_logs 
@@ -2406,7 +2581,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             if path == "/api/customers/add":
                 with _db_lock:
                     db = get_db()
-                    cid = (data.get("id") or "").strip() or new_id()
+                    cid = (data.get("id") or "").strip()
                     name = (data.get("name") or "").strip()
                     if not name:
                         self.send_err("name is required", 400)
@@ -2419,6 +2594,34 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     if email and not is_valid_email(email, required=False):
                         self.send_err("Invalid email address format (e.g. customer@gmail.com).", 400)
                         return
+
+                    # Zero-Duplicate Customer Detection: check if matching customer already exists
+                    existing_id = None
+                    created_at_val = now_iso()
+                    if cid:
+                        row = db.execute("SELECT id, created_at FROM customers WHERE id=?", (cid,)).fetchone()
+                        if row:
+                            existing_id = row["id"]
+                            created_at_val = row["created_at"] or now_iso()
+
+                    if not existing_id:
+                        matched_id = find_matching_customer(
+                            db,
+                            email=email,
+                            phone=phone,
+                            license_key=data.get("licenseKey") or data.get("license_key"),
+                            order_id=data.get("orderId") or data.get("order_id"),
+                            name=name
+                        )
+                        if matched_id:
+                            cid = matched_id
+                            existing_id = matched_id
+                            old_row = db.execute("SELECT created_at FROM customers WHERE id=?", (cid,)).fetchone()
+                            created_at_val = old_row["created_at"] if (old_row and old_row["created_at"]) else now_iso()
+
+                    if not cid:
+                        cid = new_id()
+
                     # Safe numeric coercion — data.get() returns None when key exists
                     # but value is null/None, so we must handle that explicitly
                     def safe_num(key, default):
@@ -2461,7 +2664,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                          str(data.get("notes") or ""),
                          str(data.get("planEndDate") or ""), str(data.get("trialEndDate") or ""),
                          sold_by_emp_id, sold_by_emp_name, sales_person, added_by, plan_label,
-                         now_iso(), now_iso()))
+                         created_at_val, now_iso()))
 
                     # Automatically record employee sale and credit 10% commission if sold under a salesperson
                     if sold_by_emp_id or sold_by_emp_name or sales_person:

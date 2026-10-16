@@ -20225,6 +20225,31 @@
               }
               this.customers = localCustomers;
             }
+            // Strict deduplication: ensure duplicate customer records never persist in client state or localStorage
+            const _dedupMap = new Map();
+            const _seenDedupKeys = new Set();
+            const _cleanPhone = p => (p || '').replace(/[^0-9]/g, '').slice(-10);
+
+            for (const c of this.customers) {
+              if (!c || !c.id) continue;
+              const lic = (c.licenseKey || c.license_key || '').trim();
+              const p10 = _cleanPhone(c.phone);
+              const em = (c.email || '').trim().toLowerCase();
+              const nm = (c.name || '').trim().toLowerCase();
+
+              let isDup = false;
+              if (lic && _seenDedupKeys.has('lic:' + lic)) isDup = true;
+              if (p10 && em && _seenDedupKeys.has('pe:' + p10 + '|' + em)) isDup = true;
+              if (p10 && nm && _seenDedupKeys.has('pn:' + p10 + '|' + nm)) isDup = true;
+
+              if (!isDup && !_dedupMap.has(c.id)) {
+                _dedupMap.set(c.id, c);
+                if (lic) _seenDedupKeys.add('lic:' + lic);
+                if (p10 && em) _seenDedupKeys.add('pe:' + p10 + '|' + em);
+                if (p10 && nm) _seenDedupKeys.add('pn:' + p10 + '|' + nm);
+              }
+            }
+            this.customers = Array.from(_dedupMap.values());
             localStorage.setItem('ip_adm_customers', JSON.stringify(this.customers));
 
             if (serverHasEmployees) {
@@ -20461,7 +20486,7 @@
             id: 'id-mr7pq1ln-5qjas',
             name: 'Sunvibee Tech Pvt Ltd',
             email: '',
-            phone: '9322731612',
+            phone: '9822000000',
             licenseKey: '7B5F-3F47-5BE4-3329',
             purchaseDate: '2026-08-20',
             purchaseAmount: 1499.0,
@@ -21378,7 +21403,7 @@
           const isSalesMember = ['sales_member', 'sales', 'sales2'].includes(role);
           const isSalesLeader = ['sales_leader', 'sales_lead'].includes(role);
 
-          return this.customers.filter(c => {
+          const list = this.customers.filter(c => {
             // For Sales Member: STRICTLY show ONLY those customers who came through themselves
             if (isSalesMember) {
               if (!this.isCustomerBelongingToRep(c, this.currentUser)) {
@@ -21420,6 +21445,39 @@
             const dateA = new Date(a.purchaseDate || a.createdAt || a.created_at || 0).getTime();
             const dateB = new Date(b.purchaseDate || b.createdAt || b.created_at || 0).getTime();
             return dateB - dateA;
+          });
+
+          // Zero-duplicate guarantee: prevent showing identical customer multiple times
+          const seenIds = new Set();
+          const seenKeys = new Set();
+          const cleanPhone = p => (p || '').replace(/[^0-9]/g, '').slice(-10);
+
+          return list.filter(c => {
+            if (!c || !c.id) return false;
+            if (seenIds.has(c.id)) return false;
+
+            const lic = (c.licenseKey || c.license_key || '').trim();
+            if (lic) {
+              if (seenKeys.has('lic:' + lic)) return false;
+              seenKeys.add('lic:' + lic);
+            }
+
+            const p10 = cleanPhone(c.phone);
+            const em = (c.email || '').trim().toLowerCase();
+            const nm = (c.name || '').trim().toLowerCase();
+            if (p10 && em) {
+              const k = 'p_e:' + p10 + '|' + em;
+              if (seenKeys.has(k)) return false;
+              seenKeys.add(k);
+            }
+            if (p10 && nm) {
+              const k = 'p_n:' + p10 + '|' + nm;
+              if (seenKeys.has(k)) return false;
+              seenKeys.add(k);
+            }
+
+            seenIds.add(c.id);
+            return true;
           });
         },
 

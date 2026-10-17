@@ -2,8 +2,10 @@
 title InvoicePro Admin Server
 cd /d "%~dp0"
 echo.
-echo  Starting InvoicePro Admin Server...
-echo  This window must stay open.
+echo  ======================================================
+echo    InvoicePro Admin Server
+echo    Starting up, please wait...
+echo  ======================================================
 echo.
-python admin_server.py
+python -u admin_server.py
 pause

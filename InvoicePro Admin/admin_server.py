@@ -25,12 +25,21 @@ import re
 import smtplib
 import ssl
 import sqlite3
+import sys
 import threading
 import time
 import traceback
 import uuid
 import webbrowser
 import socket
+
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -200,11 +209,11 @@ def get_db():
         try:
             import psycopg2
             import psycopg2.extras
-            conn = psycopg2.connect(DATABASE_URL)
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
             conn.autocommit = True
             return PGDatabaseWrapper(conn)
         except Exception as e:
-            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.")
+            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.", flush=True)
 
     conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -219,9 +228,35 @@ def get_db():
     return SQLiteDatabaseWrapper(conn)
 
 
+def get_table_columns(db, table_name):
+    """Retrieve existing column names for a table in a single query."""
+    try:
+        if isinstance(db, PGDatabaseWrapper):
+            rows = db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table_name.lower(),)).fetchall()
+            return {r["column_name"].lower() if isinstance(r, dict) else r[0].lower() for r in rows}
+        else:
+            rows = db.execute(f"PRAGMA table_info({table_name})").fetchall()
+            return {r["name"].lower() if isinstance(r, dict) else r[1].lower() for r in rows}
+    except Exception:
+        return set()
+
+
+SCHEMA_VERSION = "20261017_v1"
+
 def init_db():
     with _db_lock:
         db = get_db()
+        # Fast path: check if schema has already been initialized and migrated
+        try:
+            row = db.execute("SELECT value FROM system_settings WHERE key = 'db_schema_version'").fetchone()
+            val = (row[0] if isinstance(row, (list, tuple)) else row.get("value")) if row else None
+            if val == SCHEMA_VERSION:
+                db.close()
+                return
+        except Exception:
+            pass
+
+        print(f"  [DB] Performing one-time schema check & migration ({SCHEMA_VERSION})...", flush=True)
         db.executescript("""
             CREATE TABLE IF NOT EXISTS customers (
                 id                   TEXT PRIMARY KEY,
@@ -558,46 +593,55 @@ def init_db():
 
         """)
         # Ensure customer table columns for sales attribution, checkout tracking, GSTIN & commission
+        cust_existing = get_table_columns(db, "customers")
         for col in ["sold_by_emp_id", "sold_by_emp_name", "sales_person", "added_by", "plan_label", "payment_method", "transaction_id", "checkout_source", "status", "order_id", "gstin"]:
-            try:
-                db.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
-            except Exception:
-                pass
+            if col.lower() not in cust_existing:
+                try:
+                    db.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
+                except Exception:
+                    pass
 
         # Ensure employee_sales table columns for comprehensive employee attribution
+        emp_sales_existing = get_table_columns(db, "employee_sales")
         for col in ["emp_id", "customer_id", "plan_name", "status", "target_month"]:
-            try:
-                db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
-            except Exception:
-                pass
+            if col.lower() not in emp_sales_existing:
+                try:
+                    db.execute(f"ALTER TABLE employee_sales ADD COLUMN {col} TEXT DEFAULT ''")
+                except Exception:
+                    pass
 
         # Ensure activity_logs and audit_logs columns
-        for col in ["extra_data"]:
+        act_existing = get_table_columns(db, "activity_logs")
+        if "extra_data" not in act_existing:
             try:
-                db.execute(f"ALTER TABLE activity_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
+                db.execute("ALTER TABLE activity_logs ADD COLUMN extra_data TEXT DEFAULT '{}'")
             except Exception:
                 pass
+        audit_existing = get_table_columns(db, "audit_logs")
+        if "extra_data" not in audit_existing:
             try:
-                db.execute(f"ALTER TABLE audit_logs ADD COLUMN {col} TEXT DEFAULT '{{}}'")
+                db.execute("ALTER TABLE audit_logs ADD COLUMN extra_data TEXT DEFAULT '{}'")
             except Exception:
                 pass
 
         # Ensure enquiries table columns for support leader claiming, assignment, and resolution audit
+        enq_existing = get_table_columns(db, "enquiries")
         for col in [
             "subject", "priority", "channel", "customer_name", "customer_phone",
             "claimed_by_leader_id", "claimed_by_leader_name", "claimed_team_id", "claimed_team_name", "claimed_at",
             "assigned_member_id", "assigned_member_name", "assigned_at",
             "resolved_by_member_name", "resolved_by_leader_name", "resolved_by_team"
         ]:
-            try:
-                db.execute(f"ALTER TABLE enquiries ADD COLUMN {col} TEXT DEFAULT ''")
-            except Exception:
-                pass
+            if col.lower() not in enq_existing:
+                try:
+                    db.execute(f"ALTER TABLE enquiries ADD COLUMN {col} TEXT DEFAULT ''")
+                except Exception:
+                    pass
         db.commit()
 
         # Backfill customer sales attribution from notes if empty & ensure 10% employee_sales
         try:
-            cust_rows = db.execute("SELECT id, name, purchase_amount, purchase_date, notes, sold_by_emp_id, sold_by_emp_name, sales_person FROM customers").fetchall()
+            cust_rows = db.execute("SELECT id, name, purchase_amount, purchase_date, notes, sold_by_emp_id, sold_by_emp_name, sales_person FROM customers WHERE (sold_by_emp_id IS NULL OR sold_by_emp_id = '') AND notes LIKE '%EMP:%'").fetchall()
             for crow in cust_rows:
                 cid, cname, camt, cdate, cnotes, csold_id, csold_name, csales_person = crow
                 csold_id = (csold_id or '').strip()
@@ -827,19 +871,21 @@ def init_db():
             "created_at": "TEXT DEFAULT ''",
             "updated_at": "TEXT DEFAULT ''"
         }
+        cust_existing = get_table_columns(db, "customers")
         for col, col_def in cust_cols.items():
-            try:
-                db.execute(f"ALTER TABLE customers ADD COLUMN {col} {col_def}")
-                db.commit()
-            except Exception:
-                pass
+            if col.lower() not in cust_existing:
+                try:
+                    db.execute(f"ALTER TABLE customers ADD COLUMN {col} {col_def}")
+                except Exception:
+                    pass
                 
         # Support renewals columns
-        try:
-            db.execute("ALTER TABLE support_renewals ADD COLUMN added_at TEXT DEFAULT ''")
-            db.commit()
-        except Exception:
-            pass
+        sr_existing = get_table_columns(db, "support_renewals")
+        if "added_at" not in sr_existing:
+            try:
+                db.execute("ALTER TABLE support_renewals ADD COLUMN added_at TEXT DEFAULT ''")
+            except Exception:
+                pass
             
         # Employees columns
         emp_cols = {
@@ -853,12 +899,13 @@ def init_db():
             "created_at": "TEXT DEFAULT ''",
             "updated_at": "TEXT DEFAULT ''"
         }
+        emp_existing = get_table_columns(db, "employees")
         for col, col_def in emp_cols.items():
-            try:
-                db.execute(f"ALTER TABLE employees ADD COLUMN {col} {col_def}")
-                db.commit()
-            except Exception:
-                pass
+            if col.lower() not in emp_existing:
+                try:
+                    db.execute(f"ALTER TABLE employees ADD COLUMN {col} {col_def}")
+                except Exception:
+                    pass
 
         # Staff users table columns
         staff_cols = {
@@ -878,12 +925,13 @@ def init_db():
             "last_login": "TEXT DEFAULT ''",
             "extra_data": "TEXT DEFAULT '{}'"
         }
+        staff_existing = get_table_columns(db, "staff_users")
         for col, col_def in staff_cols.items():
-            try:
-                db.execute(f"ALTER TABLE staff_users ADD COLUMN {col} {col_def}")
-                db.commit()
-            except Exception:
-                pass
+            if col.lower() not in staff_existing:
+                try:
+                    db.execute(f"ALTER TABLE staff_users ADD COLUMN {col} {col_def}")
+                except Exception:
+                    pass
 
         # HR Candidates columns
         cand_cols = {
@@ -906,14 +954,33 @@ def init_db():
             "offer_accepted_at": "TEXT DEFAULT ''",
             "offer_declined_at": "TEXT DEFAULT ''"
         }
+        cand_existing = get_table_columns(db, "hr_candidates")
         for col, col_def in cand_cols.items():
+            if col.lower() not in cand_existing:
+                try:
+                    db.execute(f"ALTER TABLE hr_candidates ADD COLUMN {col} {col_def}")
+                except Exception:
+                    pass
+        db.commit()
+
+        # Record schema version in system_settings so subsequent startups skip migrations
+        try:
+            db.execute("""
+                INSERT INTO system_settings (key, value, category, updated_at)
+                VALUES ('db_schema_version', %s, 'system', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+            """, (SCHEMA_VERSION, now_iso()))
+            db.commit()
+        except Exception:
             try:
-                db.execute(f"ALTER TABLE hr_candidates ADD COLUMN {col} {col_def}")
+                db.execute("INSERT OR REPLACE INTO system_settings (key, value, category, updated_at) VALUES (?, ?, ?, ?)",
+                           ('db_schema_version', SCHEMA_VERSION, 'system', now_iso()))
                 db.commit()
             except Exception:
                 pass
-                
+
         db.close()
+        print(f"  [DB] Schema setup completed ({SCHEMA_VERSION}).", flush=True)
 
 
 # Fields that have their own DB columns — everything else goes into extra_data JSON
@@ -4919,31 +4986,41 @@ def is_port_free(port):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    init_db()
-
+    # 1. Immediate port check: if server is already running, open browser and exit immediately
     if not is_port_free(PORT):
         url = f"http://localhost:{PORT}"
-        print(f"  Admin server already running — opening {url}")
-        webbrowser.open(url)
+        print(f"  [OK] InvoicePro Admin Server is already running on port {PORT}!", flush=True)
+        print(f"  [OK] Opening {url} in your browser...", flush=True)
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
         return
+
+    url = f"http://localhost:{PORT}"
+    print("=" * 56, flush=True)
+    print("  InvoicePro Admin Server - v1.0", flush=True)
+    print(f"  URL  : {url}", flush=True)
+    print("=" * 56, flush=True)
+
+    # 2. Database readiness check
+    print("  [*] Verifying database connection & schema...", flush=True)
+    init_db()
+    print("  [OK] Database connection and schema verified.", flush=True)
 
     server = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), AdminHandler)
     server.daemon_threads = True
-    url = f"http://localhost:{PORT}"
 
-    print("=" * 56)
-    print("  InvoicePro Admin Server — v1.0")
-    print(f"  URL  : {url}")
-    print(f"  DB   : admin_data/admin.db")
     print()
-    print("  Share your LAN IP with customers to receive reports:")
+    print("  Share your LAN IP with customers to receive reports:", flush=True)
     try:
         lan_ip = socket.gethostbyname(socket.gethostname())
-        print(f"  LAN  : http://{lan_ip}:{PORT}")
-        print(f"  Set in InvoicePro config: adminUrl = http://{lan_ip}:{PORT}")
+        print(f"  LAN  : http://{lan_ip}:{PORT}", flush=True)
+        print(f"  Set in InvoicePro config: adminUrl = http://{lan_ip}:{PORT}", flush=True)
     except Exception:
         pass
-    print()
+    print(flush=True)
+
     def _open_url():
         try:
             if not os.environ.get("RAILWAY_ENVIRONMENT") and not os.environ.get("DYNO") and not os.environ.get("DOCKER"):
@@ -4951,15 +5028,15 @@ def main():
         except Exception:
             pass
 
-    threading.Timer(1.0, _open_url).start()
+    threading.Timer(0.5, _open_url).start()
 
-    # Start background scheduler (daily reminders + auto-backup)
+    # Start background scheduler (daily reminders + auto-backup after 60s)
     _start_scheduler()
 
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nAdmin server stopped.")
+        print("\nAdmin server stopped.", flush=True)
         server.server_close()
 
 
@@ -4967,8 +5044,10 @@ def main():
 _scheduler_stop = threading.Event()
 
 def _scheduler_loop():
-    """Run once at startup then every 24 hours."""
+    """Wait 60s after startup so boot is lightning fast, then run auto-backup and repeat every 24 hours."""
     import json as _json
+    if _scheduler_stop.wait(60):
+        return
     _auto_backup()
     while not _scheduler_stop.wait(86400):   # sleep 24 h
         _auto_backup()

@@ -2317,46 +2317,52 @@
           </button>
         </div>
 
-        <!-- Desktop View: Crisp Data Table (md screens and up) -->
-        <div class="hidden md:block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto shadow-xs"
+        <!-- Universal Data Table for Table View Mode (Mobile & Desktop) -->
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto shadow-xs"
              x-show="filteredCustomers.length>0">
-          <table class="w-full text-sm min-w-[850px] border-collapse">
+          <table class="w-full text-sm min-w-[780px] border-collapse">
             <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
               <tr>
-                <th class="text-left px-4 py-3.5 min-w-[200px]">Customer</th>
-                <th class="text-left px-4 py-3.5 min-w-[140px]">License Key</th>
-                <th class="text-left px-4 py-3.5 min-w-[120px]">Purchase Date</th>
-                <th class="text-left px-4 py-3.5 min-w-[150px]">Plan Expiry</th>
-                <th class="text-left px-4 py-3.5 min-w-[100px]">Status</th>
-                <th class="text-right px-4 py-3.5 whitespace-nowrap min-w-[260px]">Actions</th>
+                <th class="text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px]">Customer</th>
+                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
+                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
+                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
+                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Status</th>
+                <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[270px]">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
               <template x-for="c in filteredCustomers" :key="c.id">
                 <tr @click="modalCustomerId=c.id; showCustomerModal=true"
                   class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer">
-                  <td class="px-4 py-3.5">
-                    <div class="font-semibold text-gray-800 dark:text-gray-200" x-text="c.name"></div>
-                    <div class="text-xs text-gray-400" x-text="c.email || c.phone || '—'"></div>
-                    <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mt-1">
-                      <template x-for="tag in (c.tags||[]).slice(0,3)" :key="tag">
-                        <span
-                          class="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-400 font-semibold"
-                          x-text="tag"></span>
-                      </template>
+                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
+                           :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
+                        <span x-text="(c.name||'?')[0].toUpperCase()"></span>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="font-semibold text-gray-800 dark:text-gray-200 text-xs sm:text-sm truncate" x-text="c.name"></div>
+                        <div class="text-[11px] text-gray-400 truncate" x-text="c.email || c.phone || '—'"></div>
+                        <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mt-0.5">
+                          <template x-for="tag in (c.tags||[]).slice(0,2)" :key="tag">
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-400 font-semibold"
+                                  x-text="tag"></span>
+                          </template>
+                        </div>
+                      </div>
                     </div>
                   </td>
-                  <td class="px-4 py-3.5">
+                  <td class="px-3 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap">
                     <div x-show="c.licenseKey" class="font-mono text-xs font-semibold text-brand-600 dark:text-brand-400"
                       x-text="c.licenseKey"></div>
                     <div x-show="!c.licenseKey" class="text-xs text-gray-400 italic">Trial</div>
                   </td>
-                  <td class="px-4 py-3.5">
+                  <td class="px-3 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap">
                     <div class="text-xs text-gray-700 dark:text-gray-300 font-medium" x-text="fmtDate(c.purchaseDate) || '—'"></div>
                     <div class="text-xs text-emerald-600 font-bold" x-text="c.purchaseAmount?'₹'+c.purchaseAmount:''"></div>
                   </td>
-                  <td class="px-4 py-3.5">
-                    <!-- Licensed: show plan expiry from key -->
+                  <td class="px-3 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap">
                     <template x-if="c.licenseKey">
                       <div>
                         <div class="text-xs text-gray-500" x-text="'Expires: ' + (fmtDate(getSupportExpiry(c)) || '—')"></div>
@@ -2365,7 +2371,6 @@
                           x-text="getDaysLeft(c)===null?'—':getDaysLeft(c)<=0?'EXPIRED':getDaysLeft(c)+' days left'"></div>
                       </div>
                     </template>
-                    <!-- Trial: show trial end date if set -->
                     <template x-if="!c.licenseKey && c.trialEndDate">
                       <div>
                         <div class="text-xs text-gray-500" x-text="'Trial ends: ' + fmtDate(c.trialEndDate)"></div>
@@ -2374,12 +2379,11 @@
                           x-text="Math.floor((new Date(c.trialEndDate+'T00:00:00')-new Date().setHours(0,0,0,0))/86400000)<=0?'Trial ended':Math.floor((new Date(c.trialEndDate+'T00:00:00')-new Date().setHours(0,0,0,0))/86400000)+' days left'"></div>
                       </div>
                     </template>
-                    <!-- No date at all -->
                     <template x-if="!c.licenseKey && !c.trialEndDate">
                       <span class="text-xs text-gray-400 italic">No date set</span>
                     </template>
                   </td>
-                  <td class="px-4 py-3.5">
+                  <td class="px-3 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap">
                     <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold" :class="statusBadge(getStatus(c))"
                       x-text="statusLabel(getStatus(c))"></span>
                     <div x-show="(c.enquiries||[]).filter(e=>e.status==='open').length>0"
@@ -2388,7 +2392,7 @@
                       <span x-text="(c.enquiries||[]).filter(e=>e.status==='open').length+' open'"></span>
                     </div>
                   </td>
-                  <td class="px-4 py-3.5 whitespace-nowrap text-right min-w-[260px]">
+                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap text-right min-w-[270px]">
                     <div class="flex items-center justify-end gap-1 flex-nowrap" @click.stop>
                       <button @click="openDetail(c.id)"
                         class="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
@@ -2441,147 +2445,6 @@
               </template>
             </tbody>
           </table>
-        </div>
-
-        <!-- Mobile View: Dedicated Responsive Mobile Cards (under md screens) -->
-        <div class="block md:hidden space-y-3" x-show="filteredCustomers.length>0">
-          <template x-for="c in filteredCustomers" :key="'mob-table-'+c.id">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-3.5 shadow-sm hover:shadow transition-all relative overflow-hidden cursor-pointer"
-                 @click="modalCustomerId=c.id; showCustomerModal=true">
-              <!-- Left accent border colored by status -->
-              <div class="absolute left-0 top-0 bottom-0 w-1.5"
-                   :class="getStatus(c)==='expired'?'bg-red-500':getStatus(c)==='expiring'?'bg-amber-500':getStatus(c)==='trial'?'bg-blue-500':'bg-emerald-500'"></div>
-
-              <!-- Top Row: Avatar + Name + Status Badge -->
-              <div class="flex items-start justify-between gap-2 mb-2.5 pl-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-xs"
-                       :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
-                    <span x-text="(c.name||'?')[0].toUpperCase()"></span>
-                  </div>
-                  <div class="min-w-0">
-                    <div class="font-bold text-gray-900 dark:text-gray-100 text-sm truncate leading-snug" x-text="c.name"></div>
-                    <div class="text-[11px] text-gray-400 truncate mt-0.5" x-text="c.email || c.phone || c.city || 'No contact info'"></div>
-                  </div>
-                </div>
-                <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span class="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                        :class="statusBadge(getStatus(c))"
-                        x-text="statusLabel(getStatus(c))"></span>
-                  <div x-show="(c.enquiries||[]).filter(e=>e.status==='open').length>0"
-                       class="text-[10px] text-red-500 font-bold inline-flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
-                    <span x-text="(c.enquiries||[]).filter(e=>e.status==='open').length+' open'"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 2x2 Clean Details Grid -->
-              <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 dark:bg-gray-800/50 rounded-xl p-2.5 mb-2.5 border border-gray-100/80 dark:border-gray-800">
-                <!-- License Key -->
-                <div class="min-w-0">
-                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">License Key</div>
-                  <div x-show="c.licenseKey" class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 truncate" x-text="c.licenseKey"></div>
-                  <div x-show="!c.licenseKey" class="text-xs text-gray-400 italic">Trial Account</div>
-                </div>
-
-                <!-- Plan Expiry -->
-                <div class="min-w-0 text-right">
-                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Plan Expiry</div>
-                  <template x-if="c.licenseKey">
-                    <div>
-                      <div class="text-xs font-bold"
-                           :class="getDaysLeft(c)<=0?'text-red-500':getDaysLeft(c)<=15?'text-amber-500':'text-brand-600'"
-                           x-text="getDaysLeft(c)===null?'—':getDaysLeft(c)<=0?'EXPIRED':getDaysLeft(c)+' days left'"></div>
-                      <div class="text-[10px] text-gray-400 truncate" x-text="fmtDate(getSupportExpiry(c))"></div>
-                    </div>
-                  </template>
-                  <template x-if="!c.licenseKey && c.trialEndDate">
-                    <div>
-                      <div class="text-xs font-bold text-amber-500"
-                           x-text="Math.floor((new Date(c.trialEndDate+'T00:00:00')-new Date().setHours(0,0,0,0))/86400000)+' days left'"></div>
-                      <div class="text-[10px] text-gray-400 truncate" x-text="fmtDate(c.trialEndDate)"></div>
-                    </div>
-                  </template>
-                  <template x-if="!c.licenseKey && !c.trialEndDate">
-                    <span class="text-xs text-gray-400 italic">No date</span>
-                  </template>
-                </div>
-
-                <!-- Purchase Date & Amount -->
-                <div class="min-w-0 pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60">
-                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Purchase</div>
-                  <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate" x-text="fmtDate(c.purchaseDate) || '—'"></div>
-                  <div class="text-[11px] text-emerald-600 font-bold" x-text="c.purchaseAmount ? '₹' + c.purchaseAmount : ''"></div>
-                </div>
-
-                <!-- Contact & Location -->
-                <div class="min-w-0 text-right pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60">
-                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Contact</div>
-                  <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate" x-text="c.phone || c.city || '—'"></div>
-                  <div class="text-[10px] text-gray-400 truncate" x-text="c.owner ? ('Owner: ' + c.owner) : (c.city || '')"></div>
-                </div>
-              </div>
-
-              <!-- Tags (if any) -->
-              <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mb-2.5 pl-2">
-                <template x-for="tag in (c.tags||[]).slice(0,3)" :key="tag">
-                  <span class="text-[9px] px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-900 font-bold"
-                        x-text="tag"></span>
-                </template>
-              </div>
-
-              <!-- Action Area: Full-width Detail Button + Clean Icon Strip -->
-              <div class="pt-2.5 border-t border-gray-100 dark:border-gray-800 space-y-2" @click.stop>
-                <button @click="openDetail(c.id)"
-                        class="w-full py-2 px-3 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.99]">
-                  <i class="fa-solid fa-eye text-xs"></i> View Complete Profile
-                </button>
-                <div class="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
-                  <button x-show="c.phone" @click="openWhatsApp(c.id)"
-                          class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="WhatsApp">
-                    <i class="fa-brands fa-whatsapp text-xs"></i>
-                  </button>
-                  <button @click="openEmailModal(c.id,'renewal')"
-                          class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-500 hover:bg-blue-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Email Customer">
-                    <i class="fa-solid fa-envelope text-xs"></i>
-                  </button>
-                  <button @click="customerCardId=c.id; showCustomerCardModal=true"
-                          class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 hover:bg-indigo-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Customer Card">
-                    <i class="fa-solid fa-address-card text-xs"></i>
-                  </button>
-                  <button @click="openReminderModal(c.id)"
-                          class="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-500 hover:bg-orange-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Set Reminder">
-                    <i class="fa-solid fa-bell text-xs"></i>
-                  </button>
-                  <button x-show="c.licenseKey && canAccess('keygen')" @click="openRenewKey(c.id)"
-                          class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 hover:bg-amber-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Generate Renewal Key">
-                    <i class="fa-solid fa-rotate-right text-xs"></i>
-                  </button>
-                  <button @click="openTagsModal(c.id)"
-                          class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500 hover:bg-purple-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Manage Tags">
-                    <i class="fa-solid fa-tags text-xs"></i>
-                  </button>
-                  <button @click="editCustomer(c.id)"
-                          class="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Edit Customer">
-                    <i class="fa-solid fa-pencil text-xs"></i>
-                  </button>
-                  <button @click="deleteCustomer(c.id)"
-                          class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          title="Delete Customer">
-                    <i class="fa-solid fa-trash text-xs"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </template>
         </div>
 
       </div>
@@ -19974,7 +19837,7 @@
         // ── CSV Import ──
         showCsvImportModal: false,
         // ── View mode ──
-        customerViewMode: (typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table',
+        customerViewMode: 'table',
         // ── Global Search ──
         showGlobalSearch: false,
         globalSearchQuery: '',
@@ -29739,9 +29602,9 @@ get remindersCount() {
         getMyAssignedLeads() {
           if (!Array.isArray(this.salesLeads)) this.salesLeads = [];
           const dummyLeadIds = new Set(['lead-101', 'lead-102', 'lead-103', 'lead-104', 'lead-105', 'lead-106', 'lead-107', 'lead-201', 'lead-202', 'lead-203', 'lead-204', 'lead-205', 'lead-206', 'lead-301', 'lead-302', 'lead-303', 'lead-304', 'lead-305', 'lead-401', 'lead-402', 'lead-403', 'lead-501', 'lead-502', 'lead-503', 'lead-1790252666723']);
-          const myUser = (this.currentUser ? this.currentUser.username : 'sales').toLowerCase();
-          const myName = (this.currentUser ? this.currentUser.name : '').toLowerCase();
-          const myEmpId = (this.currentUser ? (this.currentUser.emp_id || this.currentUser.empId) : '').toLowerCase();
+          const myUser = String(this.currentUser?.username || 'sales').toLowerCase();
+          const myName = String(this.currentUser?.name || '').toLowerCase();
+          const myEmpId = String(this.currentUser?.emp_id || this.currentUser?.empId || '').toLowerCase();
           const isAdmin = this.currentUser?.role === 'admin' || this.currentUser?.role === 'super_admin';
 
           if (typeof this._syncCustomersToLeads === 'function') {

@@ -1098,10 +1098,10 @@
 
     <div class="p-2 border-t border-slate-200 space-y-0.5 bg-white">
       <!-- PWA Install Sidebar Button -->
-      <button x-show="pwaInstallable" x-cloak @click="installPwaApp()"
-        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors">
+      <button x-show="!isPwaInstalled" x-cloak @click="installPwaApp()"
+        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer">
         <i class="fa-solid fa-mobile-screen-button w-4 text-center text-blue-600 text-sm"></i>
-        <span>Install InvoicePro App</span>
+        <span>Download InvoicePro App</span>
       </button>
 
       <button x-show="isAdmin" @click="openSmtpModal()"
@@ -1185,12 +1185,12 @@
             x-text="stats.expiringSoon + ' expiring'"></span>
         </div>
         <button x-show="(view==='customers'||view==='detail') && canAccess('customers')" @click="exportCSV()"
-          class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
           title="Export CSV">
           <i class="fa-solid fa-file-csv text-xs text-green-600"></i> <span class="hidden sm:inline">CSV</span>
         </button>
         <button x-show="view==='customers' && canAccess('customers')" @click="printCustomerList()"
-          class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
           title="Print customer list">
           <i class="fa-solid fa-print text-xs text-gray-500"></i> <span class="hidden sm:inline">Print</span>
         </button>
@@ -1217,11 +1217,11 @@
           <span class="hidden sm:inline">Offline</span>
         </div>
 
-        <button x-show="pwaInstallable" x-cloak @click="installPwaApp()"
-          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer"
-          title="Install InvoicePro directly on your PC, Mac, Android, or iOS device">
+        <button x-show="!isPwaInstalled" x-cloak @click="installPwaApp()"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer flex-shrink-0"
+          title="Download & Install InvoicePro App on your phone, tablet, or PC">
           <i class="fa-solid fa-download text-xs"></i>
-          <span class="hidden sm:inline">Install App</span>
+          <span class="text-[11px] sm:text-xs">Download App</span>
         </button>
 
         <!-- User Profile Dropdown / Pill (Clickable -> Opens Full Profile Modal) -->
@@ -3018,6 +3018,90 @@
       </template>
     </div>
 
+    <!-- ══ PWA INSTALL APP MODAL ══ -->
+    <div x-show="showInstallAppModal" x-cloak
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      @click.self="showInstallAppModal = false">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 dark:border-gray-800 overflow-hidden transform transition-all"
+        @click.stop>
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-linear-to-r from-teal-50 to-indigo-50/40 dark:from-gray-800 dark:to-gray-800/60">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+              <i class="fa-solid fa-mobile-screen-button text-lg"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white leading-tight">Install InvoicePro App</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Fast offline access & home screen launcher</p>
+            </div>
+          </div>
+          <button @click="showInstallAppModal = false"
+            class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          <!-- Direct Install Banner if prompt available -->
+          <div x-show="pwaInstallable" class="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-teal-900 dark:text-teal-200">1-Click Fast Install Ready</p>
+              <p class="text-[11px] text-teal-700 dark:text-teal-400">Click below to add InvoicePro immediately</p>
+            </div>
+            <button @click="installPwaApp(); showInstallAppModal = false"
+              class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/30 flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all active:scale-95">
+              <i class="fa-solid fa-download"></i> Install Now
+            </button>
+          </div>
+
+          <!-- Step-by-step guides by device -->
+          <div class="space-y-3">
+            <!-- Android -->
+            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
+              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
+                <i class="fa-brands fa-android text-emerald-500 text-sm"></i> Android (Chrome / Brave)
+              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                1. Tap the <span class="font-bold">⋮ (3-dots)</span> menu at top-right of your browser.<br>
+                2. Tap <span class="font-semibold text-teal-600 dark:text-teal-400">"Install app"</span> or <span class="font-semibold text-teal-600 dark:text-teal-400">"Add to Home screen"</span>.<br>
+                3. Confirm when prompted to add the app icon.
+              </p>
+            </div>
+
+            <!-- iOS / iPhone -->
+            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
+              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
+                <i class="fa-brands fa-apple text-gray-900 dark:text-white text-sm"></i> iPhone & iPad (Safari)
+              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                1. Tap the <span class="font-bold">Share icon <i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i></span> at the bottom bar.<br>
+                2. Scroll down and select <span class="font-semibold text-teal-600 dark:text-teal-400">"Add to Home Screen"</span>.<br>
+                3. Tap <span class="font-bold">Add</span> in the top right corner.
+              </p>
+            </div>
+
+            <!-- Windows / Mac Desktop -->
+            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
+              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
+                <i class="fa-solid fa-desktop text-blue-500 text-sm"></i> Windows / Mac / Linux (Chrome / Edge)
+              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                Click the <span class="font-semibold text-teal-600 dark:text-teal-400">Install App</span> icon inside the browser URL address bar (right side), or open browser menu &rarr; <span class="font-semibold text-teal-600 dark:text-teal-400">"Install InvoicePro"</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-end bg-gray-50/60 dark:bg-gray-900/60">
+          <button @click="showInstallAppModal = false"
+            class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
+            Got it, Close
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- ══ CUSTOMER DETAIL ══ -->
     <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6" x-show="view==='detail'" x-cloak>
       <template x-if="selectedCustomer">
@@ -19866,6 +19950,8 @@
         globalSearchQuery: '',
         // ── PWA & Offline Network State ──
         pwaInstallable: false,
+        isPwaInstalled: (typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true)),
+        showInstallAppModal: false,
         isOffline: (typeof navigator !== 'undefined' && !navigator.onLine),
         // ── PIN ──
         pinEnabled: false,
@@ -19943,6 +20029,7 @@
 
           // ── PWA & Offline Network Listeners ──
           this.pwaInstallable = !!window.pwaDeferredPrompt;
+          this.isPwaInstalled = (typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true));
           this.isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
           window.addEventListener('pwa-installable', () => {
@@ -19951,7 +20038,8 @@
 
           window.addEventListener('pwa-installed', () => {
             this.pwaInstallable = false;
-            this.notify(' InvoicePro App installed successfully! Launchable from your home screen or desktop.');
+            this.isPwaInstalled = true;
+            this.notify('🎉 InvoicePro App installed successfully! Launchable from your home screen or desktop.');
           });
 
           window.addEventListener('online', () => {
@@ -34288,15 +34376,16 @@ get remindersCount() {
             window.pwaDeferredPrompt.prompt();
             window.pwaDeferredPrompt.userChoice.then((choiceResult) => {
               if (choiceResult && choiceResult.outcome === 'accepted') {
-                this.notify(' InvoicePro App installation accepted!');
+                this.notify('🎉 InvoicePro App installation accepted!');
                 this.pwaInstallable = false;
+                this.isPwaInstalled = true;
               } else {
                 this.notify('Installation prompt dismissed.', 'info');
               }
               window.pwaDeferredPrompt = null;
             });
           } else {
-            this.notify('To install InvoicePro: Click the install icon in your browser URL bar or tap browser menu (⋮) -> "Add to Home screen" / "Install App".', 'info');
+            this.showInstallAppModal = true;
           }
         },
 

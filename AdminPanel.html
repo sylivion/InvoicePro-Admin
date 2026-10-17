@@ -2325,7 +2325,7 @@
           <table class="w-full text-sm min-w-[780px] border-collapse">
             <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
               <tr>
-                <th class="text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px]">Customer</th>
+                <th class="sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">Customer</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
@@ -2336,8 +2336,8 @@
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
               <template x-for="c in filteredCustomers" :key="c.id">
                 <tr @click="modalCustomerId=c.id; showCustomerModal=true"
-                  class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer">
-                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle">
+                  class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
+                  <td class="sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-brand-50/60 dark:group-hover:bg-brand-950/40 z-10 px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
                            :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
@@ -3200,7 +3200,7 @@
 
     <!-- ══ ENQUIRIES (all open) ══ -->
     <!-- ══ CUSTOMER ENQUIRIES & SUPPORT TRIAGE DESK ══ -->
-    <main class="flex-1 overflow-y-auto p-6 space-y-6" x-show="view==='enquiries' && canAccess('enquiries')" x-cloak>
+    <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6" x-show="view==='enquiries' && canAccess('enquiries')" x-cloak>
       <!-- Header Banner -->
       <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -19839,7 +19839,7 @@
         // ── CSV Import ──
         showCsvImportModal: false,
         // ── View mode ──
-        customerViewMode: 'table',
+        customerViewMode: (typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table',
         // ── Global Search ──
         showGlobalSearch: false,
         globalSearchQuery: '',

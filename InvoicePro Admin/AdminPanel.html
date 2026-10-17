@@ -1153,177 +1153,104 @@
 
     <!-- Header -->
     <header
-      class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2.5 sm:px-4 flex flex-col md:flex-row md:items-center justify-between flex-shrink-0 gap-1.5 sm:gap-4 py-2 sm:py-0 md:h-[72px] sticky top-0 z-30 shadow-xs">
-      
-      <!-- Top Row: Navigation, View Title, and Mobile Profile -->
-      <div class="flex items-center justify-between w-full md:w-auto gap-2 min-w-0">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-          <button @click="sidebarOpen=!sidebarOpen"
-            class="lg:hidden p-1.5 sm:p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0 cursor-pointer"
-            title="Menu">
-            <i class="fa-solid fa-bars text-sm"></i>
-          </button>
-          <!-- Back breadcrumb — shows when in detail view -->
-          <button x-show="view==='detail'" @click="navigate('customers')"
-            class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex-shrink-0 font-medium cursor-pointer">
-            <i class="fa-solid fa-chevron-left text-xs"></i> Customers
-          </button>
-          <span x-show="view==='detail'" class="text-gray-300 dark:text-gray-600 text-xs">/</span>
-          <div class="min-w-0 flex-1">
-            <h1 class="text-xs sm:text-sm md:text-base font-bold truncate text-gray-900 dark:text-white" x-text="viewTitle"></h1>
-            <p class="text-[11px] text-gray-400 truncate hidden md:block" x-text="'Today: ' + fmtDate(today())"></p>
-          </div>
-        </div>
-
-        <!-- Mobile User Profile & Logout (Top row right on mobile) -->
-        <div class="flex md:hidden items-center gap-1 flex-shrink-0">
-          <button @click="openUserProfileModal()"
-            class="flex items-center gap-1.5 p-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-left cursor-pointer"
-            title="User Profile">
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white shadow-xs"
-              :class="currentUser?.role==='admin' ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : currentUser?.role==='manager' ? 'bg-gradient-to-br from-blue-600 to-cyan-600' : 'bg-gradient-to-br from-emerald-600 to-teal-600'"
-              x-text="(currentUser?.name || 'U').charAt(0).toUpperCase()"></div>
-            <span class="text-[10px] font-bold text-gray-700 dark:text-gray-200 max-w-[70px] truncate" x-text="currentUser?.name || 'Staff'"></span>
-          </button>
-          <button @click="logout()"
-            class="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-            title="Sign Out">
-            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
-          </button>
+      class="h-[64px] sm:h-[72px] bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2.5 sm:px-4 flex items-center justify-between flex-shrink-0 gap-2 sm:gap-4">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <button @click="sidebarOpen=!sidebarOpen"
+          class="lg:hidden p-1.5 sm:p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0 cursor-pointer"
+          title="Menu">
+          <i class="fa-solid fa-bars text-sm"></i>
+        </button>
+        <!-- Back breadcrumb — shows when in detail view -->
+        <button x-show="view==='detail'" @click="navigate('customers')"
+          class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex-shrink-0 font-medium cursor-pointer">
+          <i class="fa-solid fa-chevron-left text-xs"></i> Customers
+        </button>
+        <span x-show="view==='detail'" class="text-gray-300 dark:text-gray-600 text-xs">/</span>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-xs sm:text-sm md:text-base font-bold truncate text-gray-900 dark:text-white" x-text="viewTitle"></h1>
+          <p class="text-[11px] text-gray-400 truncate hidden md:block" x-text="'Today: ' + fmtDate(today())"></p>
         </div>
       </div>
-
-      <!-- ══ MOBILE QUICK ACTIONS STRIP (Always visible for all mobile views) ══ -->
-      <div class="flex md:hidden items-center gap-1.5 overflow-x-auto no-scrollbar w-full pt-1.5 pb-0.5 border-t border-gray-100 dark:border-gray-800">
-        <!-- 1. Search -->
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         <button @click="openGlobalSearch()"
-          class="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 active:scale-95 transition-all shadow-2xs flex-shrink-0 cursor-pointer"
-          title="Search">
-          <i class="fa-solid fa-magnifying-glass text-xs text-gray-500"></i>
-          <span>Search</span>
-        </button>
-
-        <!-- 2. Add Customer -->
-        <button @click="openAddModal()"
-          class="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all flex-shrink-0 cursor-pointer"
-          title="Add Customer">
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Add Customer</span>
-        </button>
-
-        <!-- 3. CSV -->
-        <button @click="exportCSV()"
-          class="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 active:scale-95 transition-all flex-shrink-0 cursor-pointer"
-          title="Export CSV">
-          <i class="fa-solid fa-file-csv text-xs text-emerald-600 dark:text-emerald-400"></i>
-          <span>CSV</span>
-        </button>
-
-        <!-- 4. Print -->
-        <button @click="printCustomerList()"
-          class="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 active:scale-95 transition-all flex-shrink-0 cursor-pointer"
-          title="Print">
-          <i class="fa-solid fa-print text-xs text-slate-500 dark:text-slate-400"></i>
-          <span>Print</span>
-        </button>
-
-        <!-- 5. Install App (when available) -->
-        <button x-show="pwaInstallable" x-cloak @click="installPwaApp()"
-          class="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all flex-shrink-0 cursor-pointer"
-          title="Install InvoicePro App">
-          <i class="fa-solid fa-download text-xs"></i>
-          <span>Install App</span>
-        </button>
-      </div>
-
-      <!-- ══ DESKTOP HEADER ACTIONS (Visible on md and up) ══ -->
-      <div class="hidden md:flex items-center gap-1.5 lg:gap-2 flex-shrink-0">
-        <!-- Search -->
-        <button @click="openGlobalSearch()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-          title="Global Search">
+          class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          title="Global Search (find any customer or employee)">
           <i class="fa-solid fa-magnifying-glass text-xs"></i>
-          <span>Search</span>
+          <span class="hidden sm:inline">Search</span>
         </button>
-
         <div x-show="stats.expiringSoon>0 && canAccess('expiring')"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+          class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
           <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs"></i>
           <span class="text-xs font-semibold text-amber-700 dark:text-amber-300"
             x-text="stats.expiringSoon + ' expiring'"></span>
         </div>
-
-        <!-- CSV -->
-        <button @click="exportCSV()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors cursor-pointer"
-          title="Export CSV">
-          <i class="fa-solid fa-file-csv text-xs text-green-600"></i>
-          <span>CSV</span>
+        <button x-show="(view==='customers'||view==='detail') && canAccess('customers')" @click="exportCSV()"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+          <i class="fa-solid fa-file-csv text-xs text-green-600"></i> <span class="hidden sm:inline">CSV</span>
         </button>
-
-        <!-- Print -->
-        <button @click="printCustomerList()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+        <button x-show="view==='customers' && canAccess('customers')" @click="printCustomerList()"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
           title="Print customer list">
           <i class="fa-solid fa-print text-xs text-gray-500"></i>
-          <span>Print</span>
         </button>
-
         <button x-show="view==='keygen' && canAccess('keygen')" @click="openBulkKeyModal()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-          <i class="fa-solid fa-layer-group text-xs text-brand-500"></i>
-          <span>Bulk Keys</span>
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+          <i class="fa-solid fa-layer-group text-xs text-brand-500"></i> <span class="hidden sm:inline">Bulk Keys</span>
         </button>
-
-        <!-- Add Customer -->
-        <button @click="openAddModal()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+        <button x-show="(view==='customers'||view==='detail') && canAccess('customers')" @click="openAddModal()"
+          class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
           title="Add Customer">
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Add Customer</span>
+          <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Add Customer</span>
         </button>
-
         <button x-show="view==='employees' && canAccess('employees')" @click="openAddEmployee()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+          class="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
           title="Add Employee">
-          <i class="fa-solid fa-user-plus text-xs"></i>
-          <span>Add Employee</span>
+          <i class="fa-solid fa-user-plus text-xs"></i> <span class="hidden sm:inline">Add Employee</span>
         </button>
 
-        <!-- Install App -->
+        <!-- ══ PWA Status & Install Controls ══ -->
+        <div x-show="isOffline" x-cloak
+          class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold animate-pulse"
+          title="Working in offline mode (local cache active)">
+          <i class="fa-solid fa-wifi-slash text-xs"></i>
+          <span class="hidden sm:inline">Offline</span>
+        </div>
+
         <button x-show="pwaInstallable" x-cloak @click="installPwaApp()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer flex-shrink-0"
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer"
           title="Install InvoicePro directly on your PC, Mac, Android, or iOS device">
           <i class="fa-solid fa-download text-xs"></i>
-          <span>Install App</span>
+          <span class="hidden sm:inline">Install App</span>
         </button>
 
-        <!-- User Profile Dropdown / Pill -->
-        <div class="relative flex items-center gap-1 sm:gap-2.5 pl-2 border-l border-slate-200 dark:border-slate-800">
+        <!-- User Profile Dropdown / Pill (Clickable -> Opens Full Profile Modal) -->
+        <div class="relative flex items-center gap-1 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
           <button @click="openUserProfileModal()"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/60 hover:bg-slate-100 transition-all text-left cursor-pointer">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shadow-xs text-white"
-              :class="currentUser?.role==='admin' ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : currentUser?.role==='manager' ? 'bg-gradient-to-br from-blue-600 to-cyan-600' : 'bg-gradient-to-br from-emerald-600 to-teal-600'"
+            class="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all text-left group cursor-pointer focus:outline-hidden"
+            title="Click to view full user profile">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:scale-105 transition-transform"
+              :class="currentUser?.role==='admin' ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white' : currentUser?.role==='manager' ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white' : (currentUser?.role==='sales'||currentUser?.role==='sales_leader'||currentUser?.role==='sales_member') ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : (currentUser?.role==='support'||currentUser?.role==='support_leader'||currentUser?.role==='support_member') ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' : currentUser?.role==='hr' ? 'bg-gradient-to-br from-pink-600 to-rose-600 text-white' : 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white'"
               x-text="(currentUser?.name || 'U').charAt(0).toUpperCase()"></div>
-            <div class="hidden lg:flex flex-col justify-center">
-              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight"
+            <div class="hidden md:flex flex-col justify-center">
+              <div class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors leading-tight"
                 x-text="currentUser?.name || 'Staff User'"></div>
-              <div class="mt-0.5">
-                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold uppercase"
+              <div class="mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider leading-tight"
+                  :class="currentUser?.role==='admin' ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60' : currentUser?.role==='manager' ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60' : (currentUser?.role==='sales'||currentUser?.role==='sales_leader'||currentUser?.role==='sales_member') ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60' : (currentUser?.role==='support'||currentUser?.role==='support_leader'||currentUser?.role==='support_member') ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60' : currentUser?.role==='hr' ? 'bg-pink-100 dark:bg-pink-950/80 text-pink-700 dark:text-pink-300 border border-pink-200/60 dark:border-pink-800/60' : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60'"
                   x-text="currentUser?.role || 'sales'"></span>
               </div>
             </div>
-            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+            <i class="fa-solid fa-chevron-down text-[10px] sm:text-xs text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 hidden md:inline ml-1.5 transition-colors"></i>
           </button>
           <button x-show="currentUser?.role !== 'admin'" @click="openApplyLeaveModal()"
-            class="p-2 rounded-xl text-slate-500 hover:text-teal-600 hover:bg-teal-50 transition-all cursor-pointer"
+            class="hidden sm:flex p-2 sm:p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/50 border border-transparent hover:border-teal-200 dark:hover:border-teal-900 transition-all cursor-pointer"
             title="Apply for Leave">
-            <i class="fa-solid fa-calendar-days text-sm"></i>
+            <i class="fa-solid fa-calendar-days text-sm sm:text-base"></i>
           </button>
           <button @click="logout()"
-            class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+            class="p-1.5 sm:p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-all cursor-pointer"
             title="Sign Out">
-            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            <i class="fa-solid fa-arrow-right-from-bracket text-sm sm:text-base"></i>
           </button>
         </div>
       </div>
@@ -2336,7 +2263,7 @@
         </div>
 
         <!-- Filter dropdowns & View mode toggle -->
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <select x-model="filter"
             class="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium text-gray-700 dark:text-gray-300">
             <option value="all">All Customers</option>
@@ -2360,33 +2287,13 @@
               :class="customerViewMode==='cards'?'bg-white dark:bg-gray-900 text-brand-600 shadow-xs font-bold':'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'"
               title="Card View"><i class="fa-solid fa-grip text-xs"></i></button>
           </div>
-          <!-- Add Customer -->
-          <button @click="openAddModal()"
-            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-            title="Add New Customer">
-            <i class="fa-solid fa-plus text-xs"></i>
-            <span>Add Customer</span>
-          </button>
-          <!-- Export CSV -->
-          <button @click="exportCustomersCSV()"
-            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors cursor-pointer whitespace-nowrap"
-            title="Export Customers CSV">
-            <i class="fa-solid fa-file-csv text-xs text-emerald-600 dark:text-emerald-400"></i>
-            <span>Export CSV</span>
-          </button>
-          <!-- Print -->
-          <button @click="printCustomerList()"
-            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
-            title="Print Customer Directory">
-            <i class="fa-solid fa-print text-xs text-gray-500 dark:text-gray-400"></i>
-            <span>Print</span>
-          </button>
-          <!-- Import CSV -->
           <button @click="showCsvImportModal=true"
-            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer whitespace-nowrap"
-            title="Import Customers CSV">
-            <i class="fa-solid fa-file-import text-xs text-brand-500"></i>
-            <span>Import</span>
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <i class="fa-solid fa-file-csv text-xs text-emerald-600"></i> Import
+          </button>
+          <button @click="exportCustomersCSV()"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <i class="fa-solid fa-download text-xs text-brand-500"></i> Export
           </button>
         </div>
       </div>
@@ -2418,7 +2325,7 @@
           <table class="w-full text-sm min-w-[780px] border-collapse">
             <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
               <tr>
-                <th class="sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">Customer</th>
+                <th class="text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px]">Customer</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
                 <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
@@ -2429,8 +2336,8 @@
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
               <template x-for="c in filteredCustomers" :key="c.id">
                 <tr @click="modalCustomerId=c.id; showCustomerModal=true"
-                  class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
-                  <td class="sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-brand-50/60 dark:group-hover:bg-brand-950/40 z-10 px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                  class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer">
+                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
                            :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
@@ -2523,11 +2430,6 @@
                         class="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
                         title="Manage Tags">
                         <i class="fa-solid fa-tags text-xs"></i>
-                      </button>
-                      <button @click="printReceipt(c.id)"
-                        class="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
-                        title="Print Receipt">
-                        <i class="fa-solid fa-receipt text-xs"></i>
                       </button>
                       <button @click="editCustomer(c.id)"
                         class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
@@ -2699,11 +2601,6 @@
                         class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500 hover:bg-purple-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Manage Tags">
                   <i class="fa-solid fa-tags text-xs"></i>
-                </button>
-                <button @click="printReceipt(c.id)"
-                        class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 hover:bg-purple-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
-                        title="Print Receipt">
-                  <i class="fa-solid fa-receipt text-xs"></i>
                 </button>
                 <button @click="editCustomer(c.id)"
                         class="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
@@ -3100,90 +2997,6 @@
       </template>
     </div>
 
-    <!-- ══ PWA INSTALL APP MODAL ══ -->
-    <div x-show="showInstallAppModal" x-cloak
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-      @click.self="showInstallAppModal = false">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 dark:border-gray-800 overflow-hidden transform transition-all"
-        @click.stop>
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-linear-to-r from-teal-50 to-indigo-50/40 dark:from-gray-800 dark:to-gray-800/60">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
-              <i class="fa-solid fa-mobile-screen-button text-lg"></i>
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white leading-tight">Install InvoicePro App</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Fast offline access & home screen launcher</p>
-            </div>
-          </div>
-          <button @click="showInstallAppModal = false"
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <i class="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-          <!-- Direct Install Banner if prompt available -->
-          <div x-show="pwaInstallable" class="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <p class="text-xs font-bold text-teal-900 dark:text-teal-200">1-Click Fast Install Ready</p>
-              <p class="text-[11px] text-teal-700 dark:text-teal-400">Click below to add InvoicePro immediately</p>
-            </div>
-            <button @click="installPwaApp(); showInstallAppModal = false"
-              class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/30 flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all active:scale-95">
-              <i class="fa-solid fa-download"></i> Install Now
-            </button>
-          </div>
-
-          <!-- Step-by-step guides by device -->
-          <div class="space-y-3">
-            <!-- Android -->
-            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
-              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
-                <i class="fa-brands fa-android text-emerald-500 text-sm"></i> Android (Chrome / Brave)
-              </div>
-              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                1. Tap the <span class="font-bold">⋮ (3-dots)</span> menu at top-right of your browser.<br>
-                2. Tap <span class="font-semibold text-teal-600 dark:text-teal-400">"Install app"</span> or <span class="font-semibold text-teal-600 dark:text-teal-400">"Add to Home screen"</span>.<br>
-                3. Confirm when prompted to add the app icon.
-              </p>
-            </div>
-
-            <!-- iOS / iPhone -->
-            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
-              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
-                <i class="fa-brands fa-apple text-gray-900 dark:text-white text-sm"></i> iPhone & iPad (Safari)
-              </div>
-              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                1. Tap the <span class="font-bold">Share icon <i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i></span> at the bottom bar.<br>
-                2. Scroll down and select <span class="font-semibold text-teal-600 dark:text-teal-400">"Add to Home Screen"</span>.<br>
-                3. Tap <span class="font-bold">Add</span> in the top right corner.
-              </p>
-            </div>
-
-            <!-- Windows / Mac Desktop -->
-            <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
-              <div class="flex items-center gap-2 mb-1.5 font-semibold text-xs text-gray-900 dark:text-gray-100">
-                <i class="fa-solid fa-desktop text-blue-500 text-sm"></i> Windows / Mac / Linux (Chrome / Edge)
-              </div>
-              <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                Click the <span class="font-semibold text-teal-600 dark:text-teal-400">Install App</span> icon inside the browser URL address bar (right side), or open browser menu &rarr; <span class="font-semibold text-teal-600 dark:text-teal-400">"Install InvoicePro"</span>.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-end bg-gray-50/60 dark:bg-gray-900/60">
-          <button @click="showInstallAppModal = false"
-            class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
-            Got it, Close
-          </button>
-        </div>
-      </div>
-    </div>
     <!-- ══ CUSTOMER DETAIL ══ -->
     <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6" x-show="view==='detail'" x-cloak>
       <template x-if="selectedCustomer">
@@ -20026,14 +19839,12 @@
         // ── CSV Import ──
         showCsvImportModal: false,
         // ── View mode ──
-        customerViewMode: (typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table',
+        customerViewMode: 'table',
         // ── Global Search ──
         showGlobalSearch: false,
         globalSearchQuery: '',
         // ── PWA & Offline Network State ──
         pwaInstallable: false,
-        isPwaInstalled: (typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true)),
-        showInstallAppModal: false,
         isOffline: (typeof navigator !== 'undefined' && !navigator.onLine),
         // ── PIN ──
         pinEnabled: false,
@@ -20111,7 +19922,6 @@
 
           // ── PWA & Offline Network Listeners ──
           this.pwaInstallable = !!window.pwaDeferredPrompt;
-          this.isPwaInstalled = (typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true));
           this.isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
           window.addEventListener('pwa-installable', () => {
@@ -20120,8 +19930,7 @@
 
           window.addEventListener('pwa-installed', () => {
             this.pwaInstallable = false;
-            this.isPwaInstalled = true;
-            this.notify('🎉 InvoicePro App installed successfully! Launchable from your home screen or desktop.');
+            this.notify(' InvoicePro App installed successfully! Launchable from your home screen or desktop.');
           });
 
           window.addEventListener('online', () => {
@@ -34458,16 +34267,15 @@ get remindersCount() {
             window.pwaDeferredPrompt.prompt();
             window.pwaDeferredPrompt.userChoice.then((choiceResult) => {
               if (choiceResult && choiceResult.outcome === 'accepted') {
-                this.notify('🎉 InvoicePro App installation accepted!');
+                this.notify(' InvoicePro App installation accepted!');
                 this.pwaInstallable = false;
-                this.isPwaInstalled = true;
               } else {
                 this.notify('Installation prompt dismissed.', 'info');
               }
               window.pwaDeferredPrompt = null;
             });
           } else {
-            this.showInstallAppModal = true;
+            this.notify('To install InvoicePro: Click the install icon in your browser URL bar or tap browser menu (⋮) -> "Add to Home screen" / "Install App".', 'info');
           }
         },
 

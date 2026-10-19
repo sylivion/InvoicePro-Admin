@@ -9799,69 +9799,188 @@
         </div>
 
         <!-- 5 Operations KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
           <!-- Card 1: Total Staff -> Employees -->
-          <div @click="navigate('employees')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gray-500 group-hover:text-blue-600 transition-colors">Total Staff</span>
-              <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-users"></i></span>
+          <div @click="navigate('employees')"
+            class="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-lg hover:border-blue-400/80 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer flex flex-col justify-between">
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/0 to-transparent group-hover:via-blue-500 transition-all duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-100 dark:border-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="fa-solid fa-users text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Total Staff</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="employees.length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Active personnel</span>
-              <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Staff &rarr;</span>
+
+            <div>
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums" x-text="employees.length">0</div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="inline-flex items-center gap-1.5 font-medium text-slate-500 dark:text-slate-400 truncate">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                <span>Active roster</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Directory &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 2: Customers -> Customers -->
-          <div @click="navigate('customers')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-emerald-600 group-hover:text-emerald-700 transition-colors">Customer Accounts</span>
-              <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-building-user"></i></span>
+          <div @click="navigate('customers')"
+            class="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-lg hover:border-emerald-400/80 dark:hover:border-emerald-600 transition-all duration-200 cursor-pointer flex flex-col justify-between">
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500 transition-all duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-100 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="fa-solid fa-building-user text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Customer Accounts</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-emerald-600 mt-2" x-text="customers.length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Managed clients</span>
-              <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Clients &rarr;</span>
+
+            <div>
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums" x-text="customers.length">0</div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="inline-flex items-center gap-1.5 font-medium text-slate-500 dark:text-slate-400 truncate">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                <span>Active clients</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Clients &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 3: Interviews & Onboarding -> Manager Interviews -->
-          <div @click="navigate('manager_interviews')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-indigo-600 group-hover:text-indigo-700 transition-colors">Manager Round</span>
-              <span class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-calendar-check"></i></span>
+          <div @click="navigate('manager_interviews')"
+            class="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-lg hover:border-indigo-400/80 dark:hover:border-indigo-600 transition-all duration-200 cursor-pointer flex flex-col justify-between">
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/0 to-transparent group-hover:via-indigo-500 transition-all duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="fa-solid fa-clipboard-check text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Manager Round</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-indigo-600 mt-2" x-text="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Interviews pending</span>
-              <span class="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">Evaluate &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length">0</div>
+              <template x-if="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Action needed
+                </span>
+              </template>
+              <template x-if="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length === 0">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> Clear
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Hiring queue</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Interviews &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 4: Open Enquiries -> Enquiries -->
-          <div @click="navigate('enquiries')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-amber-600 group-hover:text-amber-700 transition-colors">Open Enquiries</span>
-              <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-comments"></i></span>
+          <div @click="navigate('enquiries')"
+            class="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-lg hover:border-amber-400/80 dark:hover:border-amber-600 transition-all duration-200 cursor-pointer flex flex-col justify-between">
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500 transition-all duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-100 dark:border-amber-900/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="fa-solid fa-headset text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Open Enquiries</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-amber-600 mt-2" x-text="stats.openEnquiries"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Leads awaiting reply</span>
-              <span class="text-amber-600 dark:text-amber-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Queue &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="stats.openEnquiries">0</div>
+              <template x-if="stats.openEnquiries > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> In queue
+                </span>
+              </template>
+              <template x-if="!stats.openEnquiries">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> All resolved
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Support triage</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                View Queue &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 5: Pending Leaves -> Leaves -->
-          <div @click="navigate('leaves')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-purple-600 group-hover:text-purple-700 transition-colors">Pending Leaves</span>
-              <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-calendar-xmark"></i></span>
+          <div @click="navigate('leaves')"
+            class="group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-lg hover:border-purple-400/80 dark:hover:border-purple-600 transition-all duration-200 cursor-pointer flex flex-col justify-between">
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-purple-500/0 to-transparent group-hover:via-purple-500 transition-all duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/70 border border-purple-100 dark:border-purple-900/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Pending Leaves</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-purple-600 mt-2" x-text="leaveRequests.filter(l=>l.status==='pending').length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Awaiting manager approval</span>
-              <span class="text-purple-600 dark:text-purple-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Leaves &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="leaveRequests.filter(l=>l.status==='pending').length">0</div>
+              <template x-if="leaveRequests.filter(l=>l.status==='pending').length > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Needs review
+                </span>
+              </template>
+              <template x-if="leaveRequests.filter(l=>l.status==='pending').length === 0">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> Reviewed
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Time-off sign-off</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Leave Desk &rarr;
+              </span>
             </div>
           </div>
         </div>

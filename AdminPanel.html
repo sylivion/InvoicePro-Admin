@@ -2349,29 +2349,38 @@
         <!-- Customer Data Table (Responsive for all screen sizes: Mobile, Tablet & Desktop) -->
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xs"
              x-show="filteredCustomers.length>0">
-          <div class="overflow-x-auto w-full overscroll-x-contain">
+          <!-- Mobile Scroll Indicator Banner -->
+          <div class="sm:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-brand-50/90 to-purple-50/90 dark:from-brand-950/50 dark:to-purple-950/50 text-brand-700 dark:text-brand-300 text-xs font-semibold border-b border-brand-100/80 dark:border-brand-900/40 select-none">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-left-right text-xs text-brand-600 dark:text-brand-400 animate-pulse"></i>
+              <span>Swipe table horizontally to view all columns</span>
+            </div>
+            <span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full font-bold shadow-2xs text-gray-600 dark:text-gray-300">6 Columns</span>
+          </div>
+
+          <div class="overflow-x-auto w-full overscroll-x-contain pb-2" style="-webkit-overflow-scrolling: touch; scrollbar-width: thin;">
             <table class="w-full text-xs sm:text-sm min-w-[760px] border-collapse">
               <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
                 <tr>
-                  <th class="sticky left-0 bg-gray-50 dark:bg-gray-800 z-20 text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px] border-r border-gray-100/80 dark:border-gray-800 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">Customer</th>
-                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
-                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
-                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
-                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Status</th>
-                  <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[270px]">Actions</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap w-[150px] sm:w-auto min-w-[140px] sm:min-w-[190px] md:sticky md:left-0 md:bg-gray-50 md:dark:bg-gray-800 md:z-20 md:border-r md:border-gray-100/80 md:dark:border-gray-800 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">Customer</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">License Key</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Purchase Date</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">Plan Expiry</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[100px]">Status</th>
+                  <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[260px]">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                 <template x-for="c in filteredCustomers" :key="c.id">
                   <tr @click="modalCustomerId=c.id; showCustomerModal=true"
                     class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
-                    <td class="sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-brand-50/60 dark:group-hover:bg-brand-950/40 z-10 px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle border-r border-gray-100/80 dark:border-gray-800 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+                    <td class="px-3 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap w-[150px] sm:w-auto min-w-[140px] sm:min-w-[190px] md:sticky md:left-0 md:bg-white md:dark:bg-gray-900 md:group-hover:bg-brand-50/60 md:dark:group-hover:bg-brand-950/40 md:z-10 md:border-r md:border-gray-100/80 md:dark:border-gray-800 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
                            :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
                         <span x-text="(c.name||'?')[0].toUpperCase()"></span>
                       </div>
-                      <div class="min-w-0">
+                      <div class="min-w-0 max-w-[105px] sm:max-w-none">
                         <div class="font-semibold text-gray-800 dark:text-gray-200 text-xs sm:text-sm truncate" x-text="c.name"></div>
                         <div class="text-[11px] text-gray-400 truncate" x-text="c.email || c.phone || '—'"></div>
                         <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mt-0.5">
@@ -21127,6 +21136,10 @@
         get isManager() {
           const r = (this.currentUser?.role || '').toLowerCase();
           return r === 'manager' || r === 'operations';
+        },
+        get isAdminOrManager() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return !this.currentUser || r === 'admin' || r === 'manager' || r === 'operations';
         },
         get isSales() {
           const r = (this.currentUser?.role || '').toLowerCase();

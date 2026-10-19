@@ -2277,7 +2277,7 @@
         </div>
 
         <!-- Filter dropdowns, View mode toggle, Import, Export -->
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap overflow-x-auto no-scrollbar py-0.5">
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto no-scrollbar py-1 w-full md:w-auto">
           <!-- All Customers Filter -->
           <select x-model="filter"
             class="flex-1 sm:flex-none px-2.5 sm:px-3 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium text-gray-700 dark:text-gray-300 cursor-pointer flex-shrink-0 min-w-[130px]">
@@ -2346,8 +2346,148 @@
           </button>
         </div>
 
-        <!-- Universal Data Table for Table View Mode (Mobile & Desktop) -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto shadow-xs"
+        <!-- Mobile View (Compact Cards with Zero Horizontal Overflow) -->
+        <div class="block md:hidden space-y-3" x-show="filteredCustomers.length>0">
+          <template x-for="c in filteredCustomers" :key="'mob-'+c.id">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-3.5 shadow-xs relative overflow-hidden transition-all hover:shadow-sm"
+                 @click="modalCustomerId=c.id; showCustomerModal=true">
+              <!-- Left accent border colored by status -->
+              <div class="absolute left-0 top-0 bottom-0 w-1.5"
+                   :class="getStatus(c)==='expired'?'bg-red-500':getStatus(c)==='expiring'?'bg-amber-500':getStatus(c)==='trial'?'bg-blue-500':'bg-emerald-500'"></div>
+
+              <!-- Header: Avatar, Name, Email/Phone, Status Badge -->
+              <div class="flex items-start justify-between gap-2 mb-2.5 pl-1.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
+                       :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
+                    <span x-text="(c.name||'?')[0].toUpperCase()"></span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate" x-text="c.name"></div>
+                    <div class="text-[11px] text-gray-400 truncate" x-text="c.email || c.phone || '—'"></div>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-bold"
+                        :class="statusBadge(getStatus(c))" x-text="statusLabel(getStatus(c))"></span>
+                  <div x-show="(c.enquiries||[]).filter(e=>e.status==='open').length>0"
+                       class="text-[10px] text-red-500 font-bold inline-flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[6px] animate-pulse"></i>
+                    <span x-text="(c.enquiries||[]).filter(e=>e.status==='open').length+' open'"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tags if present -->
+              <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mb-2.5 pl-1.5">
+                <template x-for="tag in (c.tags||[]).slice(0,3)" :key="tag">
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 font-medium"
+                        x-text="tag"></span>
+                </template>
+              </div>
+
+              <!-- 2x2 Details Grid -->
+              <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50/70 dark:bg-gray-800/40 rounded-xl p-2.5 mb-2.5 border border-gray-100/80 dark:border-gray-800 pl-2">
+                <!-- License Key -->
+                <div class="min-w-0">
+                  <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">License Key</div>
+                  <div x-show="c.licenseKey" class="font-mono text-[11px] font-bold text-brand-600 dark:text-brand-400 truncate" x-text="c.licenseKey"></div>
+                  <div x-show="!c.licenseKey" class="text-xs text-gray-400 italic">Trial</div>
+                </div>
+
+                <!-- Plan Expiry -->
+                <div class="min-w-0 text-right">
+                  <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Plan Expiry</div>
+                  <template x-if="c.licenseKey">
+                    <div>
+                      <div class="text-xs font-bold"
+                           :class="getDaysLeft(c)<=0?'text-red-500':getDaysLeft(c)<=15?'text-amber-500':'text-brand-600'"
+                           x-text="getDaysLeft(c)===null?'—':getDaysLeft(c)<=0?'EXPIRED':getDaysLeft(c)+' days left'"></div>
+                      <div class="text-[10px] text-gray-400 truncate" x-text="fmtDate(getSupportExpiry(c))"></div>
+                    </div>
+                  </template>
+                  <template x-if="!c.licenseKey && c.trialEndDate">
+                    <div>
+                      <div class="text-xs font-bold text-amber-500"
+                           x-text="Math.floor((new Date(c.trialEndDate+'T00:00:00')-new Date().setHours(0,0,0,0))/86400000)+' days left'"></div>
+                      <div class="text-[10px] text-gray-400 truncate" x-text="fmtDate(c.trialEndDate)"></div>
+                    </div>
+                  </template>
+                  <template x-if="!c.licenseKey && !c.trialEndDate">
+                    <span class="text-xs text-gray-400 italic">No date</span>
+                  </template>
+                </div>
+
+                <!-- Purchase Info -->
+                <div class="min-w-0 pt-1.5 border-t border-gray-200/50 dark:border-gray-700/50">
+                  <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Purchase</div>
+                  <div class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate" x-text="fmtDate(c.purchaseDate) || '—'"></div>
+                  <div class="text-xs text-emerald-600 font-bold" x-show="c.purchaseAmount" x-text="'₹' + c.purchaseAmount"></div>
+                </div>
+
+                <!-- Contact & City -->
+                <div class="min-w-0 text-right pt-1.5 border-t border-gray-200/50 dark:border-gray-700/50">
+                  <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact</div>
+                  <div class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate" x-text="c.phone || c.city || '—'"></div>
+                  <div class="text-[10px] text-gray-400 truncate" x-show="c.owner" x-text="'By: ' + c.owner"></div>
+                </div>
+              </div>
+
+              <!-- Action Bar: Single Clean Row With Touch Buttons -->
+              <div class="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar pl-1" @click.stop>
+                <button @click="openDetail(c.id)"
+                        class="px-2.5 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0">
+                  <i class="fa-solid fa-eye text-xs"></i> View
+                </button>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <button x-show="c.phone" @click="openWhatsApp(c.id)"
+                          class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center cursor-pointer hover:bg-emerald-100"
+                          title="WhatsApp">
+                    <i class="fa-brands fa-whatsapp text-xs"></i>
+                  </button>
+                  <button @click="openEmailModal(c.id,'renewal')"
+                          class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-100"
+                          title="Email">
+                    <i class="fa-solid fa-envelope text-xs"></i>
+                  </button>
+                  <button @click="customerCardId=c.id; showCustomerCardModal=true"
+                          class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center cursor-pointer hover:bg-indigo-100"
+                          title="Customer Card">
+                    <i class="fa-solid fa-address-card text-xs"></i>
+                  </button>
+                  <button @click="openReminderModal(c.id)"
+                          class="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/60 text-orange-500 flex items-center justify-center cursor-pointer hover:bg-orange-100"
+                          title="Set Reminder">
+                    <i class="fa-solid fa-bell text-xs"></i>
+                  </button>
+                  <button x-show="c.licenseKey && canAccess('keygen')" @click="openRenewKey(c.id)"
+                          class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center cursor-pointer hover:bg-amber-100"
+                          title="Generate Renewal Key">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                  </button>
+                  <button @click="openTagsModal(c.id)"
+                          class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-500 flex items-center justify-center cursor-pointer hover:bg-purple-100"
+                          title="Tags">
+                    <i class="fa-solid fa-tags text-xs"></i>
+                  </button>
+                  <button @click="editCustomer(c.id)"
+                          class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-200"
+                          title="Edit">
+                    <i class="fa-solid fa-pencil text-xs"></i>
+                  </button>
+                  <button @click="deleteCustomer(c.id)"
+                          class="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-500 flex items-center justify-center cursor-pointer hover:bg-red-100"
+                          title="Delete">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Desktop Table View (hidden on mobile, visible on md and up) -->
+        <div class="hidden md:block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto shadow-xs"
              x-show="filteredCustomers.length>0">
           <table class="w-full text-sm min-w-[780px] border-collapse">
             <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
@@ -19278,10 +19418,19 @@
           options.headers = options.headers || {};
           const targetUrl = resolveApiUrl(url);
           if (typeof targetUrl === 'string' && targetUrl.includes('/api/')) {
+            const token = localStorage.getItem('admin_session_token') || '';
             if (options.headers instanceof Headers) {
               options.headers.set('Accept', 'application/json');
+              if (token && !options.headers.has('Authorization')) {
+                options.headers.set('Authorization', 'Bearer ' + token);
+                options.headers.set('X-Session-Token', token);
+              }
             } else {
               options.headers['Accept'] = 'application/json';
+              if (token && !options.headers['Authorization']) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+                options.headers['X-Session-Token'] = token;
+              }
             }
           }
           return nativeFetch(targetUrl, options);
@@ -29361,7 +29510,11 @@ get remindersCount() {
             this.getDaysLeft(c) !== null ? this.getDaysLeft(c) : '',
             this.statusLabel(this.getStatus(c)),
             c.notes || ''
-          ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+          ].map(v => {
+            let str = String(v);
+            if (/^[=+\-@\t\r]/.test(str)) str = "'" + str;
+            return `"${str.replace(/"/g, '""')}"`;
+          }).join(','));
           const csv = [heads.join(','), ...rows].join('\n');
           const a = document.createElement('a');
           a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
@@ -34274,6 +34427,9 @@ get remindersCount() {
                   }
                   this.currentUser = data.user;
                   localStorage.setItem('ip_adm_auth_user', JSON.stringify(data.user));
+                  if (data.token) {
+                    localStorage.setItem('admin_session_token', data.token);
+                  }
                   this.impersonatedByAdmin = null;
                   this.loginForm = { username: '', password: '', role: 'auto' };
                   this.loginError = '';
@@ -34775,6 +34931,7 @@ get remindersCount() {
           this.loginError = '';
           this.showLoginPassword = false;
           localStorage.removeItem('ip_adm_auth_user');
+          localStorage.removeItem('admin_session_token');
           this.view = 'dashboard';
           if ((typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:')) { try { window.location.hash = 'dashboard'; } catch (_) {} }
           this.logActivity('auth', `User logged out of portal`);

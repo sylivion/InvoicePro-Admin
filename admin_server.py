@@ -1482,6 +1482,59 @@ def verify_session_token(token):
     except Exception:
         return None
 
+def hash_password(plain):
+    """Secure password hasher using PBKDF2-HMAC-SHA256 with 100,000 iterations and 16-byte random salt."""
+    if not plain:
+        return ""
+    salt = os.urandom(16).hex()
+    h = hashlib.pbkdf2_hmac("sha256", str(plain).encode("utf-8"), salt.encode("utf-8"), 100000).hex()
+    return f"pbkdf2:sha256:100000${salt}${h}"
+
+def verify_password(plain, stored):
+    """Verify password supporting PBKDF2-HMAC-SHA256 hashes and timing-attack-safe fallback for legacy plain passwords."""
+    if not stored or not plain:
+        return False
+    stored = str(stored).strip()
+    plain = str(plain).strip()
+    if stored.startswith("pbkdf2:sha256:"):
+        try:
+            parts = stored.split("$")
+            if len(parts) == 3:
+                iters = int(parts[0].split(":")[-1])
+                salt = parts[1]
+                h = parts[2]
+                calc = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt.encode("utf-8"), iters).hex()
+                return hmac.compare_digest(calc, h)
+        except Exception:
+            return False
+    # Constant-time comparison for legacy plaintext passwords to prevent timing attacks
+    return hmac.compare_digest(plain, stored)
+
+_api_rate_limiter = {}  # ip -> list of float timestamps
+
+def check_api_rate_limit(client_ip):
+    """Sliding-window request throttle: allows up to 300 requests/minute per external IP. Localhost is exempt."""
+    if client_ip in ("127.0.0.1", "::1", "localhost", "0.0.0.0"):
+        return True
+    now = time.time()
+    with _db_lock:
+        timestamps = [t for t in _api_rate_limiter.get(client_ip, []) if now - t < 60]
+        if len(timestamps) >= 300:
+            _api_rate_limiter[client_ip] = timestamps
+            return False
+        timestamps.append(now)
+        _api_rate_limiter[client_ip] = timestamps
+        return True
+
+def is_safe_static_path(base_dir, file_path):
+    """Ensure file path is strictly within base directory to prevent directory traversal attacks."""
+    try:
+        base = os.path.realpath(os.path.abspath(base_dir))
+        target = os.path.realpath(os.path.abspath(file_path))
+        return os.path.commonpath([base, target]) == base and os.path.exists(target) and os.path.isfile(target)
+    except Exception:
+        return False
+
 def check_login_rate_limit(client_ip):
     now = time.time()
     with _db_lock:
@@ -1518,6 +1571,8 @@ def normalize_email_clean(e):
 
 class AdminHandler(http.server.BaseHTTPRequestHandler):
 
+    MAX_PAYLOAD_SIZE = 15 * 1024 * 1024  # 15 MB max request body
+
     def log_message(self, fmt, *args):
         pass  # suppress per-request noise
 
@@ -1525,17 +1580,23 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
         import sys
         print(f"  [Error] {fmt % args}", file=sys.stderr)
 
-    def send_json(self, data, status=200):
-        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+    def _send_security_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token, ngrok-skip-browser-warning")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("X-XSS-Protection", "1; mode=block")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+        self.send_header("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob:; font-src 'self' https: data:; frame-ancestors 'self';")
+
+    def send_json(self, data, status=200):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.end_headers()
         self.wfile.write(body)
@@ -1547,22 +1608,54 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
         self.send_json({"ok": False, "error": str(msg)}, status)
 
     def read_json(self):
-        length = int(self.headers.get("Content-Length", 0))
+        content_length_hdr = self.headers.get("Content-Length")
+        if not content_length_hdr:
+            return {}
+        try:
+            length = int(content_length_hdr)
+        except ValueError:
+            self.send_err("Invalid Content-Length header", 400)
+            return None
+        if length > self.MAX_PAYLOAD_SIZE:
+            self.send_err("Payload too large. Maximum size is 15MB.", 413)
+            return None
         if length == 0:
             return {}
-        return json.loads(self.rfile.read(length).decode("utf-8"))
+        try:
+            raw_body = self.rfile.read(length)
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self.send_err("Malformed JSON payload.", 400)
+            return None
+        except Exception:
+            self.send_err("Error reading request payload.", 400)
+            return None
 
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token, ngrok-skip-browser-warning")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self._send_security_headers()
         self.end_headers()
+
+    def get_current_user(self):
+        auth_hdr = self.headers.get("Authorization") or self.headers.get("X-Session-Token") or ""
+        token = auth_hdr.replace("Bearer ", "").strip() if auth_hdr else ""
+        if token:
+            payload = verify_session_token(token)
+            if payload:
+                return payload
+        return None
+
+    def is_local_client(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        return client_ip in ("127.0.0.1", "::1", "localhost", "0.0.0.0")
 
     # ── GET ───────────────────────────────────────────────────────────────────
     def do_GET(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        if not check_api_rate_limit(client_ip):
+            self.send_err("Too many requests. Please slow down.", 429)
+            return
         path = urlparse(self.path).path
         try:
             if path in ("/", "/AdminPanel.html"):
@@ -1571,6 +1664,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
+                self._send_security_headers()
                 self.end_headers()
                 self.wfile.write(body)
                 return
@@ -1580,12 +1674,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 manifest_path = os.path.join(BASE_DIR, "manifest.json")
                 if not os.path.exists(manifest_path):
                     manifest_path = os.path.join(os.path.dirname(BASE_DIR), "manifest.json")
-                if os.path.exists(manifest_path):
+                if is_safe_static_path(BASE_DIR, manifest_path) or is_safe_static_path(os.path.dirname(BASE_DIR), manifest_path):
                     with open(manifest_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/manifest+json; charset=utf-8")
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "public, max-age=3600")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -1596,13 +1690,13 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 sw_path = os.path.join(BASE_DIR, "sw.js")
                 if not os.path.exists(sw_path):
                     sw_path = os.path.join(os.path.dirname(BASE_DIR), "sw.js")
-                if os.path.exists(sw_path):
+                if is_safe_static_path(BASE_DIR, sw_path) or is_safe_static_path(os.path.dirname(BASE_DIR), sw_path):
                     with open(sw_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/javascript; charset=utf-8")
                     self.send_header("Service-Worker-Allowed", "/")
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -1613,11 +1707,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 offline_path = os.path.join(BASE_DIR, "offline.html")
                 if not os.path.exists(offline_path):
                     offline_path = os.path.join(os.path.dirname(BASE_DIR), "offline.html")
-                if os.path.exists(offline_path):
+                if is_safe_static_path(BASE_DIR, offline_path) or is_safe_static_path(os.path.dirname(BASE_DIR), offline_path):
                     with open(offline_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self._send_security_headers()
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
                     self.wfile.write(body)
@@ -1627,10 +1722,15 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 rel = path.lstrip("/")
                 if rel in ("favicon.ico", "apple-touch-icon.png"):
                     rel = f"icons/{rel if rel != 'favicon.ico' else 'favicon-32.png'}"
-                icon_path = os.path.join(BASE_DIR, rel.replace("/", os.sep))
+                # Prevent directory traversal
+                cleaned_rel = os.path.normpath(rel).replace("\\", "/")
+                if cleaned_rel.startswith("..") or "/../" in cleaned_rel:
+                    self.send_err("Forbidden", 403)
+                    return
+                icon_path = os.path.join(BASE_DIR, cleaned_rel.replace("/", os.sep))
                 if not os.path.exists(icon_path):
-                    icon_path = os.path.join(os.path.dirname(BASE_DIR), rel.replace("/", os.sep))
-                if os.path.exists(icon_path):
+                    icon_path = os.path.join(os.path.dirname(BASE_DIR), cleaned_rel.replace("/", os.sep))
+                if is_safe_static_path(BASE_DIR, icon_path) or is_safe_static_path(os.path.dirname(BASE_DIR), icon_path):
                     with open(icon_path, "rb") as f:
                         body = f.read()
                     ctype = "image/png"
@@ -1640,7 +1740,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         ctype = "image/x-icon"
                     self.send_response(200)
                     self.send_header("Content-Type", ctype)
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "public, max-age=86400")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -2344,13 +2444,19 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception:
             traceback.print_exc()
-            self.send_err(traceback.format_exc(), 500)
+            self.send_err("Internal server error occurred.", 500)
 
     # ── POST ──────────────────────────────────────────────────────────────────
     def do_POST(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        if not check_api_rate_limit(client_ip):
+            self.send_err("Too many requests. Please slow down.", 429)
+            return
         path = urlparse(self.path).path
         try:
             data = self.read_json()
+            if data is None:
+                return  # Error response already sent by read_json (400 or 413)
 
             if path == "/api/admin/me/profile":
                 username = (data.get("username") or "").strip().lower()
@@ -3681,8 +3787,16 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     user = None
                     if user_row:
                         user_dict = dict(user_row)
-                        if user_dict.get("password") == password:
+                        stored_pwd = user_dict.get("password") or ""
+                        if verify_password(password, stored_pwd):
                             user = user_row
+                            # Seamlessly upgrade legacy plaintext password to PBKDF2 hash
+                            if not str(stored_pwd).startswith("pbkdf2:sha256:"):
+                                try:
+                                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (hash_password(password), user_dict.get("id")))
+                                    db.commit()
+                                except Exception:
+                                    pass
 
                     # If still not found in staff_users, check employees table
                     if not user:
@@ -3694,7 +3808,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             emp_pass = e.get("staffPassword") or "emp123"
                             emp_id_val = (e.get("emp_id") or "").strip()
                             emp_email = (e.get("email") or "").strip()
-                            if (emp_user == username or (emp_id_val and emp_id_val.lower() == username.lower()) or (emp_email and emp_email.lower() == username.lower())) and password == emp_pass:
+                            if (emp_user == username or (emp_id_val and emp_id_val.lower() == username.lower()) or (emp_email and emp_email.lower() == username.lower())) and verify_password(password, emp_pass):
                                 matched_emp = e
                                 break
                         if matched_emp:
@@ -3723,7 +3837,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             db.execute("""
                                 INSERT OR REPLACE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at, last_login)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (uid, matched_emp.get("name"), username, password, role, matched_emp.get("department", "Sales"), matched_emp.get("designation", "Sales Executive"), matched_emp.get("email", ""), matched_emp.get("mobile", ""), matched_emp.get("emp_id", ""), now_str, now_str))
+                            """, (uid, matched_emp.get("name"), username, hash_password(password), role, matched_emp.get("department", "Sales"), matched_emp.get("designation", "Sales Executive"), matched_emp.get("email", ""), matched_emp.get("mobile", ""), matched_emp.get("emp_id", ""), now_str, now_str))
                             db.commit()
                             user_dict = {
                                 "id": uid,
@@ -3876,7 +3990,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.execute("""
                         INSERT INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (uid, name, username, password, role, department, designation, email, phone, emp_id, active, now_str))
+                    """, (uid, name, username, hash_password(password), role, department, designation, email, phone, emp_id, active, now_str))
                     db.commit()
                     db.close()
                 self.send_json({"ok": True, "id": uid, "msg": f"Staff profile created for {name} ({role.upper()})."})
@@ -3942,7 +4056,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.execute("""
                             UPDATE staff_users SET name=?, role=?, department=?, designation=?, email=?, phone=?, emp_id=?, active=?, password=?
                             WHERE id=?
-                        """, (name, role, department, designation, email, phone, emp_id, active, password, uid))
+                        """, (name, role, department, designation, email, phone, emp_id, active, hash_password(password), uid))
                     else:
                         db.execute("""
                             UPDATE staff_users SET name=?, role=?, department=?, designation=?, email=?, phone=?, emp_id=?, active=?
@@ -4031,7 +4145,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     return
                 with _db_lock:
                     db = get_db()
-                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (new_pw, uid))
+                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (hash_password(new_pw), uid))
                     db.commit()
                     db.close()
                 self.send_json({"ok": True, "msg": "Password updated successfully."})
@@ -4971,7 +5085,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             self.send_err(f"Missing required field: {e}")
         except Exception:
             traceback.print_exc()
-            self.send_err(traceback.format_exc(), 500)
+            self.send_err("Internal server error occurred.", 500)
 
 
 # ── Port check ────────────────────────────────────────────────────────────────

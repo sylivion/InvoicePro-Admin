@@ -20012,10 +20012,9 @@
                 const amt = parseFloat(c.purchaseAmount || c.purchase_amount || c.amount || 0);
                 const pl = (c.planLabel || c.plan || c.plan_label || '').toLowerCase();
                 const notes = (c.notes || '').toLowerCase();
-                if (pl.includes('3-month') || pl.includes('3 month') || pl === '3m' || pl.includes('6-month') || pl === '6m' || notes.includes('3-month')) {
+                if (pl.includes('3-month') || pl.includes('3 month') || pl === '3m' || pl.includes('6-month') || pl === '6m' || notes.includes('3-month') || amt === 399) {
                   return false;
                 }
-                if (amt > 0 && amt < 1000) return false;
                 return true;
               });
               if (validCust.length !== parsedCust.length) {
@@ -20023,6 +20022,12 @@
                 this.customers = validCust;
               }
             }
+            // Clear any accidental tombstone for valid customers like Yash Enterprises
+            try {
+              if (this._tombstoneRemove) {
+                this._tombstoneRemove('ip_adm_del_cust', 'id-mufirgyq-kokc9');
+              }
+            } catch (_) {}
             const rawEmps = localStorage.getItem('ip_adm_employees');
             if (rawEmps) {
               const parsedEmps = JSON.parse(rawEmps);
@@ -20041,7 +20046,7 @@
                   e.sales = e.sales.filter(s => {
                     const amt = parseFloat(s.amount || 0);
                     const note = (s.note || s.planLabel || '').toLowerCase();
-                    if (note.includes('3-month') || note.includes('3 month') || note.includes('3m') || amt < 1000) return false;
+                    if (note.includes('3-month') || note.includes('3 month') || note.includes('3m') || amt === 399) return false;
                     return true;
                   });
                   if (e.sales.length !== origLen) empChanged = true;
@@ -20722,7 +20727,7 @@
             owner: c.owner || '', city: c.city || '', currency: c.currency || 'INR',
             licenseKey: c.license_key || c.licenseKey || '',
             purchaseDate: c.purchase_date || c.purchaseDate || '',
-            purchaseAmount: parseFloat(c.purchase_amount ?? c.purchaseAmount ?? (c.license_key || c.licenseKey ? 399 : 0)) || 0,
+            purchaseAmount: parseFloat(c.purchase_amount ?? c.purchaseAmount ?? (c.license_key || c.licenseKey ? 1499 : 0)) || 0,
             notes: notes, createdAt: c.created_at || c.createdAt || '',
             updatedAt: c.updated_at || c.updatedAt || '',
             planLabel: c.plan_label || c.planLabel || '',

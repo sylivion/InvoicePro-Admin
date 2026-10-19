@@ -138,8 +138,8 @@ class PGDatabaseWrapper:
         try: self.conn.rollback()
         except Exception: pass
     def close(self):
-        # Keep persistent pooled connection open across requests
-        pass
+        try: self.conn.close()
+        except Exception: pass
     def _transform(self, sql):
         if sql.strip().upper().startswith("PRAGMA"):
             return "SELECT 1"
@@ -204,34 +204,13 @@ class SQLiteDatabaseWrapper:
         self.close()
 
 # ── Database ──────────────────────────────────────────────────────────────────
-_pg_persistent_conn = None
-_pg_conn_lock = threading.Lock()
-
-def get_pg_connection():
-    """Maintain a persistent, healthy PostgreSQL connection to eliminate per-request SSL handshake latency."""
-    global _pg_persistent_conn
-    with _pg_conn_lock:
-        if _pg_persistent_conn is not None:
-            try:
-                if _pg_persistent_conn.closed == 0:
-                    _pg_persistent_conn.poll()
-                    return _pg_persistent_conn
-            except Exception:
-                try: _pg_persistent_conn.close()
-                except Exception: pass
-                _pg_persistent_conn = None
-
-        import psycopg2
-        import psycopg2.extras
-        conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
-        conn.autocommit = True
-        _pg_persistent_conn = conn
-        return _pg_persistent_conn
-
 def get_db():
     if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
         try:
-            conn = get_pg_connection()
+            import psycopg2
+            import psycopg2.extras
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            conn.autocommit = True
             return PGDatabaseWrapper(conn)
         except Exception as e:
             print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.", flush=True)
@@ -3889,18 +3868,18 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.close()
                         self.send_json({"ok": False, "error": "This account is inactive/suspended. Please contact the administrator."})
                         return
-                    # Update last login timestamp in background thread so HTTP response returns instantly
+                    # Update last login safely
                     now_str = now_iso()
-                    target_uid = user_dict["id"]
-                    def _async_update_ts(uid, ts):
+                    try:
+                        db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (now_str, user_dict["id"]))
+                        db.commit()
+                    except Exception as db_err:
+                        print(f"  [AUTH] Warning: Failed to update last_login timestamp: {db_err}")
+                    finally:
                         try:
-                            with _db_lock:
-                                bg_db = get_db()
-                                bg_db.execute("UPDATE staff_users SET last_login = ? WHERE id = ?", (ts, uid))
-                                bg_db.commit()
-                        except Exception as db_err:
-                            print(f"  [AUTH] Warning: Failed to update last_login timestamp: {db_err}")
-                    threading.Thread(target=_async_update_ts, args=(target_uid, now_str), daemon=True).start()
+                            db.close()
+                        except Exception:
+                            pass
 
                 # Normalize username-to-role mappings
                 un_lower = (user_dict.get("username") or "").lower()

@@ -203,17 +203,23 @@ class SQLiteDatabaseWrapper:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+_last_pg_fail_time = 0
+_pg_cooldown_seconds = 60
+
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
+    global _last_pg_fail_time
     if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
-        try:
-            import psycopg2
-            import psycopg2.extras
-            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
-            conn.autocommit = True
-            return PGDatabaseWrapper(conn)
-        except Exception as e:
-            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.", flush=True)
+        if time.time() - _last_pg_fail_time >= _pg_cooldown_seconds:
+            try:
+                import psycopg2
+                import psycopg2.extras
+                conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
+                conn.autocommit = True
+                return PGDatabaseWrapper(conn)
+            except Exception as e:
+                _last_pg_fail_time = time.time()
+                print(f"  [DB] PostgreSQL connect failed ({e}), using SQLite (cached for {_pg_cooldown_seconds}s).", flush=True)
 
     conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -793,63 +799,16 @@ def init_db():
             print(f"  [Seed Notice] {seed_err}")
         
         
-        # Seed initial HR demo data if hr_candidates is empty
+        # Clean up any legacy dummy HR records from the database
         try:
-            cand_count = db.execute("SELECT COUNT(*) FROM hr_candidates").fetchone()[0]
-            if cand_count == 0:
-                now_str = now_iso()
-                sample_candidates = [
-                    ("can-101", "Aarav Mehta", "aarav.m@example.com", "9876543210", "Senior Sales Executive", "3 Years in B2B SaaS", "self_connected", "", "", "", "", "passed", "Clear communication, verified background, salary expectation aligned.", "2026-09-05 11:00 AM", "Operations Manager", "Google Meet (meet.google.com/inv-meet)", "pending", "", "pending", "Senior Sales Executive", "₹4,80,000 / annum", "2026-09-15", now_str, now_str),
-                    ("can-102", "Pooja Verma", "pooja.v@example.com", "9823112233", "Customer Support Specialist", "2 Years Call & Chat Support", "referral_known", "REF-KP-8492", "Ramesh Verma (Partner)", "9811223344", "", "passed", "Excellent empathy, clear voice, positive attitude.", "2026-09-06 02:30 PM", "Support Lead", "Office Room 2", "passed", "Strong customer focus, passed technical test.", "joining_sent", "Customer Support Specialist", "₹3,60,000 / annum", "2026-09-12", now_str, now_str),
-                    ("can-103", "Karan Sharma", "karan.s@example.com", "9845001122", "Field Sales Consultant", "1 Year Retail POS Sales", "referral_employee", "", "Amit Roy", "", "EMP-001", "pending", "Resume under screening.", "", "", "", "pending", "", "pending", "", "", "", now_str, now_str),
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_candidates (
-                        id, name, email, phone, role_applied, experience, source_type, referral_code, referrer_name, referrer_phone, referrer_emp_id,
-                        hr_round_status, hr_notes, interview_scheduled_at, interview_interviewer, interview_meet_link,
-                        manager_round_status, manager_notes, onboarding_status, offered_designation, offered_ctc, joining_date, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_candidates)
-
-                sample_jobs = [
-                    ("job-101", "Sales Executive", "Sales", 3, "Full-Time", "1-3 Years in Direct Sales", "open", now_str),
-                    ("job-102", "Customer Support Specialist", "Support", 2, "Full-Time", "1+ Year in Technical Support", "open", now_str),
-                    ("job-103", "Operations Assistant", "Operations", 1, "Full-Time", "2+ Years Admin / Operations", "open", now_str),
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_jobs (id, title, department, vacancies, job_type, experience_required, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_jobs)
-
-                sample_grievances = [
-                    ("grv-101", "Workstation Display Glitch", "Amit Roy", "EMP-001", "Sales", "Equipment / Facilities", "Primary workstation monitor flickering during client calls.", "resolved", "Replaced monitor HDMI cable and display adapter. Issue resolved.", now_str, now_str),
-                    ("grv-102", "Shift Handover Scheduling", "Pooja Verma", "EMP-002", "Support", "Work Environment", "Requested 15-minute overlap period during afternoon shift change.", "under_review", "HR reviewing with Operations Manager to adjust roster.", now_str, now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_grievances (id, title, employee_name, employee_id, department, category, description, status, resolution_notes, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_grievances)
-
-                sample_training = [
-                    ("trn-101", "InvoicePro Enterprise Product Mastery", "Product Manager", "2026-09-10 10:30 AM", "2 Hours", 5, "Keygen flows, invoice templates, offline database sync, and client FAQs", "upcoming", now_str),
-                    ("trn-102", "POSH & Anti-Harassment Compliance", "HR Director", "2026-09-18 03:00 PM", "1.5 Hours", 12, "Workplace ethics, POSH regulations, respectful communication, and reporting channels", "upcoming", now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_training (id, title, trainer, schedule_date, duration, enrolled_count, topics, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_training)
-
-                sample_goals = [
-                    ("gol-101", "EMP-001", "Amit Roy", "Achieve Monthly Sales Target", "Close 15 new InvoicePro annual licenses", 75, 4.5, "Strong client conversion rate. On track for quarterly incentive.", "Q3", "in_progress", now_str),
-                    ("gol-102", "EMP-002", "Pooja Verma", "First-Contact Resolution", "Maintain >95% first contact ticket resolution", 92, 4.8, "Exceptional response times and positive client reviews.", "Q3", "in_progress", now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_goals (id, employee_id, employee_name, goal_title, target_metric, progress_percent, appraisal_score, reviewer_notes, quarter, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_goals)
-                db.commit()
-        except Exception as hr_seed_err:
-            print(f"  [HR Seed Notice] {hr_seed_err}")
+            db.execute("DELETE FROM hr_jobs WHERE id IN ('job-101', 'job-102', 'job-103', 'job-15045844')")
+            db.execute("DELETE FROM hr_candidates WHERE id IN ('can-101', 'can-102', 'can-103')")
+            db.execute("DELETE FROM hr_grievances WHERE id IN ('grv-101', 'grv-102')")
+            db.execute("DELETE FROM hr_training WHERE id IN ('trn-101', 'trn-102')")
+            db.execute("DELETE FROM hr_goals WHERE id IN ('gol-101', 'gol-102')")
+            db.commit()
+        except Exception as hr_clean_err:
+            print(f"  [HR Clean Notice] {hr_clean_err}")
 
         # Migration: add columns if they don't exist yet (for older databases)
         # Customers table columns

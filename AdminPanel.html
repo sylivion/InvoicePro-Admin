@@ -7308,6 +7308,9 @@
                       <button x-show="isSupportLeader && (!t.assignedTo || getTicketAssigneeName(t) === 'Unassigned')" @click="openAssignSupportTicketModal(t)" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-user-plus text-[10px]"></i> Assign
                       </button>
+                      <button x-show="isSupportLeader && (t.assignedTo && getTicketAssigneeName(t) !== 'Unassigned')" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center gap-1">
+                        <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                      </button>
                       <template x-if="t.isDevIssue && !t.devTaskId">
                         <button @click="openEscalateSupportToDev(t)" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 font-medium text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer flex items-center gap-1">
                           <i class="fa-solid fa-code-fork text-[10px]"></i> Escalate Dev
@@ -7505,6 +7508,9 @@
                       <!-- Case 1: When Ticket is Assigned to an Engineer -->
                       <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
                         <div class="inline-flex items-center gap-1.5 justify-end">
+                          <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[11px] cursor-pointer shadow-xs transition-colors inline-flex items-center gap-1">
+                            <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                          </button>
                           <button @click="openCloseTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] cursor-pointer shadow-xs transition-colors">
                             <i class="fa-solid fa-check text-[10px]"></i> Resolve
                           </button>
@@ -7747,10 +7753,15 @@
                     <template x-if="!isTicketResolved(t)">
                       <div class="flex items-center gap-2">
                         <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
-                          <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-                            <i class="fa-solid fa-user-check text-blue-500"></i>
-                            <span x-text="getTicketAssigneeName(t)"></span>
-                          </span>
+                          <div class="inline-flex items-center gap-1.5">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
+                              <i class="fa-solid fa-user-check text-blue-500"></i>
+                              <span x-text="getTicketAssigneeName(t)"></span>
+                            </span>
+                            <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer" title="Reassign Ticket">
+                              <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                            </button>
+                          </div>
                         </template>
                         <template x-if="getTicketAssigneeName(t) === 'Unassigned'">
                           <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer">
@@ -32084,7 +32095,6 @@ get remindersCount() {
         },
 
         openCreateSupportTicketModal(defaultData = null) {
-          const isMember = (this.currentUser && (this.currentUser.role === 'support_member' || this.currentUser.role === 'support_mem'));
           this.newSupportTicketForm = {
             customerId: defaultData ? (defaultData.customerId || defaultData.id || '') : '',
             customerName: defaultData ? (defaultData.customerName || defaultData.name || '') : '',
@@ -32097,7 +32107,7 @@ get remindersCount() {
             subject: defaultData && defaultData.subject ? defaultData.subject : '',
             description: defaultData && (defaultData.description || defaultData.message) ? (defaultData.description || defaultData.message) : '',
             assignedTo: '',
-            selfAssign: isMember
+            selfAssign: false
           };
           this.showCreateSupportTicketModal = true;
         },
@@ -32112,15 +32122,13 @@ get remindersCount() {
           }
 
           const ticketId = 'ST-' + (100 + (this.supportTickets || []).length + 1);
-          const isMember = (this.currentUser && (this.currentUser.role === 'support_member' || this.currentUser.role === 'support_mem'));
           
           let assignee = '';
           if (this.isSupportLeader) {
             assignee = this.newSupportTicketForm.assignedTo || '';
-          } else if (isMember) {
-            assignee = this.currentUser.username || this.currentUser.name || '';
           }
-
+          // Support members (and non-leaders) always raise tickets as Unassigned
+          // so the Support Team Leader can review and assign them from the leader workspace.
           let memberName = 'Unassigned';
           if (assignee) {
             const member = (this.supportMembers || []).find(m => m.username === assignee || m.name === assignee);

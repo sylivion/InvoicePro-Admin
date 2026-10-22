@@ -19910,9 +19910,24 @@
         //  SUPPORT DEPARTMENT STATE
         // ══════════════════════════════════════════
         supportTickets: [],
-        supportMembers: [],
-        supportKB: [],
-        supportRecurringIssues: [],
+        supportMembers: [
+          { id: 'sm1', username: 'support', name: 'Aarav Patel', role: 'Support Team Leader', email: 'aarav@sunvibee.com', phone: '+91 98200 11223', activeTickets: 3, resolvedMonth: 42, avgResponseMin: 8, csat: 4.9, status: 'Online' },
+          { id: 'sm2', username: 'support_priya', name: 'Priya Sharma', role: 'Senior Support Engineer', email: 'priya@sunvibee.com', phone: '+91 98200 44556', activeTickets: 5, resolvedMonth: 38, avgResponseMin: 12, csat: 4.8, status: 'Online' },
+          { id: 'sm3', username: 'support_rahul', name: 'Rahul Verma', role: 'Technical Support Specialist', email: 'rahul@sunvibee.com', phone: '+91 98200 77889', activeTickets: 4, resolvedMonth: 35, avgResponseMin: 14, csat: 4.7, status: 'In Call' },
+          { id: 'sm4', username: 'support_ananya', name: 'Ananya Iyer', role: 'Helpdesk Representative', email: 'ananya@sunvibee.com', phone: '+91 98200 99001', activeTickets: 2, resolvedMonth: 29, avgResponseMin: 10, csat: 4.9, status: 'Online' }
+        ],
+        supportKB: [
+          { id: 'kb1', category: 'GST & Invoicing', title: 'How to Resolve HSN/SAC Multi-Rate Tax Mismatch on Invoices', summary: 'Steps to configure correct CGST/SGST/IGST tax rates per line item when printing B2B invoices.', views: 342, updated: '2026-09-02', content: '1. Open Settings -> Tax Configuration\n2. Verify state jurisdiction code for Interstate vs Intrastate\n3. Set HSN code length to 4/6/8 digits per GST slab\n4. Save and generate test preview.' },
+          { id: 'kb2', category: 'Hardware & Printers', title: 'Thermal POS Printer 80mm ESC/POS Driver Alignment Guide', summary: 'Configuring margin offsets and paper cut triggers for Epson/TVS thermal receipt printers.', views: 512, updated: '2026-08-28', content: '1. In Windows Devices & Printers, open Printer Properties\n2. Set Page Size to 80mm x 297mm Continuous\n3. In InvoicePro Print Settings, select Thermal Roll (3-inch)\n4. Click Test Print Page.' },
+          { id: 'kb3', category: 'License & Activation', title: 'License Machine ID Reset on Hardware Migration / System Format', summary: 'Procedure for releasing a locked license key and reactivating on a replacement PC.', views: 289, updated: '2026-09-01', content: '1. Support Leader opens License Admin\n2. Locate Customer ID or Serial Key\n3. Click Reset Machine ID and confirm customer authorization\n4. Customer can now input existing key in software.' },
+          { id: 'kb4', category: 'Database & Sync', title: 'Repairing SQLite DB Lock / Disk I/O Timeout Error on Multi-user LAN', summary: 'Resolving database locking when multiple client counters access the server over SMB.', views: 198, updated: '2026-08-15', content: '1. Ensure WAL (Write-Ahead Logging) mode is enabled\n2. Grant full read/write permissions to InvoicePro Data folder\n3. Check Windows Defender exclusion list\n4. Run Database Integrity Check tool.' }
+        ],
+        supportRecurringIssues: [
+          { id: 'rec1', category: 'Printing', issue: 'TVS RP-3200 Thermal Printer Cutting Paper Mid-Invoice', impactedCount: 14, severity: 'Medium', workaround: 'Adjust bottom margin from 0mm to 12mm in printer properties', status: 'Known Workaround', devLinkedTaskId: 'dt-3' },
+          { id: 'rec2', category: 'GST Tax', issue: 'Composition Scheme Dealers Inadvertently Showing Tax Breakdown on Bill', impactedCount: 9, severity: 'High', workaround: 'Toggle Bill of Supply template in Bill Format settings', status: 'Fix in v2.4.1 Release', devLinkedTaskId: 'dt-1' },
+          { id: 'rec3', category: 'Backup', issue: 'Google Drive Auto-Backup Token Expiring Every 7 Days', impactedCount: 23, severity: 'High', workaround: 'Switch to Local LAN Backup / Scheduled Drive Folder Sync', status: 'Escalated to Dev (Sprint 12)', devLinkedTaskId: null },
+          { id: 'rec4', category: 'Activation', issue: 'Antivirus Blocking Key Activation Validation Request', impactedCount: 18, severity: 'Medium', workaround: 'Whitelist activation.invoicepro.app URL in Firewall/Antivirus', status: 'Documented in KB-03', devLinkedTaskId: null }
+        ],
         supportCallLogs: [],
         supportSelectedTicket: null,
         supportSearchQuery: '',
@@ -19952,7 +19967,12 @@
         selectedDeptForLeader: null,
         leaderAssignForm: { deptId: '', lead_name: '' },
         
-        managerTasks: [],
+        managerTasks: [
+          { id: 'task-1', title: 'Follow-up with Sharma Enterprises for Enterprise renewal', assignee: 'Vishal uthale', department: 'Sales', priority: 'High', due: '2026-09-05', status: 'In Progress' },
+          { id: 'task-2', title: 'Resolve ticket #4092 database sync latency issue', assignee: 'Pooja Verma', department: 'Support', priority: 'Critical', due: '2026-09-04', status: 'In Progress' },
+          { id: 'task-3', title: 'Deploy Invoice template v2.4 to production cluster', assignee: 'Aakash Mehta', department: 'TECH', priority: 'Medium', due: '2026-09-06', status: 'Completed' },
+          { id: 'task-4', title: 'Complete physical document verification for Sakshi Chavan', assignee: 'Operations Manager', department: 'OPS', priority: 'High', due: '2026-09-04', status: 'Completed' }
+        ],
         showAddTaskModal: false,
         taskForm: { title: '', assignee: '', department: 'Sales', priority: 'Medium', due: '' },
 
@@ -31817,7 +31837,12 @@ get remindersCount() {
             const savedRec = localStorage.getItem('ip_adm_support_recurring');
             if (savedRec) { this.supportRecurringIssues = JSON.parse(savedRec); }
             else {
-              this.supportRecurringIssues = [];
+              this.supportRecurringIssues = [
+                { id: 'REC-01', issue: 'GSTR-1 JSON Schema Format Mismatch on 4-Digit vs 6-Digit HSN Codes', category: 'GST & Invoicing', severity: 'High', impactedCount: 18, workaround: '1. Navigate to Settings > Tax Configuration.\n2. Enable "Auto-pad 4-digit HSN with leading zeros" toggle.\n3. Re-run GSTR-1 offline JSON generator utility.' },
+                { id: 'REC-02', issue: 'ESC/POS 80mm Thermal Printer Margin Truncation on Windows Spooler', category: 'Hardware & Printers', severity: 'High', impactedCount: 14, workaround: '1. Open Windows Printer Properties > Device Settings.\n2. Set Paper Size to "80 x 297mm (Roll Paper)".\n3. In InvoicePro Print Settings, set Right Margin to 0mm.' },
+                { id: 'REC-03', issue: 'Hardware Machine Signature Key Mismatch after Major Windows 11 Update', category: 'License & Activation', severity: 'Medium', impactedCount: 12, workaround: '1. In Admin Panel > License Hub, search customer license.\n2. Click "Reset Machine Lock (1 of 2 Used)".\n3. Customer re-enters key in desktop client to auto-bind new signature.' },
+                { id: 'REC-04', issue: 'SQLite WAL Journal Lock during Multi-Terminal Concurrent Counter Billing', category: 'Database & Sync', severity: 'Medium', impactedCount: 9, workaround: '1. In Support Troubleshooting Desk, run "Execute DB WAL Check & Checkpoint".\n2. Increase SQLite busy_timeout to 5000ms in config.ini.' }
+              ];
             }
           } catch (_) { this.supportRecurringIssues = []; }
 

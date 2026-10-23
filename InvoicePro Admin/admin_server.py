@@ -205,6 +205,20 @@ class SQLiteDatabaseWrapper:
 
 _last_pg_fail_time = 0
 _pg_cooldown_seconds = 60
+_pg_resolved_ipv4 = None
+
+def _resolve_pg_ipv4(host):
+    global _pg_resolved_ipv4
+    if _pg_resolved_ipv4:
+        return _pg_resolved_ipv4
+    try:
+        infos = socket.getaddrinfo(host, None, socket.AF_INET)
+        if infos:
+            _pg_resolved_ipv4 = infos[0][4][0]
+            return _pg_resolved_ipv4
+    except Exception:
+        pass
+    return "66.33.22.242"
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
@@ -214,7 +228,11 @@ def get_db():
             try:
                 import psycopg2
                 import psycopg2.extras
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
+                from urllib.parse import urlparse
+                u = urlparse(DATABASE_URL)
+                host = u.hostname or "yamanote.proxy.rlwy.net"
+                ipv4 = _resolve_pg_ipv4(host)
+                conn = psycopg2.connect(DATABASE_URL, hostaddr=ipv4, connect_timeout=5)
                 conn.autocommit = True
                 return PGDatabaseWrapper(conn)
             except Exception as e:
@@ -5127,9 +5145,65 @@ def _scheduler_loop():
         _send_scheduled_reminders()
 
 
+def _sync_pg_sqlite():
+    """Background synchronizer to ensure SQLite always has the exact same customers and records as PostgreSQL."""
+    if not (DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://"))):
+        return
+    try:
+        import psycopg2
+        from urllib.parse import urlparse
+        u = urlparse(DATABASE_URL)
+        host = u.hostname or "yamanote.proxy.rlwy.net"
+        ipv4 = _resolve_pg_ipv4(host)
+        pg_conn = psycopg2.connect(DATABASE_URL, hostaddr=ipv4, connect_timeout=8)
+        cur_p = pg_conn.cursor()
+        cur_p.execute("SELECT * FROM customers")
+        cols = [desc[0] for desc in cur_p.description]
+        pg_rows = cur_p.fetchall()
+        pg_conn.close()
+
+        with _db_lock:
+            for target_db in [DB_PATH, os.path.join(os.path.dirname(BASE_DIR), "admin_data", "admin.db")]:
+                if not os.path.exists(target_db):
+                    continue
+                sl_conn = sqlite3.connect(target_db, timeout=30.0)
+                cur_s = sl_conn.cursor()
+                cur_s.execute("PRAGMA table_info(customers)")
+                existing_cols = {r[1] for r in cur_s.fetchall()}
+                for col in cols:
+                    if col not in existing_cols:
+                        try:
+                            cur_s.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
+                        except Exception:
+                            pass
+                sl_conn.commit()
+
+                cur_s.execute("SELECT id FROM customers")
+                existing_ids = {r[0] for r in cur_s.fetchall()}
+
+                for row in pg_rows:
+                    d = dict(zip(cols, row))
+                    cid = d.get("id")
+                    if not cid or cid in existing_ids:
+                        continue
+                    col_names = list(d.keys())
+                    placeholders = ",".join(["?"] * len(col_names))
+                    vals = [1 if isinstance(d[c], bool) and d[c] else (0 if isinstance(d[c], bool) else d[c]) for c in col_names]
+                    try:
+                        cur_s.execute(f"INSERT INTO customers ({','.join(col_names)}) VALUES ({placeholders})", vals)
+                    except Exception:
+                        pass
+                sl_conn.commit()
+                sl_conn.close()
+    except Exception:
+        pass
+
+
 def _start_scheduler():
     t = threading.Thread(target=_scheduler_loop, daemon=True)
     t.start()
+    sync_t = threading.Thread(target=_sync_pg_sqlite, daemon=True)
+    sync_t.start()
 
 
 def _auto_backup():

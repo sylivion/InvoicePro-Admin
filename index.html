@@ -1806,8 +1806,16 @@
                 class="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">View All <i
                   class="fa-solid fa-arrow-right text-xs"></i></button>
             </div>
-            <div class="px-4 pb-5" style="height:220px">
-              <canvas id="dash-emp-chart"></canvas>
+            <div class="px-4 pb-5 relative flex items-center justify-center" style="height:220px">
+              <!-- Clean empty state if no sales yet -->
+              <div x-show="!dashHasEmpSales" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                <div class="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center mb-2">
+                  <i class="fa-solid fa-ranking-star text-purple-400 text-sm"></i>
+                </div>
+                <div class="text-xs font-semibold text-gray-700 dark:text-gray-300">No Employee Sales Recorded Yet</div>
+                <p class="text-[11px] text-gray-400 mt-0.5 max-w-xs">Employee sales and earned incentives will appear on this leaderboard once customer deals are closed.</p>
+              </div>
+              <canvas id="dash-emp-chart" x-show="dashHasEmpSales" style="width:100%;height:100%"></canvas>
             </div>
           </div>
 
@@ -20274,6 +20282,20 @@
           this._loadAuditLog();
           this._initPin();
           this._probeServer();
+          if (this.view === 'dashboard') {
+            this.$nextTick(() => { this.initDashCharts(); });
+            setTimeout(() => { if (this.view === 'dashboard') this.initDashCharts(); }, 250);
+          }
+          this.$watch('employees', () => {
+            if (this.view === 'dashboard') {
+              this.$nextTick(() => { this.initDashCharts(); });
+            }
+          });
+          this.$watch('customers', () => {
+            if (this.view === 'dashboard') {
+              this.$nextTick(() => { this.initDashCharts(); });
+            }
+          });
           // Load SMTP config from server (when running via http server) and keep local storage in sync
           if ((typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:')) {
             fetch('/api/smtp-config').then(r => r.json()).then(d => {
@@ -20301,6 +20323,7 @@
           this.view = v;
           if (v === 'dashboard') {
             this.$nextTick(() => { this.initDashCharts(); });
+            setTimeout(() => { if (this.view === 'dashboard') this.initDashCharts(); }, 150);
           }
           if (v === 'auditlog') {
             this.auditFilterCategory = 'all';
@@ -26853,6 +26876,7 @@
                   window._ipDashCharts.emp = null;
                 }
                 const empData = plain(this._dashEmpSales());
+                const maxSales = Math.max(0, ...empData.map(e => e.sales || 0));
                 const palette = ['#4f46e5', '#0d9488', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
                 try {
                   window._ipDashCharts.emp = new Chart(ctx3, {
@@ -26860,17 +26884,42 @@
                     data: {
                       labels: empData.map(e => e.name),
                       datasets: [{
-                        label: 'Sales', data: empData.map(e => e.sales),
+                        label: 'Sales',
+                        data: empData.map(e => e.sales),
                         backgroundColor: empData.map((_, i) => palette[i % palette.length]),
-                        borderRadius: 6, borderSkipped: false,
+                        borderRadius: 6,
+                        borderSkipped: false,
                       }],
                     },
                     options: {
-                      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                      plugins: { legend: { display: false }, tooltip: { ...tooltip, callbacks: { label: c => ` ${c.raw} sales` } } },
+                      indexAxis: 'y',
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          ...tooltip,
+                          callbacks: {
+                            label: c => {
+                              const emp = empData[c.dataIndex] || {};
+                              const commStr = emp.commission ? ` · ₹${Number(emp.commission).toLocaleString('en-IN')} incentive` : '';
+                              return ` ${c.raw} sales${commStr}`;
+                            }
+                          }
+                        }
+                      },
                       scales: {
-                        x: { min: 0, ticks: { stepSize: 1, color: text, font: { size: 11 } }, grid: { color: grid, drawBorder: false }, border: { display: false } },
-                        y: { ticks: { color: text, font: { size: 11 } }, grid: { display: false } },
+                        x: {
+                          min: 0,
+                          suggestedMax: maxSales > 0 ? (maxSales <= 5 ? maxSales + 1 : undefined) : 5,
+                          ticks: { stepSize: 1, color: text, font: { size: 11 } },
+                          grid: { color: grid, drawBorder: false },
+                          border: { display: false }
+                        },
+                        y: {
+                          ticks: { color: text, font: { size: 11 } },
+                          grid: { display: false }
+                        },
                       },
                     },
                   });
@@ -26915,14 +26964,45 @@
         },
 
         _dashEmpSales() {
-          return this.employees
-            .map(e => ({
-              name: e.name ? e.name.split(' ')[0] : 'Emp',
-              sales: (e.sales || []).length,
-              commission: this.empTotalCommission(e),
-            }))
-            .sort((a, b) => b.sales - a.sales)
-            .slice(0, 6);
+          try {
+            const emps = Array.isArray(this.employees) ? this.employees : [];
+            const mapped = emps.map(e => {
+              if (!e) return null;
+              const salesCount = typeof this.empTotalSales === 'function' ? this.empTotalSales(e) : (Array.isArray(e.sales) ? e.sales.length : 0);
+              const comm = typeof this.empTotalCommission === 'function' ? this.empTotalCommission(e) : (typeof this.empTotalIncentive === 'function' ? this.empTotalIncentive(e) : 0);
+              const isSales = typeof this.isEmpSalesRole === 'function' ? this.isEmpSalesRole(e) : true;
+              const empName = (e.name || '').trim();
+              const nameParts = empName.split(/\s+/).filter(Boolean);
+              const displayName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1][0]}.` : (nameParts[0] || 'Emp');
+              return {
+                id: e.id,
+                name: displayName,
+                fullName: empName,
+                sales: Number(salesCount) || 0,
+                commission: Math.round(Number(comm) || 0),
+                isSales: isSales,
+              };
+            }).filter(Boolean);
+
+            const salesTeam = mapped.filter(e => e.sales > 0 || e.isSales);
+            const listToUse = salesTeam.length > 0 ? salesTeam : mapped;
+
+            return listToUse
+              .sort((a, b) => (b.sales - a.sales) || (b.commission - a.commission))
+              .slice(0, 6);
+          } catch (err) {
+            console.warn('Error in _dashEmpSales:', err);
+            return [];
+          }
+        },
+
+        get dashHasEmpSales() {
+          try {
+            const list = this._dashEmpSales();
+            return Array.isArray(list) && list.some(e => (e.sales || 0) > 0);
+          } catch (_) {
+            return false;
+          }
         },
 
         // ── Tombstone helpers — track locally deleted IDs so server can't restore them on refresh ──

@@ -1601,18 +1601,22 @@
             <div class="text-xl font-semibold text-green-600" x-text="fmtCurrency(arr)"></div>
             <div class="text-xs text-gray-400 mt-0.5">ARR (Annual Recurring)</div>
           </div>
-          <div class="dash-anim-8 rounded-2xl p-4 border"
-            :class="churnRate>20?'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800':'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'">
+          <div class="dash-anim-8 rounded-2xl p-4 border bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
+            :class="customerRetention < 80 ? 'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800' : ''">
             <div class="flex items-center justify-between mb-2">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center"
-                :class="churnRate>20?'bg-red-100 dark:bg-red-900':'bg-gray-100 dark:bg-gray-800'"><i
-                  class="fa-solid fa-door-open text-xs" :class="churnRate>20?'text-red-500':'text-gray-400'"></i></div>
-              <span class="text-xs font-bold" :class="churnRate>20?'text-red-500':'text-gray-400'"
-                x-text="churnRate+'%'"></span>
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950"
+                :class="customerRetention < 80 ? 'bg-amber-100 dark:bg-amber-900' : ''">
+                <i class="fa-solid fa-user-check text-xs text-emerald-600 dark:text-emerald-400"
+                  :class="customerRetention < 80 ? 'text-amber-500' : ''"></i>
+              </div>
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400"
+                :class="customerRetention < 80 ? 'text-amber-500' : ''"
+                x-text="customerRetention + '%'"></span>
             </div>
-            <div class="text-xl font-semibold" :class="churnRate>20?'text-red-500':'text-gray-500 dark:text-gray-400'"
-              x-text="churnRate+'%'"></div>
-            <div class="text-xs text-gray-400 mt-0.5">Churn Rate</div>
+            <div class="text-xl font-semibold text-emerald-600 dark:text-emerald-400"
+              :class="customerRetention < 80 ? 'text-amber-500' : ''"
+              x-text="customerRetention + '%'"></div>
+            <div class="text-xs text-gray-400 mt-0.5">Customer Retention</div>
           </div>
           <div
             class="dash-anim-8 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
@@ -27016,6 +27020,10 @@
         },
         get arr() {
           return this.customers.reduce((s, c) => s + (c.purchaseAmount || 0), 0);
+        },
+        get customerRetention() {
+          if (!this.customers.length) return 100;
+          return 100 - this.churnRate;
         },
         get churnRate() {
           if (!this.customers.length) return 0;

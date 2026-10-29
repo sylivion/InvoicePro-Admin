@@ -203,17 +203,41 @@ class SQLiteDatabaseWrapper:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+_last_pg_fail_time = 0
+_pg_cooldown_seconds = 60
+_pg_resolved_ipv4 = None
+
+def _resolve_pg_ipv4(host):
+    global _pg_resolved_ipv4
+    if _pg_resolved_ipv4:
+        return _pg_resolved_ipv4
+    try:
+        infos = socket.getaddrinfo(host, None, socket.AF_INET)
+        if infos:
+            _pg_resolved_ipv4 = infos[0][4][0]
+            return _pg_resolved_ipv4
+    except Exception:
+        pass
+    return "66.33.22.242"
+
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
+    global _last_pg_fail_time
     if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
-        try:
-            import psycopg2
-            import psycopg2.extras
-            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
-            conn.autocommit = True
-            return PGDatabaseWrapper(conn)
-        except Exception as e:
-            print(f"  [DB] PostgreSQL connect failed ({e}), falling back to SQLite.", flush=True)
+        if time.time() - _last_pg_fail_time >= _pg_cooldown_seconds:
+            try:
+                import psycopg2
+                import psycopg2.extras
+                from urllib.parse import urlparse
+                u = urlparse(DATABASE_URL)
+                host = u.hostname or "yamanote.proxy.rlwy.net"
+                ipv4 = _resolve_pg_ipv4(host)
+                conn = psycopg2.connect(DATABASE_URL, hostaddr=ipv4, connect_timeout=5)
+                conn.autocommit = True
+                return PGDatabaseWrapper(conn)
+            except Exception as e:
+                _last_pg_fail_time = time.time()
+                print(f"  [DB] PostgreSQL connect failed ({e}), using SQLite (cached for {_pg_cooldown_seconds}s).", flush=True)
 
     conn = sqlite3.connect(DB_PATH, timeout=60.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -793,63 +817,16 @@ def init_db():
             print(f"  [Seed Notice] {seed_err}")
         
         
-        # Seed initial HR demo data if hr_candidates is empty
+        # Clean up any legacy dummy HR records from the database
         try:
-            cand_count = db.execute("SELECT COUNT(*) FROM hr_candidates").fetchone()[0]
-            if cand_count == 0:
-                now_str = now_iso()
-                sample_candidates = [
-                    ("can-101", "Aarav Mehta", "aarav.m@example.com", "9876543210", "Senior Sales Executive", "3 Years in B2B SaaS", "self_connected", "", "", "", "", "passed", "Clear communication, verified background, salary expectation aligned.", "2026-09-05 11:00 AM", "Operations Manager", "Google Meet (meet.google.com/inv-meet)", "pending", "", "pending", "Senior Sales Executive", "₹4,80,000 / annum", "2026-09-15", now_str, now_str),
-                    ("can-102", "Pooja Verma", "pooja.v@example.com", "9823112233", "Customer Support Specialist", "2 Years Call & Chat Support", "referral_known", "REF-KP-8492", "Ramesh Verma (Partner)", "9811223344", "", "passed", "Excellent empathy, clear voice, positive attitude.", "2026-09-06 02:30 PM", "Support Lead", "Office Room 2", "passed", "Strong customer focus, passed technical test.", "joining_sent", "Customer Support Specialist", "₹3,60,000 / annum", "2026-09-12", now_str, now_str),
-                    ("can-103", "Karan Sharma", "karan.s@example.com", "9845001122", "Field Sales Consultant", "1 Year Retail POS Sales", "referral_employee", "", "Amit Roy", "", "EMP-001", "pending", "Resume under screening.", "", "", "", "pending", "", "pending", "", "", "", now_str, now_str),
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_candidates (
-                        id, name, email, phone, role_applied, experience, source_type, referral_code, referrer_name, referrer_phone, referrer_emp_id,
-                        hr_round_status, hr_notes, interview_scheduled_at, interview_interviewer, interview_meet_link,
-                        manager_round_status, manager_notes, onboarding_status, offered_designation, offered_ctc, joining_date, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_candidates)
-
-                sample_jobs = [
-                    ("job-101", "Sales Executive", "Sales", 3, "Full-Time", "1-3 Years in Direct Sales", "open", now_str),
-                    ("job-102", "Customer Support Specialist", "Support", 2, "Full-Time", "1+ Year in Technical Support", "open", now_str),
-                    ("job-103", "Operations Assistant", "Operations", 1, "Full-Time", "2+ Years Admin / Operations", "open", now_str),
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_jobs (id, title, department, vacancies, job_type, experience_required, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_jobs)
-
-                sample_grievances = [
-                    ("grv-101", "Workstation Display Glitch", "Amit Roy", "EMP-001", "Sales", "Equipment / Facilities", "Primary workstation monitor flickering during client calls.", "resolved", "Replaced monitor HDMI cable and display adapter. Issue resolved.", now_str, now_str),
-                    ("grv-102", "Shift Handover Scheduling", "Pooja Verma", "EMP-002", "Support", "Work Environment", "Requested 15-minute overlap period during afternoon shift change.", "under_review", "HR reviewing with Operations Manager to adjust roster.", now_str, now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_grievances (id, title, employee_name, employee_id, department, category, description, status, resolution_notes, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_grievances)
-
-                sample_training = [
-                    ("trn-101", "InvoicePro Enterprise Product Mastery", "Product Manager", "2026-09-10 10:30 AM", "2 Hours", 5, "Keygen flows, invoice templates, offline database sync, and client FAQs", "upcoming", now_str),
-                    ("trn-102", "POSH & Anti-Harassment Compliance", "HR Director", "2026-09-18 03:00 PM", "1.5 Hours", 12, "Workplace ethics, POSH regulations, respectful communication, and reporting channels", "upcoming", now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_training (id, title, trainer, schedule_date, duration, enrolled_count, topics, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_training)
-
-                sample_goals = [
-                    ("gol-101", "EMP-001", "Amit Roy", "Achieve Monthly Sales Target", "Close 15 new InvoicePro annual licenses", 75, 4.5, "Strong client conversion rate. On track for quarterly incentive.", "Q3", "in_progress", now_str),
-                    ("gol-102", "EMP-002", "Pooja Verma", "First-Contact Resolution", "Maintain >95% first contact ticket resolution", 92, 4.8, "Exceptional response times and positive client reviews.", "Q3", "in_progress", now_str)
-                ]
-                db.executemany("""
-                    INSERT OR IGNORE INTO hr_goals (id, employee_id, employee_name, goal_title, target_metric, progress_percent, appraisal_score, reviewer_notes, quarter, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, sample_goals)
-                db.commit()
-        except Exception as hr_seed_err:
-            print(f"  [HR Seed Notice] {hr_seed_err}")
+            db.execute("DELETE FROM hr_jobs WHERE id IN ('job-101', 'job-102', 'job-103', 'job-15045844')")
+            db.execute("DELETE FROM hr_candidates WHERE id IN ('can-101', 'can-102', 'can-103')")
+            db.execute("DELETE FROM hr_grievances WHERE id IN ('grv-101', 'grv-102')")
+            db.execute("DELETE FROM hr_training WHERE id IN ('trn-101', 'trn-102')")
+            db.execute("DELETE FROM hr_goals WHERE id IN ('gol-101', 'gol-102')")
+            db.commit()
+        except Exception as hr_clean_err:
+            print(f"  [HR Clean Notice] {hr_clean_err}")
 
         # Migration: add columns if they don't exist yet (for older databases)
         # Customers table columns
@@ -1482,6 +1459,59 @@ def verify_session_token(token):
     except Exception:
         return None
 
+def hash_password(plain):
+    """Secure password hasher using PBKDF2-HMAC-SHA256 with 100,000 iterations and 16-byte random salt."""
+    if not plain:
+        return ""
+    salt = os.urandom(16).hex()
+    h = hashlib.pbkdf2_hmac("sha256", str(plain).encode("utf-8"), salt.encode("utf-8"), 100000).hex()
+    return f"pbkdf2:sha256:100000${salt}${h}"
+
+def verify_password(plain, stored):
+    """Verify password supporting PBKDF2-HMAC-SHA256 hashes and timing-attack-safe fallback for legacy plain passwords."""
+    if not stored or not plain:
+        return False
+    stored = str(stored).strip()
+    plain = str(plain).strip()
+    if stored.startswith("pbkdf2:sha256:"):
+        try:
+            parts = stored.split("$")
+            if len(parts) == 3:
+                iters = int(parts[0].split(":")[-1])
+                salt = parts[1]
+                h = parts[2]
+                calc = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt.encode("utf-8"), iters).hex()
+                return hmac.compare_digest(calc, h)
+        except Exception:
+            return False
+    # Constant-time comparison for legacy plaintext passwords to prevent timing attacks
+    return hmac.compare_digest(plain, stored)
+
+_api_rate_limiter = {}  # ip -> list of float timestamps
+
+def check_api_rate_limit(client_ip):
+    """Sliding-window request throttle: allows up to 300 requests/minute per external IP. Localhost is exempt."""
+    if client_ip in ("127.0.0.1", "::1", "localhost", "0.0.0.0"):
+        return True
+    now = time.time()
+    with _db_lock:
+        timestamps = [t for t in _api_rate_limiter.get(client_ip, []) if now - t < 60]
+        if len(timestamps) >= 300:
+            _api_rate_limiter[client_ip] = timestamps
+            return False
+        timestamps.append(now)
+        _api_rate_limiter[client_ip] = timestamps
+        return True
+
+def is_safe_static_path(base_dir, file_path):
+    """Ensure file path is strictly within base directory to prevent directory traversal attacks."""
+    try:
+        base = os.path.realpath(os.path.abspath(base_dir))
+        target = os.path.realpath(os.path.abspath(file_path))
+        return os.path.commonpath([base, target]) == base and os.path.exists(target) and os.path.isfile(target)
+    except Exception:
+        return False
+
 def check_login_rate_limit(client_ip):
     now = time.time()
     with _db_lock:
@@ -1518,6 +1548,8 @@ def normalize_email_clean(e):
 
 class AdminHandler(http.server.BaseHTTPRequestHandler):
 
+    MAX_PAYLOAD_SIZE = 15 * 1024 * 1024  # 15 MB max request body
+
     def log_message(self, fmt, *args):
         pass  # suppress per-request noise
 
@@ -1525,17 +1557,23 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
         import sys
         print(f"  [Error] {fmt % args}", file=sys.stderr)
 
-    def send_json(self, data, status=200):
-        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+    def _send_security_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token, ngrok-skip-browser-warning")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("X-XSS-Protection", "1; mode=block")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+        self.send_header("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob:; font-src 'self' https: data:; frame-ancestors 'self';")
+
+    def send_json(self, data, status=200):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.end_headers()
         self.wfile.write(body)
@@ -1547,22 +1585,54 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
         self.send_json({"ok": False, "error": str(msg)}, status)
 
     def read_json(self):
-        length = int(self.headers.get("Content-Length", 0))
+        content_length_hdr = self.headers.get("Content-Length")
+        if not content_length_hdr:
+            return {}
+        try:
+            length = int(content_length_hdr)
+        except ValueError:
+            self.send_err("Invalid Content-Length header", 400)
+            return None
+        if length > self.MAX_PAYLOAD_SIZE:
+            self.send_err("Payload too large. Maximum size is 15MB.", 413)
+            return None
         if length == 0:
             return {}
-        return json.loads(self.rfile.read(length).decode("utf-8"))
+        try:
+            raw_body = self.rfile.read(length)
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self.send_err("Malformed JSON payload.", 400)
+            return None
+        except Exception:
+            self.send_err("Error reading request payload.", 400)
+            return None
 
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token, ngrok-skip-browser-warning")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self._send_security_headers()
         self.end_headers()
+
+    def get_current_user(self):
+        auth_hdr = self.headers.get("Authorization") or self.headers.get("X-Session-Token") or ""
+        token = auth_hdr.replace("Bearer ", "").strip() if auth_hdr else ""
+        if token:
+            payload = verify_session_token(token)
+            if payload:
+                return payload
+        return None
+
+    def is_local_client(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        return client_ip in ("127.0.0.1", "::1", "localhost", "0.0.0.0")
 
     # ── GET ───────────────────────────────────────────────────────────────────
     def do_GET(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        if not check_api_rate_limit(client_ip):
+            self.send_err("Too many requests. Please slow down.", 429)
+            return
         path = urlparse(self.path).path
         try:
             if path in ("/", "/AdminPanel.html"):
@@ -1571,6 +1641,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
+                self._send_security_headers()
                 self.end_headers()
                 self.wfile.write(body)
                 return
@@ -1580,12 +1651,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 manifest_path = os.path.join(BASE_DIR, "manifest.json")
                 if not os.path.exists(manifest_path):
                     manifest_path = os.path.join(os.path.dirname(BASE_DIR), "manifest.json")
-                if os.path.exists(manifest_path):
+                if is_safe_static_path(BASE_DIR, manifest_path) or is_safe_static_path(os.path.dirname(BASE_DIR), manifest_path):
                     with open(manifest_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/manifest+json; charset=utf-8")
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "public, max-age=3600")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -1596,13 +1667,13 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 sw_path = os.path.join(BASE_DIR, "sw.js")
                 if not os.path.exists(sw_path):
                     sw_path = os.path.join(os.path.dirname(BASE_DIR), "sw.js")
-                if os.path.exists(sw_path):
+                if is_safe_static_path(BASE_DIR, sw_path) or is_safe_static_path(os.path.dirname(BASE_DIR), sw_path):
                     with open(sw_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/javascript; charset=utf-8")
                     self.send_header("Service-Worker-Allowed", "/")
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -1613,11 +1684,12 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 offline_path = os.path.join(BASE_DIR, "offline.html")
                 if not os.path.exists(offline_path):
                     offline_path = os.path.join(os.path.dirname(BASE_DIR), "offline.html")
-                if os.path.exists(offline_path):
+                if is_safe_static_path(BASE_DIR, offline_path) or is_safe_static_path(os.path.dirname(BASE_DIR), offline_path):
                     with open(offline_path, "rb") as f:
                         body = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self._send_security_headers()
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
                     self.wfile.write(body)
@@ -1627,10 +1699,15 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                 rel = path.lstrip("/")
                 if rel in ("favicon.ico", "apple-touch-icon.png"):
                     rel = f"icons/{rel if rel != 'favicon.ico' else 'favicon-32.png'}"
-                icon_path = os.path.join(BASE_DIR, rel.replace("/", os.sep))
+                # Prevent directory traversal
+                cleaned_rel = os.path.normpath(rel).replace("\\", "/")
+                if cleaned_rel.startswith("..") or "/../" in cleaned_rel:
+                    self.send_err("Forbidden", 403)
+                    return
+                icon_path = os.path.join(BASE_DIR, cleaned_rel.replace("/", os.sep))
                 if not os.path.exists(icon_path):
-                    icon_path = os.path.join(os.path.dirname(BASE_DIR), rel.replace("/", os.sep))
-                if os.path.exists(icon_path):
+                    icon_path = os.path.join(os.path.dirname(BASE_DIR), cleaned_rel.replace("/", os.sep))
+                if is_safe_static_path(BASE_DIR, icon_path) or is_safe_static_path(os.path.dirname(BASE_DIR), icon_path):
                     with open(icon_path, "rb") as f:
                         body = f.read()
                     ctype = "image/png"
@@ -1640,7 +1717,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         ctype = "image/x-icon"
                     self.send_response(200)
                     self.send_header("Content-Type", ctype)
-                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self._send_security_headers()
                     self.send_header("Cache-Control", "public, max-age=86400")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
@@ -2344,13 +2421,19 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
 
         except Exception:
             traceback.print_exc()
-            self.send_err(traceback.format_exc(), 500)
+            self.send_err("Internal server error occurred.", 500)
 
     # ── POST ──────────────────────────────────────────────────────────────────
     def do_POST(self):
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+        if not check_api_rate_limit(client_ip):
+            self.send_err("Too many requests. Please slow down.", 429)
+            return
         path = urlparse(self.path).path
         try:
             data = self.read_json()
+            if data is None:
+                return  # Error response already sent by read_json (400 or 413)
 
             if path == "/api/admin/me/profile":
                 username = (data.get("username") or "").strip().lower()
@@ -3681,8 +3764,16 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     user = None
                     if user_row:
                         user_dict = dict(user_row)
-                        if user_dict.get("password") == password:
+                        stored_pwd = user_dict.get("password") or ""
+                        if verify_password(password, stored_pwd):
                             user = user_row
+                            # Seamlessly upgrade legacy plaintext password to PBKDF2 hash
+                            if not str(stored_pwd).startswith("pbkdf2:sha256:"):
+                                try:
+                                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (hash_password(password), user_dict.get("id")))
+                                    db.commit()
+                                except Exception:
+                                    pass
 
                     # If still not found in staff_users, check employees table
                     if not user:
@@ -3694,7 +3785,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             emp_pass = e.get("staffPassword") or "emp123"
                             emp_id_val = (e.get("emp_id") or "").strip()
                             emp_email = (e.get("email") or "").strip()
-                            if (emp_user == username or (emp_id_val and emp_id_val.lower() == username.lower()) or (emp_email and emp_email.lower() == username.lower())) and password == emp_pass:
+                            if (emp_user == username or (emp_id_val and emp_id_val.lower() == username.lower()) or (emp_email and emp_email.lower() == username.lower())) and verify_password(password, emp_pass):
                                 matched_emp = e
                                 break
                         if matched_emp:
@@ -3723,7 +3814,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                             db.execute("""
                                 INSERT OR REPLACE INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at, last_login)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (uid, matched_emp.get("name"), username, password, role, matched_emp.get("department", "Sales"), matched_emp.get("designation", "Sales Executive"), matched_emp.get("email", ""), matched_emp.get("mobile", ""), matched_emp.get("emp_id", ""), now_str, now_str))
+                            """, (uid, matched_emp.get("name"), username, hash_password(password), role, matched_emp.get("department", "Sales"), matched_emp.get("designation", "Sales Executive"), matched_emp.get("email", ""), matched_emp.get("mobile", ""), matched_emp.get("emp_id", ""), now_str, now_str))
                             db.commit()
                             user_dict = {
                                 "id": uid,
@@ -3876,7 +3967,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     db.execute("""
                         INSERT INTO staff_users (id, name, username, password, role, department, designation, email, phone, emp_id, active, created_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (uid, name, username, password, role, department, designation, email, phone, emp_id, active, now_str))
+                    """, (uid, name, username, hash_password(password), role, department, designation, email, phone, emp_id, active, now_str))
                     db.commit()
                     db.close()
                 self.send_json({"ok": True, "id": uid, "msg": f"Staff profile created for {name} ({role.upper()})."})
@@ -3942,7 +4033,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                         db.execute("""
                             UPDATE staff_users SET name=?, role=?, department=?, designation=?, email=?, phone=?, emp_id=?, active=?, password=?
                             WHERE id=?
-                        """, (name, role, department, designation, email, phone, emp_id, active, password, uid))
+                        """, (name, role, department, designation, email, phone, emp_id, active, hash_password(password), uid))
                     else:
                         db.execute("""
                             UPDATE staff_users SET name=?, role=?, department=?, designation=?, email=?, phone=?, emp_id=?, active=?
@@ -4031,7 +4122,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
                     return
                 with _db_lock:
                     db = get_db()
-                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (new_pw, uid))
+                    db.execute("UPDATE staff_users SET password=? WHERE id=?", (hash_password(new_pw), uid))
                     db.commit()
                     db.close()
                 self.send_json({"ok": True, "msg": "Password updated successfully."})
@@ -4971,7 +5062,7 @@ class AdminHandler(http.server.BaseHTTPRequestHandler):
             self.send_err(f"Missing required field: {e}")
         except Exception:
             traceback.print_exc()
-            self.send_err(traceback.format_exc(), 500)
+            self.send_err("Internal server error occurred.", 500)
 
 
 # ── Port check ────────────────────────────────────────────────────────────────
@@ -5054,9 +5145,65 @@ def _scheduler_loop():
         _send_scheduled_reminders()
 
 
+def _sync_pg_sqlite():
+    """Background synchronizer to ensure SQLite always has the exact same customers and records as PostgreSQL."""
+    if not (DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://"))):
+        return
+    try:
+        import psycopg2
+        from urllib.parse import urlparse
+        u = urlparse(DATABASE_URL)
+        host = u.hostname or "yamanote.proxy.rlwy.net"
+        ipv4 = _resolve_pg_ipv4(host)
+        pg_conn = psycopg2.connect(DATABASE_URL, hostaddr=ipv4, connect_timeout=8)
+        cur_p = pg_conn.cursor()
+        cur_p.execute("SELECT * FROM customers")
+        cols = [desc[0] for desc in cur_p.description]
+        pg_rows = cur_p.fetchall()
+        pg_conn.close()
+
+        with _db_lock:
+            for target_db in [DB_PATH, os.path.join(os.path.dirname(BASE_DIR), "admin_data", "admin.db")]:
+                if not os.path.exists(target_db):
+                    continue
+                sl_conn = sqlite3.connect(target_db, timeout=30.0)
+                cur_s = sl_conn.cursor()
+                cur_s.execute("PRAGMA table_info(customers)")
+                existing_cols = {r[1] for r in cur_s.fetchall()}
+                for col in cols:
+                    if col not in existing_cols:
+                        try:
+                            cur_s.execute(f"ALTER TABLE customers ADD COLUMN {col} TEXT DEFAULT ''")
+                        except Exception:
+                            pass
+                sl_conn.commit()
+
+                cur_s.execute("SELECT id FROM customers")
+                existing_ids = {r[0] for r in cur_s.fetchall()}
+
+                for row in pg_rows:
+                    d = dict(zip(cols, row))
+                    cid = d.get("id")
+                    if not cid or cid in existing_ids:
+                        continue
+                    col_names = list(d.keys())
+                    placeholders = ",".join(["?"] * len(col_names))
+                    vals = [1 if isinstance(d[c], bool) and d[c] else (0 if isinstance(d[c], bool) else d[c]) for c in col_names]
+                    try:
+                        cur_s.execute(f"INSERT INTO customers ({','.join(col_names)}) VALUES ({placeholders})", vals)
+                    except Exception:
+                        pass
+                sl_conn.commit()
+                sl_conn.close()
+    except Exception:
+        pass
+
+
 def _start_scheduler():
     t = threading.Thread(target=_scheduler_loop, daemon=True)
     t.start()
+    sync_t = threading.Thread(target=_sync_pg_sqlite, daemon=True)
+    sync_t.start()
 
 
 def _auto_backup():

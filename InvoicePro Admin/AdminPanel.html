@@ -1601,18 +1601,22 @@
             <div class="text-xl font-semibold text-green-600" x-text="fmtCurrency(arr)"></div>
             <div class="text-xs text-gray-400 mt-0.5">ARR (Annual Recurring)</div>
           </div>
-          <div class="dash-anim-8 rounded-2xl p-4 border"
-            :class="churnRate>20?'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800':'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'">
+          <div class="dash-anim-8 rounded-2xl p-4 border bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
+            :class="customerRetention < 80 ? 'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800' : ''">
             <div class="flex items-center justify-between mb-2">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center"
-                :class="churnRate>20?'bg-red-100 dark:bg-red-900':'bg-gray-100 dark:bg-gray-800'"><i
-                  class="fa-solid fa-door-open text-xs" :class="churnRate>20?'text-red-500':'text-gray-400'"></i></div>
-              <span class="text-xs font-bold" :class="churnRate>20?'text-red-500':'text-gray-400'"
-                x-text="churnRate+'%'"></span>
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950"
+                :class="customerRetention < 80 ? 'bg-amber-100 dark:bg-amber-900' : ''">
+                <i class="fa-solid fa-user-check text-xs text-emerald-600 dark:text-emerald-400"
+                  :class="customerRetention < 80 ? 'text-amber-500' : ''"></i>
+              </div>
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400"
+                :class="customerRetention < 80 ? 'text-amber-500' : ''"
+                x-text="customerRetention + '%'"></span>
             </div>
-            <div class="text-xl font-semibold" :class="churnRate>20?'text-red-500':'text-gray-500 dark:text-gray-400'"
-              x-text="churnRate+'%'"></div>
-            <div class="text-xs text-gray-400 mt-0.5">Churn Rate</div>
+            <div class="text-xl font-semibold text-emerald-600 dark:text-emerald-400"
+              :class="customerRetention < 80 ? 'text-amber-500' : ''"
+              x-text="customerRetention + '%'"></div>
+            <div class="text-xs text-gray-400 mt-0.5">Customer Retention</div>
           </div>
           <div
             class="dash-anim-8 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
@@ -1806,8 +1810,16 @@
                 class="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">View All <i
                   class="fa-solid fa-arrow-right text-xs"></i></button>
             </div>
-            <div class="px-4 pb-5" style="height:220px">
-              <canvas id="dash-emp-chart"></canvas>
+            <div class="px-4 pb-5 relative flex items-center justify-center" style="height:220px">
+              <!-- Clean empty state if no sales yet -->
+              <div x-show="!dashHasEmpSales" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                <div class="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center mb-2">
+                  <i class="fa-solid fa-ranking-star text-purple-400 text-sm"></i>
+                </div>
+                <div class="text-xs font-semibold text-gray-700 dark:text-gray-300">No Employee Sales Recorded Yet</div>
+                <p class="text-[11px] text-gray-400 mt-0.5 max-w-xs">Employee sales and earned incentives will appear on this leaderboard once customer deals are closed.</p>
+              </div>
+              <canvas id="dash-emp-chart" x-show="dashHasEmpSales" style="width:100%;height:100%"></canvas>
             </div>
           </div>
 
@@ -2007,7 +2019,7 @@
               <span class="text-xs font-bold text-purple-600">Avg. Fill Time</span>
               <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 font-semibold text-xs flex items-center justify-center"><i class="fa-solid fa-clock"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-purple-600 mt-2">7 Days</div>
+            <div class="text-2xl font-semibold text-purple-600 mt-2" x-text="hrAvgFillTime"></div>
             <div class="text-[11px] text-gray-400 mt-0.5">Time to offer stage</div>
           </div>
         </div>
@@ -2277,7 +2289,7 @@
         </div>
 
         <!-- Filter dropdowns, View mode toggle, Import, Export -->
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap overflow-x-auto no-scrollbar py-0.5">
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto no-scrollbar py-1 w-full md:w-auto">
           <!-- All Customers Filter -->
           <select x-model="filter"
             class="flex-1 sm:flex-none px-2.5 sm:px-3 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium text-gray-700 dark:text-gray-300 cursor-pointer flex-shrink-0 min-w-[130px]">
@@ -2346,31 +2358,41 @@
           </button>
         </div>
 
-        <!-- Universal Data Table for Table View Mode (Mobile & Desktop) -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden overflow-x-auto shadow-xs"
+        <!-- Customer Data Table (Responsive for all screen sizes: Mobile, Tablet & Desktop) -->
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xs"
              x-show="filteredCustomers.length>0">
-          <table class="w-full text-sm min-w-[780px] border-collapse">
-            <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
-              <tr>
-                <th class="sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[190px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">Customer</th>
-                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
-                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
-                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
-                <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Status</th>
-                <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[270px]">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-              <template x-for="c in filteredCustomers" :key="c.id">
-                <tr @click="modalCustomerId=c.id; showCustomerModal=true"
-                  class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
-                  <td class="sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-brand-50/60 dark:group-hover:bg-brand-950/40 z-10 px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+          <!-- Mobile Scroll Indicator Banner -->
+          <div class="sm:hidden flex items-center justify-between px-3.5 py-2 bg-gradient-to-r from-brand-50/90 to-purple-50/90 dark:from-brand-950/50 dark:to-purple-950/50 text-brand-700 dark:text-brand-300 text-xs font-semibold border-b border-brand-100/80 dark:border-brand-900/40 select-none">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-left-right text-xs text-brand-600 dark:text-brand-400 animate-pulse"></i>
+              <span>Swipe table horizontally to view all columns</span>
+            </div>
+            <span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full font-bold shadow-2xs text-gray-600 dark:text-gray-300">6 Columns</span>
+          </div>
+
+          <div class="overflow-x-auto w-full overscroll-x-contain pb-2" style="-webkit-overflow-scrolling: touch; scrollbar-width: thin;">
+            <table class="w-full text-xs sm:text-sm min-w-[780px] border-collapse">
+              <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
+                <tr>
+                  <th class="text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[180px] sm:min-w-[220px]">Customer</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
+                  <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Status</th>
+                  <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[270px]">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                <template x-for="c in filteredCustomers" :key="c.id">
+                  <tr @click="modalCustomerId=c.id; showCustomerModal=true"
+                    class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
+                    <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap min-w-[180px] sm:min-w-[220px]">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
                            :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
                         <span x-text="(c.name||'?')[0].toUpperCase()"></span>
                       </div>
-                      <div class="min-w-0">
+                      <div class="min-w-0 max-w-[160px] sm:max-w-none">
                         <div class="font-semibold text-gray-800 dark:text-gray-200 text-xs sm:text-sm truncate" x-text="c.name"></div>
                         <div class="text-[11px] text-gray-400 truncate" x-text="c.email || c.phone || '—'"></div>
                         <div x-show="(c.tags||[]).length>0" class="flex flex-wrap gap-1 mt-0.5">
@@ -2421,50 +2443,50 @@
                       <span x-text="(c.enquiries||[]).filter(e=>e.status==='open').length+' open'"></span>
                     </div>
                   </td>
-                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap text-right min-w-[270px]">
-                    <div class="flex items-center justify-end gap-1 flex-nowrap" @click.stop>
+                  <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap text-right min-w-[285px]">
+                    <div class="flex items-center justify-end gap-1 flex-nowrap whitespace-nowrap min-w-[280px]" @click.stop>
                       <button @click="openDetail(c.id)"
-                        class="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors cursor-pointer"
                         title="View Full Detail">
                         <i class="fa-solid fa-eye text-xs"></i>
                       </button>
                       <button @click="customerCardId=c.id; showCustomerCardModal=true"
-                        class="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
                         title="Customer Card">
                         <i class="fa-solid fa-address-card text-xs"></i>
                       </button>
                       <button @click="openEmailModal(c.id,'renewal')"
-                        class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors cursor-pointer"
                         title="Email Customer">
                         <i class="fa-solid fa-envelope text-xs"></i>
                       </button>
                       <button x-show="c.phone" @click="openWhatsApp(c.id)"
-                        class="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors cursor-pointer"
                         title="WhatsApp">
                         <i class="fa-brands fa-whatsapp text-xs"></i>
                       </button>
                       <button @click="openReminderModal(c.id)"
-                        class="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950 transition-colors cursor-pointer"
                         title="Set Reminder">
                         <i class="fa-solid fa-bell text-xs"></i>
                       </button>
                       <button x-show="c.licenseKey && canAccess('keygen')" @click="openRenewKey(c.id)"
-                        class="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors cursor-pointer"
                         title="Generate Renewal Key">
                         <i class="fa-solid fa-rotate-right text-xs"></i>
                       </button>
                       <button @click="openTagsModal(c.id)"
-                        class="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors cursor-pointer"
                         title="Manage Tags">
                         <i class="fa-solid fa-tags text-xs"></i>
                       </button>
                       <button @click="editCustomer(c.id)"
-                        class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                         title="Edit">
                         <i class="fa-solid fa-pencil text-xs"></i>
                       </button>
                       <button @click="deleteCustomer(c.id)"
-                        class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors cursor-pointer"
+                        class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors cursor-pointer"
                         title="Delete">
                         <i class="fa-solid fa-trash text-xs"></i>
                       </button>
@@ -2473,7 +2495,8 @@
                 </tr>
               </template>
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
 
       </div>
@@ -2537,7 +2560,7 @@
             </div>
 
             <!-- 2x2 Details Grid -->
-            <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 dark:bg-gray-800/50 rounded-xl p-3 mb-3 border border-gray-100/80 dark:border-gray-800">
+            <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 dark:bg-gray-800/50 rounded-xl p-3 mb-3 border border-gray-100/80 dark:border-gray-800" style="grid-template-columns: repeat(2, minmax(0, 1fr)) !important;">
               <!-- License Key -->
               <div class="min-w-0">
                 <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">License Key</div>
@@ -2600,42 +2623,42 @@
               </button>
               <div class="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
                 <button x-show="c.phone" @click="openWhatsApp(c.id)"
-                        class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="WhatsApp">
                   <i class="fa-brands fa-whatsapp text-xs"></i>
                 </button>
                 <button @click="openEmailModal(c.id,'renewal')"
-                        class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-500 hover:bg-blue-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-500 hover:bg-blue-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Email Customer">
                   <i class="fa-solid fa-envelope text-xs"></i>
                 </button>
                 <button @click="customerCardId=c.id; showCustomerCardModal=true"
-                        class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 hover:bg-indigo-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 hover:bg-indigo-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Customer Card">
                   <i class="fa-solid fa-address-card text-xs"></i>
                 </button>
                 <button @click="openReminderModal(c.id)"
-                        class="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-500 hover:bg-orange-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-500 hover:bg-orange-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Set Reminder">
                   <i class="fa-solid fa-bell text-xs"></i>
                 </button>
                 <button x-show="c.licenseKey && canAccess('keygen')" @click="openRenewKey(c.id)"
-                        class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 hover:bg-amber-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 hover:bg-amber-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Generate Renewal Key">
                   <i class="fa-solid fa-rotate-right text-xs"></i>
                 </button>
                 <button @click="openTagsModal(c.id)"
-                        class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500 hover:bg-purple-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500 hover:bg-purple-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Manage Tags">
                   <i class="fa-solid fa-tags text-xs"></i>
                 </button>
                 <button @click="editCustomer(c.id)"
-                        class="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Edit Customer">
                   <i class="fa-solid fa-pencil text-xs"></i>
                 </button>
                 <button @click="deleteCustomer(c.id)"
-                        class="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        class="flex-1 min-w-[32px] h-8 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                         title="Delete Customer">
                   <i class="fa-solid fa-trash text-xs"></i>
                 </button>
@@ -7297,6 +7320,9 @@
                       <button x-show="isSupportLeader && (!t.assignedTo || getTicketAssigneeName(t) === 'Unassigned')" @click="openAssignSupportTicketModal(t)" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-user-plus text-[10px]"></i> Assign
                       </button>
+                      <button x-show="isSupportLeader && (t.assignedTo && getTicketAssigneeName(t) !== 'Unassigned')" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center gap-1">
+                        <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                      </button>
                       <template x-if="t.isDevIssue && !t.devTaskId">
                         <button @click="openEscalateSupportToDev(t)" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 font-medium text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer flex items-center gap-1">
                           <i class="fa-solid fa-code-fork text-[10px]"></i> Escalate Dev
@@ -7494,6 +7520,9 @@
                       <!-- Case 1: When Ticket is Assigned to an Engineer -->
                       <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
                         <div class="inline-flex items-center gap-1.5 justify-end">
+                          <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[11px] cursor-pointer shadow-xs transition-colors inline-flex items-center gap-1">
+                            <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                          </button>
                           <button @click="openCloseTicketModal(t)" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] cursor-pointer shadow-xs transition-colors">
                             <i class="fa-solid fa-check text-[10px]"></i> Resolve
                           </button>
@@ -7736,10 +7765,15 @@
                     <template x-if="!isTicketResolved(t)">
                       <div class="flex items-center gap-2">
                         <template x-if="getTicketAssigneeName(t) !== 'Unassigned'">
-                          <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-                            <i class="fa-solid fa-user-check text-blue-500"></i>
-                            <span x-text="getTicketAssigneeName(t)"></span>
-                          </span>
+                          <div class="inline-flex items-center gap-1.5">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
+                              <i class="fa-solid fa-user-check text-blue-500"></i>
+                              <span x-text="getTicketAssigneeName(t)"></span>
+                            </span>
+                            <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer" title="Reassign Ticket">
+                              <i class="fa-solid fa-user-pen text-[10px]"></i> Reassign
+                            </button>
+                          </div>
                         </template>
                         <template x-if="getTicketAssigneeName(t) === 'Unassigned'">
                           <button x-show="isSupportLeader" @click="openAssignSupportTicketModal(t)" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer">
@@ -9799,69 +9833,183 @@
         </div>
 
         <!-- 5 Operations KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
           <!-- Card 1: Total Staff -> Employees -->
-          <div @click="navigate('employees')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gray-500 group-hover:text-blue-600 transition-colors">Total Staff</span>
-              <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-users"></i></span>
+          <div @click="navigate('employees')"
+            class="group bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-100 dark:border-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs flex-shrink-0">
+                  <i class="fa-solid fa-users text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Total Staff</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-2" x-text="employees.length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Active personnel</span>
-              <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Staff &rarr;</span>
+
+            <div>
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums" x-text="employees.length">0</div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="inline-flex items-center gap-1.5 font-medium text-slate-500 dark:text-slate-400 truncate">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                <span>Active roster</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Directory &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 2: Customers -> Customers -->
-          <div @click="navigate('customers')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-emerald-600 group-hover:text-emerald-700 transition-colors">Customer Accounts</span>
-              <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-building-user"></i></span>
+          <div @click="navigate('customers')"
+            class="group bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-100 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs flex-shrink-0">
+                  <i class="fa-solid fa-building-user text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Customer Accounts</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-emerald-600 mt-2" x-text="customers.length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Managed clients</span>
-              <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Clients &rarr;</span>
+
+            <div>
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums" x-text="customers.length">0</div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="inline-flex items-center gap-1.5 font-medium text-slate-500 dark:text-slate-400 truncate">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                <span>Active clients</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Clients &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 3: Interviews & Onboarding -> Manager Interviews -->
-          <div @click="navigate('manager_interviews')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-indigo-600 group-hover:text-indigo-700 transition-colors">Manager Round</span>
-              <span class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-calendar-check"></i></span>
+          <div @click="navigate('manager_interviews')"
+            class="group bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs flex-shrink-0">
+                  <i class="fa-solid fa-clipboard-check text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Manager Round</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-indigo-600 mt-2" x-text="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Interviews pending</span>
-              <span class="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">Evaluate &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length">0</div>
+              <template x-if="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Action needed
+                </span>
+              </template>
+              <template x-if="candidates.filter(c=>c.hr_round_status==='passed'&&c.manager_round_status==='pending').length === 0">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> Clear
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Hiring queue</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Interviews &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 4: Open Enquiries -> Enquiries -->
-          <div @click="navigate('enquiries')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-amber-600 group-hover:text-amber-700 transition-colors">Open Enquiries</span>
-              <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-comments"></i></span>
+          <div @click="navigate('enquiries')"
+            class="group bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-100 dark:border-amber-900/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs flex-shrink-0">
+                  <i class="fa-solid fa-headset text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Open Enquiries</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-amber-600 mt-2" x-text="stats.openEnquiries"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Leads awaiting reply</span>
-              <span class="text-amber-600 dark:text-amber-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Queue &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="stats.openEnquiries">0</div>
+              <template x-if="stats.openEnquiries > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> In queue
+                </span>
+              </template>
+              <template x-if="!stats.openEnquiries">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> All resolved
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Support triage</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                View Queue &rarr;
+              </span>
             </div>
           </div>
 
           <!-- Card 5: Pending Leaves -> Leaves -->
-          <div @click="navigate('leaves')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer group hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-purple-600 group-hover:text-purple-700 transition-colors">Pending Leaves</span>
-              <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 font-semibold text-xs flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-calendar-xmark"></i></span>
+          <div @click="navigate('leaves')"
+            class="group bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/70 border border-purple-100 dark:border-purple-900/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs flex-shrink-0">
+                  <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                </span>
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 tracking-tight truncate">Pending Leaves</span>
+              </div>
+              <div class="w-6 h-6 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                <i class="fa-solid fa-arrow-up-right text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+              </div>
             </div>
-            <div class="text-2xl font-semibold text-purple-600 mt-2" x-text="leaveRequests.filter(l=>l.status==='pending').length"></div>
-            <div class="text-[11px] text-gray-400 mt-0.5 flex items-center justify-between">
-              <span>Awaiting manager approval</span>
-              <span class="text-purple-600 dark:text-purple-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">View Leaves &rarr;</span>
+
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums"
+                   x-text="leaveRequests.filter(l=>l.status==='pending').length">0</div>
+              <template x-if="leaveRequests.filter(l=>l.status==='pending').length > 0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Needs review
+                </span>
+              </template>
+              <template x-if="leaveRequests.filter(l=>l.status==='pending').length === 0">
+                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <i class="fa-solid fa-check text-emerald-500 text-[9px]"></i> Reviewed
+                </span>
+              </template>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Time-off sign-off</span>
+              <span class="text-[10px] font-bold text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors flex items-center gap-0.5 flex-shrink-0">
+                Leave Desk &rarr;
+              </span>
             </div>
           </div>
         </div>
@@ -16138,7 +16286,11 @@
                   <div class="font-bold text-slate-800">🎧 Support Lead</div>
                   <div class="text-[10px] text-slate-500 font-mono">support_lead / support123</div>
                 </button>
-                <button type="button" @click="fillLoginCredentials('hr', 'hr123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                <button type="button" @click="fillLoginCredentials('support_mem', 'support123')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
+                  <div class="font-bold text-slate-800">🛠️ Support Member</div>
+                  <div class="text-[10px] text-slate-500 font-mono">support_mem / support123</div>
+                </button>
+                <button type="button" @click="fillLoginCredentials('hr', 'hr123')" class="col-span-2 p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 text-left transition-all cursor-pointer">
                   <div class="font-bold text-slate-800">👥 HR Specialist</div>
                   <div class="text-[10px] text-slate-500 font-mono">hr / hr123</div>
                 </button>
@@ -19159,10 +19311,19 @@
           options.headers = options.headers || {};
           const targetUrl = resolveApiUrl(url);
           if (typeof targetUrl === 'string' && targetUrl.includes('/api/')) {
+            const token = localStorage.getItem('admin_session_token') || '';
             if (options.headers instanceof Headers) {
               options.headers.set('Accept', 'application/json');
+              if (token && !options.headers.has('Authorization')) {
+                options.headers.set('Authorization', 'Bearer ' + token);
+                options.headers.set('X-Session-Token', token);
+              }
             } else {
               options.headers['Accept'] = 'application/json';
+              if (token && !options.headers['Authorization']) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+                options.headers['X-Session-Token'] = token;
+              }
             }
           }
           return nativeFetch(targetUrl, options);
@@ -19893,10 +20054,9 @@
                 const amt = parseFloat(c.purchaseAmount || c.purchase_amount || c.amount || 0);
                 const pl = (c.planLabel || c.plan || c.plan_label || '').toLowerCase();
                 const notes = (c.notes || '').toLowerCase();
-                if (pl.includes('3-month') || pl.includes('3 month') || pl === '3m' || pl.includes('6-month') || pl === '6m' || notes.includes('3-month')) {
+                if (pl.includes('3-month') || pl.includes('3 month') || pl === '3m' || pl.includes('6-month') || pl === '6m' || notes.includes('3-month') || amt === 399) {
                   return false;
                 }
-                if (amt > 0 && amt < 1000) return false;
                 return true;
               });
               if (validCust.length !== parsedCust.length) {
@@ -19904,6 +20064,12 @@
                 this.customers = validCust;
               }
             }
+            // Clear any accidental tombstone for valid customers like Yash Enterprises
+            try {
+              if (this._tombstoneRemove) {
+                this._tombstoneRemove('ip_adm_del_cust', 'id-mufirgyq-kokc9');
+              }
+            } catch (_) {}
             const rawEmps = localStorage.getItem('ip_adm_employees');
             if (rawEmps) {
               const parsedEmps = JSON.parse(rawEmps);
@@ -19922,7 +20088,7 @@
                   e.sales = e.sales.filter(s => {
                     const amt = parseFloat(s.amount || 0);
                     const note = (s.note || s.planLabel || '').toLowerCase();
-                    if (note.includes('3-month') || note.includes('3 month') || note.includes('3m') || amt < 1000) return false;
+                    if (note.includes('3-month') || note.includes('3 month') || note.includes('3m') || amt === 399) return false;
                     return true;
                   });
                   if (e.sales.length !== origLen) empChanged = true;
@@ -19972,7 +20138,7 @@
           });
 
           // One-time real data purge check (removes previously cached dummy records while preserving Sunvibee Tech)
-          if (!localStorage.getItem('ip_adm_clean_prod_v3')) {
+          if (!localStorage.getItem('ip_adm_clean_prod_v5')) {
             const dummyKeysToPurge = [
               'ip_adm_sales_leads', 'ip_adm_sales_quotes', 'ip_adm_sales_targets',
               'ip_adm_sales_activities', 'ip_adm_sales_escalations', 'ip_adm_dev_sprints', 'ip_adm_dev_tasks',
@@ -19986,7 +20152,7 @@
             });
             try {
               localStorage.setItem('ip_adm_customers', JSON.stringify([this._defaultSunvibeeCustomer()]));
-              localStorage.setItem('ip_adm_clean_prod_v3', '1');
+              localStorage.setItem('ip_adm_clean_prod_v5', '1');
             } catch (_) {}
           }
 
@@ -20115,6 +20281,20 @@
           this._loadAuditLog();
           this._initPin();
           this._probeServer();
+          if (this.view === 'dashboard') {
+            this.$nextTick(() => { this.initDashCharts(); });
+            setTimeout(() => { if (this.view === 'dashboard') this.initDashCharts(); }, 250);
+          }
+          this.$watch('employees', () => {
+            if (this.view === 'dashboard') {
+              this.$nextTick(() => { this.initDashCharts(); });
+            }
+          });
+          this.$watch('customers', () => {
+            if (this.view === 'dashboard') {
+              this.$nextTick(() => { this.initDashCharts(); });
+            }
+          });
           // Load SMTP config from server (when running via http server) and keep local storage in sync
           if ((typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:')) {
             fetch('/api/smtp-config').then(r => r.json()).then(d => {
@@ -20142,6 +20322,7 @@
           this.view = v;
           if (v === 'dashboard') {
             this.$nextTick(() => { this.initDashCharts(); });
+            setTimeout(() => { if (this.view === 'dashboard') this.initDashCharts(); }, 150);
           }
           if (v === 'auditlog') {
             this.auditFilterCategory = 'all';
@@ -20603,7 +20784,7 @@
             owner: c.owner || '', city: c.city || '', currency: c.currency || 'INR',
             licenseKey: c.license_key || c.licenseKey || '',
             purchaseDate: c.purchase_date || c.purchaseDate || '',
-            purchaseAmount: parseFloat(c.purchase_amount ?? c.purchaseAmount ?? (c.license_key || c.licenseKey ? 399 : 0)) || 0,
+            purchaseAmount: parseFloat(c.purchase_amount ?? c.purchaseAmount ?? (c.license_key || c.licenseKey ? 1499 : 0)) || 0,
             notes: notes, createdAt: c.created_at || c.createdAt || '',
             updatedAt: c.updated_at || c.updatedAt || '',
             planLabel: c.plan_label || c.planLabel || '',
@@ -20685,13 +20866,17 @@
           } catch (_) { this.leaveRequests = []; }
           try {
             const rawCand = localStorage.getItem('ip_adm_candidates');
-            if (rawCand) this.candidates = JSON.parse(rawCand);
-            else this.candidates = [];
+            if (rawCand) {
+              const parsed = JSON.parse(rawCand);
+              this.candidates = Array.isArray(parsed) ? parsed.filter(c => c && c.id && !['can-101', 'can-102', 'can-103', 'cand-dummy'].includes(c.id)) : [];
+            } else this.candidates = [];
           } catch (_) { this.candidates = []; }
           try {
             const rawJobs = localStorage.getItem('ip_adm_hr_jobs');
-            if (rawJobs) this.hrJobs = JSON.parse(rawJobs);
-            else this.hrJobs = [];
+            if (rawJobs) {
+              const parsed = JSON.parse(rawJobs);
+              this.hrJobs = Array.isArray(parsed) ? parsed.filter(j => j && j.id && !['job-101', 'job-102', 'job-103', 'job-15045844'].includes(j.id)) : [];
+            } else this.hrJobs = [];
           } catch (_) { this.hrJobs = []; }
           try {
             const rawGrv = localStorage.getItem('ip_adm_hr_grievances');
@@ -20992,6 +21177,10 @@
         get isManager() {
           const r = (this.currentUser?.role || '').toLowerCase();
           return r === 'manager' || r === 'operations';
+        },
+        get isAdminOrManager() {
+          const r = (this.currentUser?.role || '').toLowerCase();
+          return !this.currentUser || r === 'admin' || r === 'manager' || r === 'operations';
         },
         get isSales() {
           const r = (this.currentUser?.role || '').toLowerCase();
@@ -26686,6 +26875,7 @@
                   window._ipDashCharts.emp = null;
                 }
                 const empData = plain(this._dashEmpSales());
+                const maxSales = Math.max(0, ...empData.map(e => e.sales || 0));
                 const palette = ['#4f46e5', '#0d9488', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
                 try {
                   window._ipDashCharts.emp = new Chart(ctx3, {
@@ -26693,17 +26883,42 @@
                     data: {
                       labels: empData.map(e => e.name),
                       datasets: [{
-                        label: 'Sales', data: empData.map(e => e.sales),
+                        label: 'Sales',
+                        data: empData.map(e => e.sales),
                         backgroundColor: empData.map((_, i) => palette[i % palette.length]),
-                        borderRadius: 6, borderSkipped: false,
+                        borderRadius: 6,
+                        borderSkipped: false,
                       }],
                     },
                     options: {
-                      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                      plugins: { legend: { display: false }, tooltip: { ...tooltip, callbacks: { label: c => ` ${c.raw} sales` } } },
+                      indexAxis: 'y',
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          ...tooltip,
+                          callbacks: {
+                            label: c => {
+                              const emp = empData[c.dataIndex] || {};
+                              const commStr = emp.commission ? ` · ₹${Number(emp.commission).toLocaleString('en-IN')} incentive` : '';
+                              return ` ${c.raw} sales${commStr}`;
+                            }
+                          }
+                        }
+                      },
                       scales: {
-                        x: { min: 0, ticks: { stepSize: 1, color: text, font: { size: 11 } }, grid: { color: grid, drawBorder: false }, border: { display: false } },
-                        y: { ticks: { color: text, font: { size: 11 } }, grid: { display: false } },
+                        x: {
+                          min: 0,
+                          suggestedMax: maxSales > 0 ? (maxSales <= 5 ? maxSales + 1 : undefined) : 5,
+                          ticks: { stepSize: 1, color: text, font: { size: 11 } },
+                          grid: { color: grid, drawBorder: false },
+                          border: { display: false }
+                        },
+                        y: {
+                          ticks: { color: text, font: { size: 11 } },
+                          grid: { display: false }
+                        },
                       },
                     },
                   });
@@ -26748,14 +26963,45 @@
         },
 
         _dashEmpSales() {
-          return this.employees
-            .map(e => ({
-              name: e.name ? e.name.split(' ')[0] : 'Emp',
-              sales: (e.sales || []).length,
-              commission: this.empTotalCommission(e),
-            }))
-            .sort((a, b) => b.sales - a.sales)
-            .slice(0, 6);
+          try {
+            const emps = Array.isArray(this.employees) ? this.employees : [];
+            const mapped = emps.map(e => {
+              if (!e) return null;
+              const salesCount = typeof this.empTotalSales === 'function' ? this.empTotalSales(e) : (Array.isArray(e.sales) ? e.sales.length : 0);
+              const comm = typeof this.empTotalCommission === 'function' ? this.empTotalCommission(e) : (typeof this.empTotalIncentive === 'function' ? this.empTotalIncentive(e) : 0);
+              const isSales = typeof this.isEmpSalesRole === 'function' ? this.isEmpSalesRole(e) : true;
+              const empName = (e.name || '').trim();
+              const nameParts = empName.split(/\s+/).filter(Boolean);
+              const displayName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1][0]}.` : (nameParts[0] || 'Emp');
+              return {
+                id: e.id,
+                name: displayName,
+                fullName: empName,
+                sales: Number(salesCount) || 0,
+                commission: Math.round(Number(comm) || 0),
+                isSales: isSales,
+              };
+            }).filter(Boolean);
+
+            const salesTeam = mapped.filter(e => e.sales > 0 || e.isSales);
+            const listToUse = salesTeam.length > 0 ? salesTeam : mapped;
+
+            return listToUse
+              .sort((a, b) => (b.sales - a.sales) || (b.commission - a.commission))
+              .slice(0, 6);
+          } catch (err) {
+            console.warn('Error in _dashEmpSales:', err);
+            return [];
+          }
+        },
+
+        get dashHasEmpSales() {
+          try {
+            const list = this._dashEmpSales();
+            return Array.isArray(list) && list.some(e => (e.sales || 0) > 0);
+          } catch (_) {
+            return false;
+          }
         },
 
         // ── Tombstone helpers — track locally deleted IDs so server can't restore them on refresh ──
@@ -26769,6 +27015,10 @@
         },
         get arr() {
           return this.customers.reduce((s, c) => s + (c.purchaseAmount || 0), 0);
+        },
+        get customerRetention() {
+          if (!this.customers.length) return 100;
+          return 100 - this.churnRate;
         },
         get churnRate() {
           if (!this.customers.length) return 0;
@@ -29237,7 +29487,11 @@ get remindersCount() {
             this.getDaysLeft(c) !== null ? this.getDaysLeft(c) : '',
             this.statusLabel(this.getStatus(c)),
             c.notes || ''
-          ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+          ].map(v => {
+            let str = String(v);
+            if (/^[=+\-@\t\r]/.test(str)) str = "'" + str;
+            return `"${str.replace(/"/g, '""')}"`;
+          }).join(','));
           const csv = [heads.join(','), ...rows].join('\n');
           const a = document.createElement('a');
           a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
@@ -31928,7 +32182,6 @@ get remindersCount() {
         },
 
         openCreateSupportTicketModal(defaultData = null) {
-          const isMember = (this.currentUser && (this.currentUser.role === 'support_member' || this.currentUser.role === 'support_mem'));
           this.newSupportTicketForm = {
             customerId: defaultData ? (defaultData.customerId || defaultData.id || '') : '',
             customerName: defaultData ? (defaultData.customerName || defaultData.name || '') : '',
@@ -31941,7 +32194,7 @@ get remindersCount() {
             subject: defaultData && defaultData.subject ? defaultData.subject : '',
             description: defaultData && (defaultData.description || defaultData.message) ? (defaultData.description || defaultData.message) : '',
             assignedTo: '',
-            selfAssign: isMember
+            selfAssign: false
           };
           this.showCreateSupportTicketModal = true;
         },
@@ -31956,15 +32209,13 @@ get remindersCount() {
           }
 
           const ticketId = 'ST-' + (100 + (this.supportTickets || []).length + 1);
-          const isMember = (this.currentUser && (this.currentUser.role === 'support_member' || this.currentUser.role === 'support_mem'));
           
           let assignee = '';
           if (this.isSupportLeader) {
             assignee = this.newSupportTicketForm.assignedTo || '';
-          } else if (isMember) {
-            assignee = this.currentUser.username || this.currentUser.name || '';
           }
-
+          // Support members (and non-leaders) always raise tickets as Unassigned
+          // so the Support Team Leader can review and assign them from the leader workspace.
           let memberName = 'Unassigned';
           if (assignee) {
             const member = (this.supportMembers || []).find(m => m.username === assignee || m.name === assignee);
@@ -34150,6 +34401,9 @@ get remindersCount() {
                   }
                   this.currentUser = data.user;
                   localStorage.setItem('ip_adm_auth_user', JSON.stringify(data.user));
+                  if (data.token) {
+                    localStorage.setItem('admin_session_token', data.token);
+                  }
                   this.impersonatedByAdmin = null;
                   this.loginForm = { username: '', password: '', role: 'auto' };
                   this.loginError = '';
@@ -34651,6 +34905,7 @@ get remindersCount() {
           this.loginError = '';
           this.showLoginPassword = false;
           localStorage.removeItem('ip_adm_auth_user');
+          localStorage.removeItem('admin_session_token');
           this.view = 'dashboard';
           if ((typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:')) { try { window.location.hash = 'dashboard'; } catch (_) {} }
           this.logActivity('auth', `User logged out of portal`);

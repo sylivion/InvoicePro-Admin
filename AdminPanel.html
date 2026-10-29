@@ -2311,10 +2311,10 @@
 
           <!-- View Mode Toggle: Table vs Cards -->
           <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700 flex-shrink-0">
-            <button @click="customerViewMode='table'" class="p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer"
+            <button @click="customerViewMode='table'; localStorage.setItem('ip_adm_cust_view_manual','table')" class="p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer"
               :class="customerViewMode==='table'?'bg-white dark:bg-gray-900 text-brand-600 shadow-xs font-bold':'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'"
               title="Table View"><i class="fa-solid fa-table-list text-xs"></i></button>
-            <button @click="customerViewMode='cards'" class="p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer"
+            <button @click="customerViewMode='cards'; localStorage.setItem('ip_adm_cust_view_manual','cards')" class="p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer"
               :class="customerViewMode==='cards'?'bg-white dark:bg-gray-900 text-brand-600 shadow-xs font-bold':'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'"
               title="Card View"><i class="fa-solid fa-grip text-xs"></i></button>
           </div>
@@ -2374,19 +2374,19 @@
             <table class="w-full text-xs sm:text-sm min-w-[780px] border-collapse">
               <thead class="bg-gray-50/80 dark:bg-gray-800/80 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800 select-none">
                 <tr>
-                  <th class="text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[180px] sm:min-w-[220px]">Customer</th>
+                  <th class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 text-left px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[180px] sm:min-w-[220px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">Customer</th>
                   <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[130px]">License Key</th>
                   <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[120px]">Purchase Date</th>
                   <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[140px]">Plan Expiry</th>
                   <th class="text-left px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[110px]">Status</th>
-                  <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[270px]">Actions</th>
+                  <th class="text-right px-3.5 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap min-w-[285px]">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                 <template x-for="c in filteredCustomers" :key="c.id">
                   <tr @click="modalCustomerId=c.id; showCustomerModal=true"
                     class="hover:bg-brand-50/60 dark:hover:bg-brand-950/40 transition-colors cursor-pointer group">
-                    <td class="px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap min-w-[180px] sm:min-w-[220px]">
+                    <td class="sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-850 px-3.5 sm:px-4 py-3 sm:py-3.5 align-middle whitespace-nowrap min-w-[180px] sm:min-w-[220px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-xs"
                            :style="'background:hsl('+(c.name.charCodeAt(0)*53%360)+',55%,45%)'">
@@ -4276,7 +4276,7 @@
               <span class="text-xs font-bold text-indigo-500 uppercase">Total Sales Customers</span>
               <span class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center text-sm"><i class="fa-solid fa-users"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mt-2" x-text="(salesLeads || []).length + ' Customers'"></div>
+            <div class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mt-2" x-text="Math.max((customers || []).length, (salesLeads || []).length) + ' Customers'"></div>
             <div class="text-[11px] text-gray-500 mt-1" x-text="salesTeamScorecardList.length + ' Active sales executives'"></div>
           </div>
 
@@ -4285,7 +4285,7 @@
               <span class="text-xs font-bold text-teal-500 uppercase">Active Sales Volume</span>
               <span class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 flex items-center justify-center text-sm"><i class="fa-solid fa-chart-line"></i></span>
             </div>
-            <div class="text-2xl font-semibold text-teal-600 dark:text-teal-400 mt-2" x-text="(salesLeads || []).length + ' Records'"></div>
+            <div class="text-2xl font-semibold text-teal-600 dark:text-teal-400 mt-2" x-text="Math.max((customers || []).length, (salesLeads || []).length) + ' Records'"></div>
             <div class="text-[11px] text-gray-500 mt-1">Recorded sales &amp; prospects</div>
           </div>
 
@@ -20027,7 +20027,7 @@
         // ── CSV Import ──
         showCsvImportModal: false,
         // ── View mode ──
-        customerViewMode: (typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table',
+        customerViewMode: (typeof window !== 'undefined' && localStorage.getItem('ip_adm_cust_view_manual')) ? localStorage.getItem('ip_adm_cust_view_manual') : ((typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table'),
         // ── Global Search ──
         showGlobalSearch: false,
         globalSearchQuery: '',
@@ -20111,6 +20111,16 @@
           this.$watch('darkMode', v => localStorage.setItem('ip_adm_dark', v ? '1' : '0'));
           this.$watch('activeReceiptTemplate', v => {
             if (v) localStorage.setItem('ip_adm_receipt_template', v);
+          });
+          this.$watch('customerViewMode', v => {
+            localStorage.setItem('ip_adm_cust_view_manual', v);
+          });
+
+          // Responsive viewMode sync if user has not explicitly forced a mode
+          window.addEventListener('resize', () => {
+            if (!localStorage.getItem('ip_adm_cust_view_manual')) {
+              this.customerViewMode = window.innerWidth < 768 ? 'cards' : 'table';
+            }
           });
 
           // ── PWA & Offline Network Listeners ──
@@ -27772,9 +27782,9 @@
           for (const l of list) {
             if (!l || dummyLeadIds.has(l.id) || l.company === '45rtetdsfdsg') continue;
             const cId = String(l.customerId || '').trim();
+            const comp = String(l.company || l.customer_name || '').trim().toLowerCase();
             const cleanPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
-            const comp = String(l.company || l.customer_name || l.id || '').trim().toLowerCase();
-            const key = cId ? `id:${cId}` : (cleanPhone ? `phone:${cleanPhone}` : `name:${comp}`);
+            const key = cId ? `id:${cId}` : (comp ? `name:${comp}` : (l.id ? `lid:${l.id}` : `phone:${cleanPhone}`));
             if (!seen.has(key)) {
               seen.add(key);
               result.push(l);
